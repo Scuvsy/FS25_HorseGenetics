@@ -1,0 +1,21 @@
+---
+description: Always ship FS25 Horse Genetics updates on a new branch with a PR, never on main.
+alwaysApply: true
+---
+
+# Mod update git workflow
+
+Do not commit or push directly to `main` or `master` for mod updates.
+
+For each update:
+
+1. Create a **new branch** from current `main` (examples: `fix/esc-sidebar`, `v1.0.6.0`).
+2. Commit only on that branch.
+3. Push that branch.
+4. Open a PR into `main` if `gh` works.
+
+After a fix, still ship the GitHub Release **game zip** (`FS25_HorseGenetics.zip` with `modDesc.xml` at zip root). Never tell the user to use GitHub Code → Download ZIP.
+
+Rebuild `mods/FS25_HorseGenetics.zip` with `modDesc.xml` at zip root. Include patch notes in the reply.
+
+Never update git config. Never force-push to `main`. Do not rewrite git history or move existing `main` commits onto other branches unless the user asks.
