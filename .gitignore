@@ -1,6 +1,8 @@
 *.zip
 *.rar
+dist/
 Thumbs.db
 desktop.ini
 .DS_Store
 *.log
+tools/

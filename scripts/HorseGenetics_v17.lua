@@ -1,6 +1,6 @@
 -- Horse Genetics for Farming Simulator 25
 
-HorseGenetics = {}
+HorseGenetics = HorseGenetics or {}
 
 -- Keep the mod path; FS25 can clear g_currentModDirectory after load.
 HorseGenetics.modDirectory = g_currentModDirectory
@@ -43,6 +43,20 @@ HorseGenetics.COAT_COLOURS = {
 }
 
 HorseGenetics.nextHorseId = 1
+
+local function hgApplyHorseDataFile()
+    local data = HorseGenetics.HORSE_DATA
+    if type(data) ~= "table" then
+        return
+    end
+    if type(data.nextHorseId) == "number" and data.nextHorseId > 0 then
+        HorseGenetics.nextHorseId = data.nextHorseId
+    end
+    if type(data.coatColours) == "table" and data.coatColours[1] ~= nil then
+        HorseGenetics.COAT_COLOURS = data.coatColours
+    end
+end
+hgApplyHorseDataFile()
 
 HorseGenetics.xmlSchema = XMLSchema.new("horseGenetics")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#version", "Save format version")
@@ -736,60 +750,10 @@ if AnimalCluster ~= nil
     AnimalCluster.horseGeneticsPersistenceInstalled = true
 end
 
--- Wrap AnimalCluster writeStream/readStream once. A second wrap (loadMap/update)
--- made dedicated servers write extra bytes that joining clients had not installed
--- yet, which broke AnimalClusterUpdateEvent with nil:readStream.
-local function hgWrapClusterStream(methodName)
-    if AnimalCluster == nil or type(AnimalCluster[methodName]) ~= "function" then
-        return false
-    end
-    local flag = "horseGeneticsWrapped_" .. methodName
-    if AnimalCluster[flag] then
-        return true
-    end
-    local original = AnimalCluster[methodName]
-    if string.find(methodName, "write", 1, true) == 1 then
-        AnimalCluster[methodName] = function(self, streamId, connection, ...)
-            local result = original(self, streamId, connection, ...)
-            if streamId ~= nil then
-                local id = self ~= nil and self.horseGeneticsId or nil
-                local hasId = type(id) == "string" and id ~= ""
-                streamWriteBool(streamId, hasId)
-                if hasId then
-                    streamWriteString(streamId, id)
-                end
-            end
-            return result
-        end
-    else
-        AnimalCluster[methodName] = function(self, streamId, connection, ...)
-            local result = original(self, streamId, connection, ...)
-            if streamId ~= nil then
-                local hasId = streamReadBool(streamId)
-                if hasId then
-                    local id = streamReadString(streamId)
-                    if self ~= nil and id ~= nil and id ~= "" then
-                        self.horseGeneticsId = id
-                    end
-                end
-            end
-            return result
-        end
-    end
-    AnimalCluster[flag] = true
-    return true
-end
-
-local function hgInstallClusterStreamSyncOnce()
-    local okWrite = hgWrapClusterStream("writeStream")
-    local okRead = hgWrapClusterStream("readStream")
-    if AnimalCluster ~= nil then
-        AnimalCluster.horseGeneticsStreamInstalled = okWrite and okRead
-    end
-    return okWrite and okRead
-end
-
-hgInstallClusterStreamSyncOnce()
+-- Never wrap AnimalCluster readStream/writeStream. Extra bytes desync vanilla
+-- AnimalClusterUpdateEvent on dedicated join (nil:readStream) and can leave
+-- later clusters in the same packet unbound (missing age on MP clients).
+-- horseGeneticsId is kept in save XML and synced with HorseGeneticsSyncEvent.
 
 if AnimalCluster ~= nil and AnimalCluster.clone ~= nil and not AnimalCluster.horseGeneticsCloneInstalled then
     local originalClone = AnimalCluster.clone
@@ -934,14 +898,28 @@ function HorseGenetics.getHusbandryClusters(husbandry)
         end
         HorseGenetics.addClustersFromTable(list, seen, hgInvoke(object, "getClusters"))
         HorseGenetics.addClustersFromTable(list, seen, hgInvoke(object, "getAnimalItems"))
+        HorseGenetics.addClustersFromTable(list, seen, hgInvoke(object, "getAnimals"))
         HorseGenetics.addClustersFromTable(list, seen, object.clusters)
-        local spec = object.spec_husbandryAnimals
-        if spec ~= nil then
-            HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec, "getClusters"))
-            HorseGenetics.addClustersFromTable(list, seen, spec.clusters)
-            if spec.clusterSystem ~= nil then
-                HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec.clusterSystem, "getClusters"))
-                HorseGenetics.addClustersFromTable(list, seen, spec.clusterSystem.clusters)
+        HorseGenetics.addClustersFromTable(list, seen, object.animalItems)
+        local specs = {
+            object.spec_husbandryAnimals,
+            object.spec_husbandryMeadow,
+            object.spec_pasture,
+            object.spec_rideable,
+            object.spec_livestockTrailer
+        }
+        for i = 1, #specs do
+            local spec = specs[i]
+            if spec ~= nil then
+                HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec, "getClusters"))
+                HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec, "getAnimalItems"))
+                HorseGenetics.addClustersFromTable(list, seen, spec.clusters)
+                HorseGenetics.addClustersFromTable(list, seen, spec.animalItems)
+                if spec.clusterSystem ~= nil then
+                    HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec.clusterSystem, "getClusters"))
+                    HorseGenetics.addClustersFromTable(list, seen, spec.clusterSystem.clusters)
+                end
+                HorseGenetics.addClustersFromTable(list, seen, hgInvoke(spec, "getCluster") or spec.cluster)
             end
         end
         local system = hgInvoke(object, "getClusterSystem") or object.clusterSystem
@@ -1542,7 +1520,18 @@ end
 function HorseGenetics.getRecordAgeMonths(record)
     local cluster = HorseGenetics.getRecordCluster(record)
     if cluster ~= nil then
-        return HorseGenetics.getClusterAgeMonths(cluster)
+        local age = cluster.age
+        if type(age) ~= "number" and cluster.getAge ~= nil then
+            local ok, value = pcall(function()
+                return cluster:getAge()
+            end)
+            if ok then
+                age = value
+            end
+        end
+        if type(age) == "number" then
+            return math.max(0, age)
+        end
     end
     if record ~= nil and type(record.lastAgeMonths) == "number" then
         return record.lastAgeMonths
@@ -1688,6 +1677,10 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
     duration = math.max(1, tonumber(duration) or HorseGenetics.getGestationMonths())
     remaining = math.max(0, tonumber(remaining) or duration)
     cluster._hgReproSync = true
+    local originalSetDirty = cluster.setDirty
+    if type(originalSetDirty) == "function" then
+        cluster.setDirty = function() end
+    end
     pcall(function()
         cluster.reproductionDuration = duration
         cluster.reproductionToGo = remaining
@@ -1708,10 +1701,8 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
                 cluster:setReproductionDuration(duration)
             end)
         end
-        if cluster.setDirty ~= nil then
-            cluster:setDirty()
-        end
     end)
+    cluster.setDirty = originalSetDirty
     cluster._hgReproSync = nil
 end
 
@@ -1950,9 +1941,13 @@ function HorseGenetics.visitAnimalClusters(visitor)
         visitList(hs.placeables)
         visitList(hs.husbandries)
         visitList(hs.clusterHusbandries)
+        visitList(hs.animalHusbandries)
+        visitList(hs.pastures)
         visitMaybe(hs, "getPlaceables")
         visitMaybe(hs, "getHusbandries")
         visitMaybe(hs, "getClusterHusbandries")
+        visitMaybe(hs, "getAnimalHusbandries")
+        visitMaybe(hs, "getPastures")
     end
     local ps = mission.placeableSystem
     if ps ~= nil then
@@ -1961,6 +1956,7 @@ function HorseGenetics.visitAnimalClusters(visitor)
         visitMaybe(ps, "getPlaceables")
     end
     visitList(mission.placeables)
+    visitList(mission.husbandries)
     local vs = mission.vehicleSystem
     if vs ~= nil then
         visitList(vs.vehicles)
@@ -1974,12 +1970,14 @@ local function hgVisitAnimalClusters(visitor)
     HorseGenetics.visitAnimalClusters(visitor)
 end
 
-function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
+function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
     if cluster == nil then
         return nil
     end
-    if cluster.horseGeneticsId ~= nil and HorseGenetics.horses[cluster.horseGeneticsId] ~= nil then
-        return HorseGenetics.horses[cluster.horseGeneticsId]
+    local existingId = cluster.horseGeneticsId
+    if existingId ~= nil and HorseGenetics.horses[existingId] ~= nil
+        and (usedHorseIds == nil or usedHorseIds[existingId] ~= true) then
+        return HorseGenetics.horses[existingId]
     end
     local horseName = HorseGenetics.getClusterName(cluster)
     if horseName == nil or horseName == "" then
@@ -1989,7 +1987,8 @@ function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
     local match, count = nil, 0
     for _, horse in pairs(HorseGenetics.horses or {}) do
         if horse ~= nil and horse.soldPrice == nil and horse.name ~= nil
-            and string.lower(tostring(horse.name)) == lname then
+            and string.lower(tostring(horse.name)) == lname
+            and (usedHorseIds == nil or usedHorseIds[horse.id] ~= true) then
             if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
                 match = horse
                 count = count + 1
@@ -2000,6 +1999,115 @@ function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
         return match
     end
     return nil
+end
+
+function HorseGenetics.collectClusterBindings()
+    local bindings = {}
+    local usedHorseIds = {}
+    pcall(function()
+        HorseGenetics.visitAnimalClusters(function(cluster, container)
+            if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
+                return
+            end
+            local ownerFarmId = hgGetOwnerFarmId(container) or hgGetOwnerFarmId(cluster)
+            local record = HorseGenetics.getHorseForCluster(cluster)
+            if record ~= nil and usedHorseIds[record.id] == true then
+                record = nil
+            end
+            if record == nil then
+                record = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
+            end
+            if record == nil or record.id == nil then
+                return
+            end
+            cluster.horseGeneticsId = record.id
+            usedHorseIds[record.id] = true
+            local age = HorseGenetics.getClusterAgeMonths(cluster)
+            record.lastAgeMonths = age
+            table.insert(bindings, {
+                horseId = record.id,
+                husbandryId = HorseGenetics.getHusbandryKey(container) or "",
+                clusterId = cluster.id ~= nil and tostring(cluster.id) or "",
+                name = HorseGenetics.getClusterName(cluster) or record.name or "",
+                ageMonths = age,
+                farmId = tonumber(ownerFarmId) or tonumber(record.farmId) or 0
+            })
+        end)
+    end)
+    return bindings
+end
+
+function HorseGenetics.applyClusterBindings(bindings)
+    HorseGenetics.clusterBindings = bindings or {}
+    for _, binding in ipairs(HorseGenetics.clusterBindings) do
+        local record = binding.horseId ~= nil and HorseGenetics.horses[binding.horseId] or nil
+        if record ~= nil and type(binding.ageMonths) == "number" then
+            record.lastAgeMonths = binding.ageMonths
+        end
+    end
+    HorseGenetics.rebindLiveClusters()
+end
+
+function HorseGenetics.rebindLiveClusters()
+    HorseGenetics._clusterById = {}
+    local usedHorseIds = {}
+    local bindings = HorseGenetics.clusterBindings or {}
+    local byPlaceAndCluster = {}
+    for _, binding in ipairs(bindings) do
+        if binding.horseId ~= nil and binding.husbandryId ~= nil and binding.husbandryId ~= ""
+            and binding.clusterId ~= nil and binding.clusterId ~= "" then
+            byPlaceAndCluster[binding.husbandryId .. "\0" .. binding.clusterId] = binding
+        end
+    end
+
+    local function bindCluster(cluster, horseId)
+        if cluster == nil or horseId == nil or horseId == "" or usedHorseIds[horseId] == true then
+            return false
+        end
+        if HorseGenetics.horses[horseId] == nil then
+            return false
+        end
+        cluster.horseGeneticsId = horseId
+        usedHorseIds[horseId] = true
+        HorseGenetics._clusterById[horseId] = cluster
+        local record = HorseGenetics.horses[horseId]
+        local age = cluster.age
+        if type(age) ~= "number" and cluster.getAge ~= nil then
+            local ok, value = pcall(function()
+                return cluster:getAge()
+            end)
+            if ok and type(value) == "number" then
+                age = value
+            end
+        end
+        if type(age) == "number" then
+            record.lastAgeMonths = math.max(0, age)
+        end
+        return true
+    end
+
+    pcall(function()
+        HorseGenetics.visitAnimalClusters(function(cluster, container)
+            if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
+                return
+            end
+            local ownerFarmId = hgGetOwnerFarmId(container) or hgGetOwnerFarmId(cluster)
+            local key = (HorseGenetics.getHusbandryKey(container) or "") .. "\0"
+                .. (cluster.id ~= nil and tostring(cluster.id) or "")
+            local binding = byPlaceAndCluster[key]
+            if binding ~= nil and bindCluster(cluster, binding.horseId) then
+                return
+            end
+            if cluster.horseGeneticsId ~= nil and bindCluster(cluster, cluster.horseGeneticsId) then
+                return
+            end
+            local record = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
+            if record ~= nil then
+                bindCluster(cluster, record.id)
+            end
+        end)
+    end)
+    return usedHorseIds
 end
 
 -- Bind live horse clusters on the host/dedicated server and push new records.
@@ -2043,6 +2151,10 @@ function HorseGenetics.collectOwnedHorseIds()
     local authoritative = HorseGenetics.isAuthoritative()
     local dedicated = HorseGenetics.isDedicatedServer ~= nil and HorseGenetics.isDedicatedServer()
     HorseGenetics._clusterById = {}
+    local usedHorseIds = {}
+    if not authoritative then
+        usedHorseIds = HorseGenetics.rebindLiveClusters() or {}
+    end
 
     local function farmOk(ownerFarmId)
         if not mp then
@@ -2077,8 +2189,11 @@ function HorseGenetics.collectOwnedHorseIds()
             record = HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         else
             record = HorseGenetics.getHorseForCluster(cluster)
-            if record == nil then
-                record = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
+            local alreadyBound = record ~= nil and usedHorseIds[record.id] == true
+                and HorseGenetics._clusterById[record.id] ~= nil
+                and HorseGenetics._clusterById[record.id] ~= cluster
+            if record == nil or alreadyBound then
+                record = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
                 if record ~= nil then
                     cluster.horseGeneticsId = record.id
                 end
@@ -2088,10 +2203,27 @@ function HorseGenetics.collectOwnedHorseIds()
             record = HorseGenetics.horses[cluster.horseGeneticsId]
         end
         if record ~= nil and record.id ~= nil then
+            if not authoritative and usedHorseIds[record.id] == true
+                and HorseGenetics._clusterById[record.id] ~= nil
+                and HorseGenetics._clusterById[record.id] ~= cluster then
+                return
+            end
             record.soldPrice = nil
             owned[record.id] = true
             HorseGenetics._clusterById[record.id] = cluster
-            record.lastAgeMonths = HorseGenetics.getClusterAgeMonths(cluster)
+            usedHorseIds[record.id] = true
+            local age = cluster.age
+            if type(age) ~= "number" and cluster.getAge ~= nil then
+                local ok, value = pcall(function()
+                    return cluster:getAge()
+                end)
+                if ok then
+                    age = value
+                end
+            end
+            if type(age) == "number" then
+                record.lastAgeMonths = math.max(0, age)
+            end
             if record.farmId == nil and ownerFarmId ~= nil then
                 record.farmId = ownerFarmId
             end
@@ -2339,14 +2471,9 @@ local function hgHookHorseClusterAdd(classTable, methodName)
     classTable[flag] = true
 end
 
-function HorseGenetics.installClusterStreamSync()
-    return hgInstallClusterStreamSyncOnce()
-end
-
 -- Hook sale price, new clusters, and mounting a horse.
 function HorseGenetics:installCoreIntegrations()
     self:installSaleValueIntegration()
-    HorseGenetics.installClusterStreamSync()
     hgHookHorseClusterAdd(PlaceableHusbandryAnimals, "addCluster")
     hgHookHorseClusterAdd(AnimalClusterSystem, "addCluster")
     hgHookHorseClusterAdd(AnimalClusterHusbandry, "addCluster")
@@ -2580,7 +2707,6 @@ function HorseGenetics:loadMap()
     HorseGenetics.registerEventClasses()
     HorseGenetics.installNetworkHooks()
     HorseGenetics.installHorseReproductionBlock()
-    HorseGenetics.installClusterStreamSync()
     HorseGenetics:installCoreIntegrations()
 end
 
@@ -2589,7 +2715,6 @@ function HorseGenetics:update(dt)
         HorseGenetics.registerEventClasses()
         HorseGenetics.installNetworkHooks()
         HorseGenetics.installHorseReproductionBlock()
-        HorseGenetics.installClusterStreamSync()
         HorseGenetics:installCoreIntegrations()
         dt = tonumber(dt) or 0
         if HorseGenetics.isAuthoritative() then
@@ -2759,6 +2884,11 @@ local function hgWriteHorseToStream(streamId, horse)
     streamWriteInt32(streamId, tonumber(horse.farmId) or 0)
     streamWriteInt32(streamId, tonumber(horse.soldPrice) or 0)
     streamWriteInt32(streamId, tonumber(horse.lastKnownSellPrice) or 0)
+    local ageMonths = tonumber(horse.lastAgeMonths)
+    streamWriteBool(streamId, ageMonths ~= nil)
+    if ageMonths ~= nil then
+        streamWriteInt32(streamId, math.max(0, math.floor(ageMonths + 0.5)))
+    end
 end
 
 local function hgReadHorseFromStream(streamId)
@@ -2778,6 +2908,9 @@ local function hgReadHorseFromStream(streamId)
         soldPrice = streamReadInt32(streamId),
         lastKnownSellPrice = streamReadInt32(streamId)
     }
+    if streamReadBool(streamId) then
+        horse.lastAgeMonths = streamReadInt32(streamId)
+    end
     if horse.farmId == 0 then
         horse.farmId = nil
     end
@@ -2808,7 +2941,7 @@ function HorseGenetics.applyHorseRecord(horse)
     end
 end
 
-function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregnancies, settings)
+function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregnancies, settings, clusterBindings)
     HorseGenetics.horses = horses or {}
     HorseGenetics.clientHasSync = true
     if type(nextHorseId) == "number" and nextHorseId > 0 then
@@ -2822,6 +2955,7 @@ function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregn
     if type(settings) == "table" then
         HorseGenetics.applySettings(settings.gestationMonths, settings.valueModifierPercent, true)
     end
+    HorseGenetics.applyClusterBindings(clusterBindings)
     HorseGenetics.notifyUiDirty()
     if HorseGenetics.syncAllReproductionVisuals ~= nil then
         HorseGenetics.syncAllReproductionVisuals()
@@ -2895,13 +3029,14 @@ function HorseGenetics.registerEventClasses()
         return Event.new(HorseGeneticsSyncEvent_mt)
     end
 
-    function HorseGeneticsSyncEvent.new(horses, nextHorseId, breedingHistory, pregnancies, settings)
+    function HorseGeneticsSyncEvent.new(horses, nextHorseId, breedingHistory, pregnancies, settings, clusterBindings)
         local self = HorseGeneticsSyncEvent.emptyNew()
         self.horses = horses or {}
         self.nextHorseId = nextHorseId or 1
         self.breedingHistory = breedingHistory or {}
         self.pregnancies = pregnancies or {}
         self.settings = settings or HorseGenetics.settings
+        self.clusterBindings = clusterBindings or {}
         return self
     end
 
@@ -2921,7 +3056,8 @@ function HorseGenetics.registerEventClasses()
             {
                 gestationMonths = HorseGenetics.getGestationMonths(),
                 valueModifierPercent = HorseGenetics.getValueModifierPercent()
-            }
+            },
+            HorseGenetics.collectClusterBindings()
         )
     end
 
@@ -2967,6 +3103,17 @@ function HorseGenetics.registerEventClasses()
         local settings = self.settings or HorseGenetics.settings or {}
         streamWriteInt32(streamId, tonumber(settings.gestationMonths) or HorseGenetics.VANILLA_GESTATION_MONTHS)
         streamWriteInt32(streamId, tonumber(settings.valueModifierPercent) or 100)
+        local bindings = self.clusterBindings or {}
+        streamWriteInt32(streamId, #bindings)
+        for i = 1, #bindings do
+            local binding = bindings[i]
+            hgWriteOptionalString(streamId, binding.horseId)
+            hgWriteOptionalString(streamId, binding.husbandryId)
+            hgWriteOptionalString(streamId, binding.clusterId)
+            hgWriteOptionalString(streamId, binding.name)
+            streamWriteInt32(streamId, tonumber(binding.ageMonths) or 0)
+            streamWriteInt32(streamId, tonumber(binding.farmId) or 0)
+        end
     end
 
     function HorseGeneticsSyncEvent:readStream(streamId, connection)
@@ -3018,6 +3165,18 @@ function HorseGenetics.registerEventClasses()
             gestationMonths = streamReadInt32(streamId),
             valueModifierPercent = streamReadInt32(streamId)
         }
+        local bindingCount = streamReadInt32(streamId)
+        self.clusterBindings = {}
+        for _ = 1, bindingCount do
+            table.insert(self.clusterBindings, {
+                horseId = hgReadOptionalString(streamId),
+                husbandryId = hgReadOptionalString(streamId) or "",
+                clusterId = hgReadOptionalString(streamId) or "",
+                name = hgReadOptionalString(streamId) or "",
+                ageMonths = streamReadInt32(streamId),
+                farmId = streamReadInt32(streamId)
+            })
+        end
         self:run(connection)
     end
 
@@ -3027,7 +3186,7 @@ function HorseGenetics.registerEventClasses()
             for _, horse in ipairs(self.horses or {}) do
                 byId[horse.id] = horse
             end
-            HorseGenetics.applyFullSync(byId, self.nextHorseId, self.breedingHistory, self.pregnancies, self.settings)
+            HorseGenetics.applyFullSync(byId, self.nextHorseId, self.breedingHistory, self.pregnancies, self.settings, self.clusterBindings)
         end
     end
 
@@ -4013,6 +4172,11 @@ local function hgIsCoatPhotoPath(filename)
         return false
     end
     local lower = string.lower(filename)
+    -- Packed local DDS coats are valid fallbacks. Reject leftover png/jpg paths
+    -- that animal-system visuals might still point at.
+    if string.find(lower, "%.dds", 1, true) ~= nil then
+        return false
+    end
     return string.find(lower, "gui/coats", 1, true) ~= nil
         or string.find(lower, "hg_ui_portrait", 1, true) ~= nil
 end
@@ -4235,6 +4399,8 @@ local function hgToDdsFilename(filename)
     end
     local swapped = string.gsub(filename, "%.png$", ".dds")
     swapped = string.gsub(swapped, "%.PNG$", ".dds")
+    swapped = string.gsub(swapped, "%.jpe?g$", ".dds")
+    swapped = string.gsub(swapped, "%.JPE?G$", ".dds")
     return swapped
 end
 
@@ -4258,6 +4424,28 @@ local function hgAddPortraitPathVariants(list, seen, filename)
     hgAddPortraitCandidate(list, seen, normalized)
 end
 
+local function hgAddLocalCoatPortraitPaths(list, seen, key)
+    local directory = HorseGenetics.modDirectory or g_currentModDirectory
+    if directory == nil then
+        return
+    end
+    if not string.match(directory, "[/\\]$") then
+        directory = directory .. "/"
+    end
+    local stems = { key }
+    if key == "dun" then
+        stems = { "dun", "buckskin" }
+    elseif key == "sealbrown" then
+        stems = { "sealbrown" }
+    end
+    for i = 1, #stems do
+        local stem = stems[i]
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_portrait_" .. stem .. "_v26.dds")
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_ui_portrait_" .. stem .. ".dds")
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/" .. stem .. ".dds")
+    end
+end
+
 local function hgCollectHorseStoreIconPaths(coatColour)
     local key = hgNormalizeCoatKey(coatColour)
     local list, seen = {}, {}
@@ -4275,6 +4463,7 @@ local function hgCollectHorseStoreIconPaths(coatColour)
     local stem = HG_HORSE_STORE_ICON_STEMS[key] or HG_HORSE_STORE_ICON_STEMS.bay
     hgAddPortraitPathVariants(list, seen, HG_HORSE_STORE_ICON_DIR .. stem .. ".dds")
     hgAddPortraitPathVariants(list, seen, HG_HORSE_STORE_ICON_DIR .. stem .. ".png")
+    hgAddLocalCoatPortraitPaths(list, seen, key)
     return list, key
 end
 

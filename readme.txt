@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.5.0
+Version: 1.0.9.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
