@@ -1677,6 +1677,10 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
     duration = math.max(1, tonumber(duration) or HorseGenetics.getGestationMonths())
     remaining = math.max(0, tonumber(remaining) or duration)
     cluster._hgReproSync = true
+    local originalSetDirty = cluster.setDirty
+    if type(originalSetDirty) == "function" then
+        cluster.setDirty = function() end
+    end
     pcall(function()
         cluster.reproductionDuration = duration
         cluster.reproductionToGo = remaining
@@ -1697,10 +1701,8 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
                 cluster:setReproductionDuration(duration)
             end)
         end
-        if cluster.setDirty ~= nil then
-            cluster:setDirty()
-        end
     end)
+    cluster.setDirty = originalSetDirty
     cluster._hgReproSync = nil
 end
 
