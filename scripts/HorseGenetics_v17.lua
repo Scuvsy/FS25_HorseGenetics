@@ -736,6 +736,9 @@ if AnimalCluster ~= nil
     AnimalCluster.horseGeneticsPersistenceInstalled = true
 end
 
+-- Wrap AnimalCluster writeStream/readStream once. A second wrap (loadMap/update)
+-- made dedicated servers write extra bytes that joining clients had not installed
+-- yet, which broke AnimalClusterUpdateEvent with nil:readStream.
 local function hgWrapClusterStream(methodName)
     if AnimalCluster == nil or type(AnimalCluster[methodName]) ~= "function" then
         return false
@@ -748,22 +751,26 @@ local function hgWrapClusterStream(methodName)
     if string.find(methodName, "write", 1, true) == 1 then
         AnimalCluster[methodName] = function(self, streamId, connection, ...)
             local result = original(self, streamId, connection, ...)
-            local id = self ~= nil and self.horseGeneticsId or nil
-            local hasId = type(id) == "string" and id ~= ""
-            streamWriteBool(streamId, hasId)
-            if hasId then
-                streamWriteString(streamId, id)
+            if streamId ~= nil then
+                local id = self ~= nil and self.horseGeneticsId or nil
+                local hasId = type(id) == "string" and id ~= ""
+                streamWriteBool(streamId, hasId)
+                if hasId then
+                    streamWriteString(streamId, id)
+                end
             end
             return result
         end
     else
         AnimalCluster[methodName] = function(self, streamId, connection, ...)
             local result = original(self, streamId, connection, ...)
-            local hasId = streamReadBool(streamId)
-            if hasId then
-                local id = streamReadString(streamId)
-                if id ~= nil and id ~= "" then
-                    self.horseGeneticsId = id
+            if streamId ~= nil then
+                local hasId = streamReadBool(streamId)
+                if hasId then
+                    local id = streamReadString(streamId)
+                    if self ~= nil and id ~= nil and id ~= "" then
+                        self.horseGeneticsId = id
+                    end
                 end
             end
             return result
@@ -773,14 +780,16 @@ local function hgWrapClusterStream(methodName)
     return true
 end
 
-if AnimalCluster ~= nil and AnimalCluster.writeStream ~= nil and AnimalCluster.readStream ~= nil then
-    hgWrapClusterStream("writeStream")
-    hgWrapClusterStream("readStream")
+local function hgInstallClusterStreamSyncOnce()
+    local okWrite = hgWrapClusterStream("writeStream")
+    local okRead = hgWrapClusterStream("readStream")
+    if AnimalCluster ~= nil then
+        AnimalCluster.horseGeneticsStreamInstalled = okWrite and okRead
+    end
+    return okWrite and okRead
 end
-if AnimalCluster ~= nil and AnimalCluster.writeUpdateStream ~= nil and AnimalCluster.readUpdateStream ~= nil then
-    hgWrapClusterStream("writeUpdateStream")
-    hgWrapClusterStream("readUpdateStream")
-end
+
+hgInstallClusterStreamSyncOnce()
 
 if AnimalCluster ~= nil and AnimalCluster.clone ~= nil and not AnimalCluster.horseGeneticsCloneInstalled then
     local originalClone = AnimalCluster.clone
@@ -2331,33 +2340,7 @@ local function hgHookHorseClusterAdd(classTable, methodName)
 end
 
 function HorseGenetics.installClusterStreamSync()
-    if AnimalCluster == nil or AnimalCluster.writeStream == nil or AnimalCluster.readStream == nil then
-        return false
-    end
-    if AnimalCluster.horseGeneticsStreamInstalled then
-        return true
-    end
-    local originalWrite = AnimalCluster.writeStream
-    local originalRead = AnimalCluster.readStream
-    AnimalCluster.writeStream = function(self, streamId, connection)
-        originalWrite(self, streamId, connection)
-        local id = tostring(self.horseGeneticsId or "")
-        streamWriteBool(streamId, id ~= "")
-        if id ~= "" then
-            streamWriteString(streamId, id)
-        end
-    end
-    AnimalCluster.readStream = function(self, streamId, connection)
-        originalRead(self, streamId, connection)
-        if streamReadBool(streamId) then
-            local id = streamReadString(streamId)
-            if id ~= nil and id ~= "" then
-                self.horseGeneticsId = id
-            end
-        end
-    end
-    AnimalCluster.horseGeneticsStreamInstalled = true
-    return true
+    return hgInstallClusterStreamSyncOnce()
 end
 
 -- Hook sale price, new clusters, and mounting a horse.
