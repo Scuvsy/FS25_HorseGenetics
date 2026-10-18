@@ -4943,10 +4943,147 @@ local function hgInstallScrollInputHooks(page)
                 local hgPage = HorseGenetics.hgMenuPage
                 if hgPage ~= nil and hgPage:hgIsMyHorsesScrollActive() then
                     hgPage:hgApplyWheelDelta(delta)
+                    return
+                end
+                local tabList = menu ~= nil and menu.pagingTabList or nil
+                if tabList == nil or tabList.absPosition == nil or tabList.absSize == nil then
+                    return
+                end
+                local mouseX, mouseY = nil, nil
+                pcall(function()
+                    if g_inputBinding ~= nil and g_inputBinding.getMousePosition ~= nil then
+                        mouseX, mouseY = g_inputBinding:getMousePosition()
+                    elseif g_inputBinding ~= nil then
+                        mouseX = g_inputBinding.mousePosX
+                        mouseY = g_inputBinding.mousePosY
+                    end
+                end)
+                if mouseX == nil or mouseY == nil then
+                    return
+                end
+                local x, y = tabList.absPosition[1], tabList.absPosition[2]
+                local w, h = tabList.absSize[1], tabList.absSize[2]
+                if mouseX < x or mouseX > x + w or mouseY < y or mouseY > y + h then
+                    return
+                end
+                local step = 0
+                if tonumber(delta) ~= nil then
+                    if tonumber(delta) > 0 then
+                        step = -1
+                    elseif tonumber(delta) < 0 then
+                        step = 1
+                    end
+                end
+                if step == 0 then
+                    return
+                end
+                local first = tabList.firstVisibleItem or 1
+                local visible = tabList.maxNumVisibleItems or tabList.visibleItems or 7
+                local total = 0
+                if menu.enabledPages ~= nil then
+                    total = #menu.enabledPages
+                elseif tabList.getItemCount ~= nil then
+                    total = tonumber(tabList:getItemCount()) or 0
+                end
+                local maxFirst = math.max(1, total - visible + 1)
+                local nextFirst = math.max(1, math.min(maxFirst, first + step))
+                if tabList.setFirstVisibleItem ~= nil then
+                    tabList:setFirstVisibleItem(nextFirst)
+                else
+                    tabList.firstVisibleItem = nextFirst
+                    if tabList.updateView ~= nil then
+                        tabList:updateView(true)
+                    end
                 end
             end)
         end)
     end
+end
+
+-- Extra InGameMenu page overflows the left rail (Settings sits below Finances).
+-- FS25 SmoothListElement centres items in MP, so the list will not scroll far
+-- enough to show the last tab. Force start alignment and keep the selection in view.
+local function hgFixInGameMenuTabScroll()
+    local menu = g_inGameMenu
+    local tabList = menu ~= nil and menu.pagingTabList or nil
+    if tabList == nil then
+        return
+    end
+
+    local alignStart = 1
+    if SmoothListElement ~= nil and SmoothListElement.ALIGN_START ~= nil then
+        alignStart = SmoothListElement.ALIGN_START
+    elseif ListElement ~= nil and ListElement.ALIGN_START ~= nil then
+        alignStart = ListElement.ALIGN_START
+    end
+    tabList.listItemAlignment = alignStart
+
+    if tabList.setIsScrollAllowed ~= nil then
+        pcall(tabList.setIsScrollAllowed, tabList, true)
+    else
+        tabList.isScrollAllowed = true
+    end
+    if tabList.supportsMouseScrolling ~= nil then
+        tabList.supportsMouseScrolling = true
+    end
+
+    if tabList.updateAbsolutePosition ~= nil then
+        tabList:updateAbsolutePosition()
+    end
+    if tabList.reloadData ~= nil then
+        tabList:reloadData()
+    end
+    if tabList.updateView ~= nil then
+        tabList:updateView(true)
+    end
+    if tabList.updateItemPositions ~= nil then
+        tabList:updateItemPositions()
+    end
+
+    local idx = menu.currentPageListIndex
+    if idx == nil and tabList.selectedIndex ~= nil then
+        idx = tabList.selectedIndex
+    end
+    if idx ~= nil then
+        if tabList.setSelectedIndex ~= nil then
+            pcall(tabList.setSelectedIndex, tabList, idx)
+        end
+        if tabList.makeCellVisible ~= nil then
+            pcall(tabList.makeCellVisible, tabList, idx)
+        elseif tabList.scrollTo ~= nil then
+            pcall(tabList.scrollTo, tabList, idx)
+        elseif tabList.setFirstVisibleItem ~= nil then
+            local visible = tabList.maxNumVisibleItems or tabList.visibleItems or 7
+            local first = math.max(1, idx - math.max(0, visible - 1))
+            pcall(tabList.setFirstVisibleItem, tabList, first)
+        end
+    end
+end
+
+local function hgInstallTabScrollFix()
+    if HorseGenetics.hgTabScrollFixInstalled or Utils == nil then
+        pcall(hgFixInGameMenuTabScroll)
+        return
+    end
+    HorseGenetics.hgTabScrollFixInstalled = true
+    if InGameMenu ~= nil then
+        if InGameMenu.updatePages ~= nil then
+            InGameMenu.updatePages = Utils.appendedFunction(InGameMenu.updatePages, function()
+                pcall(hgFixInGameMenuTabScroll)
+            end)
+        end
+        if InGameMenu.onOpen ~= nil then
+            InGameMenu.onOpen = Utils.appendedFunction(InGameMenu.onOpen, function()
+                pcall(hgFixInGameMenuTabScroll)
+            end)
+        end
+        if InGameMenu.rebuildTabList ~= nil then
+            InGameMenu.rebuildTabList = Utils.appendedFunction(InGameMenu.rebuildTabList, function()
+                pcall(hgFixInGameMenuTabScroll)
+            end)
+        end
+    end
+    pcall(hgFixInGameMenuTabScroll)
 end
 
 local function hgPageListEntryMatches(entry, page)
@@ -5077,6 +5214,8 @@ function HorseGenetics.installGeneticsMenu()
     if g_inGameMenu.rebuildTabList ~= nil then
         g_inGameMenu:rebuildTabList()
     end
+    pcall(hgFixInGameMenuTabScroll)
+    pcall(hgInstallTabScrollFix)
 
     HorseGenetics.geneticsMenuInstalled = true
 
