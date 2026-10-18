@@ -303,6 +303,10 @@ Farming Simulator 25 only loads zipped mods in multiplayer. For a multiplayer
 or dedicated-server session, pack the folder as FS25_HorseGenetics.zip. The
 unzipped folder is fine for single player while you are testing.
 
+Download the game zip from GitHub Releases (Assets: FS25_HorseGenetics.zip), not
+Code → Download ZIP. Code → Download ZIP nests files under FS25_HorseGenetics-main/,
+so Fragnet and other dedicated hosts report modDesc.xml not found.
+
 
 ================================================================================
 OTHER MODS
