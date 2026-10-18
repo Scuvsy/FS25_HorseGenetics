@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="114">
     <author>Scuvsy</author>
-    <version>1.0.6.0</version>
+    <version>1.0.7.0</version>
 
     <title>
         <en>Horse Genetics</en>
@@ -36,6 +36,7 @@ Works in single player and PC multiplayer. It does not work on console. Every pl
     <multiplayer supported="true" />
 
     <extraSourceFiles>
+        <sourceFile filename="data/horses.lua" />
         <sourceFile filename="scripts/HorseGenetics_v17.lua" />
     </extraSourceFiles>
 </modDesc>

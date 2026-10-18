@@ -1,6 +1,6 @@
 -- Horse Genetics for Farming Simulator 25
 
-HorseGenetics = {}
+HorseGenetics = HorseGenetics or {}
 
 -- Keep the mod path; FS25 can clear g_currentModDirectory after load.
 HorseGenetics.modDirectory = g_currentModDirectory
@@ -43,6 +43,20 @@ HorseGenetics.COAT_COLOURS = {
 }
 
 HorseGenetics.nextHorseId = 1
+
+local function hgApplyHorseDataFile()
+    local data = HorseGenetics.HORSE_DATA
+    if type(data) ~= "table" then
+        return
+    end
+    if type(data.nextHorseId) == "number" and data.nextHorseId > 0 then
+        HorseGenetics.nextHorseId = data.nextHorseId
+    end
+    if type(data.coatColours) == "table" and data.coatColours[1] ~= nil then
+        HorseGenetics.COAT_COLOURS = data.coatColours
+    end
+end
+hgApplyHorseDataFile()
 
 HorseGenetics.xmlSchema = XMLSchema.new("horseGenetics")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#version", "Save format version")
@@ -4156,6 +4170,11 @@ local function hgIsCoatPhotoPath(filename)
         return false
     end
     local lower = string.lower(filename)
+    -- Packed local DDS coats are valid fallbacks. Reject leftover png/jpg paths
+    -- that animal-system visuals might still point at.
+    if string.find(lower, "%.dds", 1, true) ~= nil then
+        return false
+    end
     return string.find(lower, "gui/coats", 1, true) ~= nil
         or string.find(lower, "hg_ui_portrait", 1, true) ~= nil
 end
@@ -4378,6 +4397,8 @@ local function hgToDdsFilename(filename)
     end
     local swapped = string.gsub(filename, "%.png$", ".dds")
     swapped = string.gsub(swapped, "%.PNG$", ".dds")
+    swapped = string.gsub(swapped, "%.jpe?g$", ".dds")
+    swapped = string.gsub(swapped, "%.JPE?G$", ".dds")
     return swapped
 end
 
@@ -4401,6 +4422,28 @@ local function hgAddPortraitPathVariants(list, seen, filename)
     hgAddPortraitCandidate(list, seen, normalized)
 end
 
+local function hgAddLocalCoatPortraitPaths(list, seen, key)
+    local directory = HorseGenetics.modDirectory or g_currentModDirectory
+    if directory == nil then
+        return
+    end
+    if not string.match(directory, "[/\\]$") then
+        directory = directory .. "/"
+    end
+    local stems = { key }
+    if key == "dun" then
+        stems = { "dun", "buckskin" }
+    elseif key == "sealbrown" then
+        stems = { "sealbrown" }
+    end
+    for i = 1, #stems do
+        local stem = stems[i]
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_portrait_" .. stem .. "_v26.dds")
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_ui_portrait_" .. stem .. ".dds")
+        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/" .. stem .. ".dds")
+    end
+end
+
 local function hgCollectHorseStoreIconPaths(coatColour)
     local key = hgNormalizeCoatKey(coatColour)
     local list, seen = {}, {}
@@ -4418,6 +4461,7 @@ local function hgCollectHorseStoreIconPaths(coatColour)
     local stem = HG_HORSE_STORE_ICON_STEMS[key] or HG_HORSE_STORE_ICON_STEMS.bay
     hgAddPortraitPathVariants(list, seen, HG_HORSE_STORE_ICON_DIR .. stem .. ".dds")
     hgAddPortraitPathVariants(list, seen, HG_HORSE_STORE_ICON_DIR .. stem .. ".png")
+    hgAddLocalCoatPortraitPaths(list, seen, key)
     return list, key
 end
 
