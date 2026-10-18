@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.3.0
+Version: 1.0.4.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -280,6 +280,9 @@ The host or dedicated server owns the genetics data:
 
   - Shop horses and foals get their stats on the server only. Clients receive
     those records; they do not roll their own Speed, Stamina or Health.
+  - Dedicated servers scan horse pastures and stables for live horses even
+    though they have no GUI. Bought horses are registered there and synced
+    to the owning farm. Refresh on MY HORSES asks the server for a new list.
   - Horse Genetics IDs travel with the live animal, so sale prices match for
     every player.
   - Saves are written on the server. Joining players are sent the current

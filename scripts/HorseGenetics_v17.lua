@@ -676,6 +676,7 @@ if Mission00 ~= nil and Mission00.onStartMission ~= nil then
             HorseGenetics.installNetworkHooks()
             if HorseGenetics.isAuthoritative() then
                 HorseGenetics:loadFromSavegame()
+                HorseGenetics.ensureLiveHorseRecords()
             else
                 HorseGenetics.requestSync()
             end
@@ -1964,13 +1965,92 @@ local function hgVisitAnimalClusters(visitor)
     HorseGenetics.visitAnimalClusters(visitor)
 end
 
+function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
+    if cluster == nil then
+        return nil
+    end
+    if cluster.horseGeneticsId ~= nil and HorseGenetics.horses[cluster.horseGeneticsId] ~= nil then
+        return HorseGenetics.horses[cluster.horseGeneticsId]
+    end
+    local horseName = HorseGenetics.getClusterName(cluster)
+    if horseName == nil or horseName == "" then
+        return nil
+    end
+    local lname = string.lower(tostring(horseName))
+    local match, count = nil, 0
+    for _, horse in pairs(HorseGenetics.horses or {}) do
+        if horse ~= nil and horse.soldPrice == nil and horse.name ~= nil
+            and string.lower(tostring(horse.name)) == lname then
+            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
+                match = horse
+                count = count + 1
+            end
+        end
+    end
+    if count == 1 then
+        return match
+    end
+    return nil
+end
+
+-- Bind live horse clusters on the host/dedicated server and push new records.
+function HorseGenetics.ensureLiveHorseRecords()
+    if not HorseGenetics.isAuthoritative() then
+        return 0
+    end
+    local created = 0
+    pcall(function()
+        HorseGenetics.visitAnimalClusters(function(cluster, container)
+            if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
+                return
+            end
+            local ownerFarmId = hgGetOwnerFarmId(container) or hgGetOwnerFarmId(cluster)
+            local beforeId = cluster.horseGeneticsId
+            local record = HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
+            if record ~= nil and (beforeId == nil or beforeId ~= record.id) then
+                created = created + 1
+            end
+        end)
+    end)
+    pcall(function()
+        HorseGenetics.finalizeSoldPrices()
+    end)
+    if created > 0 then
+        HorseGenetics:saveToSavegame()
+        if HorseGenetics.isMultiplayer() then
+            HorseGenetics.broadcastFullSync()
+        end
+        HorseGenetics.notifyUiDirty()
+    end
+    return created
+end
+
 -- IDs of horses currently in stables or spawned.
 function HorseGenetics.collectOwnedHorseIds()
     local owned = {}
     local scanned = 0
     local localFarmId = HorseGenetics.getLocalFarmId ~= nil and HorseGenetics.getLocalFarmId() or nil
     local mp = HorseGenetics.isMultiplayer ~= nil and HorseGenetics.isMultiplayer()
+    local authoritative = HorseGenetics.isAuthoritative()
+    local dedicated = HorseGenetics.isDedicatedServer ~= nil and HorseGenetics.isDedicatedServer()
     HorseGenetics._clusterById = {}
+
+    local function farmOk(ownerFarmId)
+        if not mp then
+            return true
+        end
+        if authoritative and dedicated then
+            return true
+        end
+        if localFarmId == nil then
+            return true
+        end
+        if ownerFarmId == nil then
+            return true
+        end
+        return ownerFarmId == localFarmId
+    end
+
     HorseGenetics.visitAnimalClusters(function(cluster, container)
         scanned = scanned + 1
         if cluster == nil then
@@ -1980,29 +2060,47 @@ function HorseGenetics.collectOwnedHorseIds()
             return
         end
         local ownerFarmId = hgGetOwnerFarmId(container) or hgGetOwnerFarmId(cluster)
-        if mp and localFarmId ~= nil and ownerFarmId ~= nil and ownerFarmId ~= localFarmId then
+        if not farmOk(ownerFarmId) then
             return
         end
         local record
-        if HorseGenetics.isAuthoritative() then
+        if authoritative then
             record = HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         else
             record = HorseGenetics.getHorseForCluster(cluster)
+            if record == nil then
+                record = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
+                if record ~= nil then
+                    cluster.horseGeneticsId = record.id
+                end
+            end
         end
         if record == nil and cluster.horseGeneticsId ~= nil then
             record = HorseGenetics.horses[cluster.horseGeneticsId]
-            if record ~= nil then
-                record.soldPrice = nil
-            end
         end
         if record ~= nil and record.id ~= nil then
+            record.soldPrice = nil
             owned[record.id] = true
             HorseGenetics._clusterById[record.id] = cluster
             record.lastAgeMonths = HorseGenetics.getClusterAgeMonths(cluster)
+            if record.farmId == nil and ownerFarmId ~= nil then
+                record.farmId = ownerFarmId
+            end
         end
     end)
     HorseGenetics._lastClusterScanCount = scanned
-    if scanned > 0 then
+
+    -- Dedicated clients never create records; list unsold farm horses from the sync.
+    if not authoritative then
+        for id, record in pairs(HorseGenetics.horses or {}) do
+            if type(record) == "table" and record.soldPrice == nil
+                and HorseGenetics.recordVisibleToLocalFarm(record) then
+                owned[id] = true
+            end
+        end
+    end
+
+    if scanned > 0 and authoritative then
         HorseGenetics.pruneDuplicateRecords()
     end
     return owned
@@ -2081,6 +2179,9 @@ function HorseGenetics.rememberSellPrice(horse, price)
 end
 
 function HorseGenetics.finalizeSoldPrices(ownedIds)
+    if HorseGenetics.isAuthoritative ~= nil and not HorseGenetics.isAuthoritative() then
+        return
+    end
     ownedIds = ownedIds or HorseGenetics.collectOwnedHorseIds()
     if (HorseGenetics._lastClusterScanCount or 0) <= 0 then
         return
@@ -2206,21 +2307,66 @@ function HorseGenetics:installSaleValueIntegration()
     return true
 end
 
+local function hgHookHorseClusterAdd(classTable, methodName)
+    if classTable == nil or type(classTable[methodName]) ~= "function" then
+        return
+    end
+    local flag = "horseGeneticsHook_" .. methodName
+    if classTable[flag] then
+        return
+    end
+    local original = classTable[methodName]
+    classTable[methodName] = function(self, cluster, ...)
+        if HorseGenetics.isAuthoritative() and HorseGenetics.isHorseCluster(cluster) then
+            local ownerFarmId = hgGetOwnerFarmId(self) or hgGetOwnerFarmId(cluster)
+            if ownerFarmId == nil and self ~= nil then
+                ownerFarmId = hgGetOwnerFarmId(self.owner) or hgGetOwnerFarmId(self.husbandry)
+                    or hgGetOwnerFarmId(self.placeable)
+            end
+            HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
+        end
+        return original(self, cluster, ...)
+    end
+    classTable[flag] = true
+end
+
+function HorseGenetics.installClusterStreamSync()
+    if AnimalCluster == nil or AnimalCluster.writeStream == nil or AnimalCluster.readStream == nil then
+        return false
+    end
+    if AnimalCluster.horseGeneticsStreamInstalled then
+        return true
+    end
+    local originalWrite = AnimalCluster.writeStream
+    local originalRead = AnimalCluster.readStream
+    AnimalCluster.writeStream = function(self, streamId, connection)
+        originalWrite(self, streamId, connection)
+        local id = tostring(self.horseGeneticsId or "")
+        streamWriteBool(streamId, id ~= "")
+        if id ~= "" then
+            streamWriteString(streamId, id)
+        end
+    end
+    AnimalCluster.readStream = function(self, streamId, connection)
+        originalRead(self, streamId, connection)
+        if streamReadBool(streamId) then
+            local id = streamReadString(streamId)
+            if id ~= nil and id ~= "" then
+                self.horseGeneticsId = id
+            end
+        end
+    end
+    AnimalCluster.horseGeneticsStreamInstalled = true
+    return true
+end
+
 -- Hook sale price, new clusters, and mounting a horse.
 function HorseGenetics:installCoreIntegrations()
     self:installSaleValueIntegration()
-    if PlaceableHusbandryAnimals ~= nil and PlaceableHusbandryAnimals.addCluster ~= nil
-        and not PlaceableHusbandryAnimals.horseGeneticsAddClusterInstalled then
-        local originalAddCluster = PlaceableHusbandryAnimals.addCluster
-        PlaceableHusbandryAnimals.addCluster = function(husbandry, cluster, ...)
-            local result = originalAddCluster(husbandry, cluster, ...)
-            if HorseGenetics.isAuthoritative() and HorseGenetics.isHorseCluster(cluster) then
-                HorseGenetics.getOrCreateHorseForCluster(cluster, hgGetOwnerFarmId(husbandry))
-            end
-            return result
-        end
-        PlaceableHusbandryAnimals.horseGeneticsAddClusterInstalled = true
-    end
+    HorseGenetics.installClusterStreamSync()
+    hgHookHorseClusterAdd(PlaceableHusbandryAnimals, "addCluster")
+    hgHookHorseClusterAdd(AnimalClusterSystem, "addCluster")
+    hgHookHorseClusterAdd(AnimalClusterHusbandry, "addCluster")
 
     if Rideable == nil or Rideable.getCluster == nil or Rideable.onEnterVehicle == nil then
         return
@@ -2448,8 +2594,35 @@ function HorseGenetics.installHorseReproductionBlock()
 end
 
 function HorseGenetics:loadMap()
+    HorseGenetics.registerEventClasses()
     HorseGenetics.installNetworkHooks()
     HorseGenetics.installHorseReproductionBlock()
+    HorseGenetics.installClusterStreamSync()
+    HorseGenetics:installCoreIntegrations()
+end
+
+function HorseGenetics:update(dt)
+    pcall(function()
+        HorseGenetics.registerEventClasses()
+        HorseGenetics.installNetworkHooks()
+        HorseGenetics.installHorseReproductionBlock()
+        HorseGenetics.installClusterStreamSync()
+        HorseGenetics:installCoreIntegrations()
+        dt = tonumber(dt) or 0
+        if HorseGenetics.isAuthoritative() then
+            HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
+            if HorseGenetics._liveScanAcc >= 2000 then
+                HorseGenetics._liveScanAcc = 0
+                HorseGenetics.ensureLiveHorseRecords()
+            end
+        elseif HorseGenetics.clientHasSync ~= true then
+            HorseGenetics._clientSyncAcc = (HorseGenetics._clientSyncAcc or 0) + dt
+            if HorseGenetics._clientSyncAcc >= 2500 then
+                HorseGenetics._clientSyncAcc = 0
+                HorseGenetics.requestSync()
+            end
+        end
+    end)
 end
 
 addModEventListener(HorseGenetics)
@@ -2491,24 +2664,46 @@ function HorseGenetics.isMultiplayer()
     return false
 end
 
+function HorseGenetics.isDedicatedServer()
+    if g_dedicatedServer ~= nil then
+        return true
+    end
+    if g_server ~= nil and g_client == nil then
+        return true
+    end
+    return false
+end
+
 function HorseGenetics.getLocalFarmId()
-    if g_localPlayer ~= nil and type(g_localPlayer.farmId) == "number" then
-        return g_localPlayer.farmId
+    local function validFarmId(farmId)
+        return type(farmId) == "number" and farmId > 0 and farmId
+    end
+    if g_localPlayer ~= nil then
+        local farmId = validFarmId(g_localPlayer.farmId)
+        if farmId then
+            return farmId
+        end
     end
     if g_currentMission ~= nil then
-        if g_currentMission.player ~= nil and type(g_currentMission.player.farmId) == "number" then
-            return g_currentMission.player.farmId
+        if g_currentMission.player ~= nil then
+            local farmId = validFarmId(g_currentMission.player.farmId)
+            if farmId then
+                return farmId
+            end
         end
         if g_currentMission.getFarmId ~= nil then
             local ok, farmId = pcall(function()
                 return g_currentMission:getFarmId()
             end)
-            if ok and type(farmId) == "number" then
-                return farmId
+            if ok then
+                farmId = validFarmId(farmId)
+                if farmId then
+                    return farmId
+                end
             end
         end
     end
-    return 1
+    return nil
 end
 
 function HorseGenetics.recordVisibleToLocalFarm(record)
@@ -2619,6 +2814,7 @@ function HorseGenetics.applyHorseRecord(horse)
     if horse == nil or horse.id == nil or horse.id == "" then
         return
     end
+    HorseGenetics.clientHasSync = true
     HorseGenetics.horses[horse.id] = horse
     local numeric = string.match(horse.id, "(%d+)$")
     if numeric ~= nil then
@@ -2631,6 +2827,7 @@ end
 
 function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregnancies, settings)
     HorseGenetics.horses = horses or {}
+    HorseGenetics.clientHasSync = true
     if type(nextHorseId) == "number" and nextHorseId > 0 then
         HorseGenetics.nextHorseId = nextHorseId
     end
@@ -2692,6 +2889,7 @@ function HorseGenetics.installNetworkHooks()
             FSBaseMission.sendInitialClientState,
             function(mission, connection, user, farm)
                 if connection ~= nil then
+                    HorseGenetics.ensureLiveHorseRecords()
                     HorseGenetics.broadcastFullSync(connection)
                 end
             end
@@ -2702,7 +2900,10 @@ function HorseGenetics.installNetworkHooks()
     return false
 end
 
-if Event ~= nil and InitEventClass ~= nil then
+function HorseGenetics.registerEventClasses()
+    if HorseGeneticsSyncEvent ~= nil or Event == nil or InitEventClass == nil then
+        return
+    end
     HorseGeneticsSyncEvent = {}
     local HorseGeneticsSyncEvent_mt = Class(HorseGeneticsSyncEvent, Event)
     InitEventClass(HorseGeneticsSyncEvent, "HorseGeneticsSyncEvent")
@@ -2898,6 +3099,7 @@ if Event ~= nil and InitEventClass ~= nil then
 
     function HorseGeneticsRequestEvent:run(connection)
         if g_server ~= nil and connection ~= nil and not connection:getIsServer() then
+            HorseGenetics.ensureLiveHorseRecords()
             HorseGenetics.broadcastFullSync(connection)
         end
     end
@@ -2943,6 +3145,7 @@ if Event ~= nil and InitEventClass ~= nil then
     end
 
 end
+HorseGenetics.registerEventClasses()
 
 -- Esc-menu Horse Genetics page.
 HorseGeneticsMenu = {}
@@ -4274,6 +4477,12 @@ function HorseGeneticsMenu:onSelectHorse12() self:selectRecord(12) end
 function HorseGeneticsMenu:onSelectHorse13() self:selectRecord(13) end
 
 function HorseGeneticsMenu:onRefreshClick()
+    if HorseGenetics.requestSync ~= nil then
+        HorseGenetics.requestSync()
+    end
+    if HorseGenetics.ensureLiveHorseRecords ~= nil then
+        HorseGenetics.ensureLiveHorseRecords()
+    end
     self:refreshRecords()
     if self.currentTab == "breeding" then
         self:renderBreedingPage()
