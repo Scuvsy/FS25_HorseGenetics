@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<GUI name="horseGeneticsMenu">
+    <GuiElement profile="fs25_menuContainer">
+        <GuiElement profile="fs25_menuHeaderPanel">
+            <Bitmap id="hgHeaderBadge" position="-86px -4px" size="74px 74px" imageSliceId="noSlice" />
+            <Bitmap id="hgHeaderIcon" position="-79px 3px" size="60px 60px" imageSliceId="noSlice" />
+            <Text profile="fs25_menuHeaderTitle" id="categoryHeaderText" text="HORSE GENETICS" />
+        </GuiElement>
+
+        <BoxLayout profile="fs25_subCategorySelectorTabbedBox" id="subCategoryBox" position="-10px 0px" size="1550px 57px">
+            <Button profile="fs25_subCategorySelectorTabbedTab" id="tabMyHorses" text="MY HORSES" onClick="onClickTabMyHorses">
+                <ThreePartBitmap profile="fs25_subCategorySelectorTabbedTabBg" name="background" />
+            </Button>
+            <Button profile="fs25_subCategorySelectorTabbedTab" id="tabBreeding" text="BREEDING" onClick="onClickTabBreeding">
+                <ThreePartBitmap profile="fs25_subCategorySelectorTabbedTabBg" name="background" />
+            </Button>
+            <Button profile="fs25_subCategorySelectorTabbedTab" id="tabGeneticInfo" text="GENETIC INFO" onClick="onClickTabGeneticInfo">
+                <ThreePartBitmap profile="fs25_subCategorySelectorTabbedTabBg" name="background" />
+            </Button>
+            <Button profile="fs25_subCategorySelectorTabbedTab" id="tabSettings" text="SETTINGS" onClick="onClickTabSettings">
+                <ThreePartBitmap profile="fs25_subCategorySelectorTabbedTabBg" name="background" />
+            </Button>
+        </BoxLayout>
+        <ThreePartBitmap profile="fs25_lineSeparatorTopHighlighted" position="-10px -57px" size="1550px 4px" />
+
+        <GuiElement profile="fs25_subCategorySelectorTabbedContainer" id="panelMyHorses">
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxRegisteredHorses" position="-410px -80px" size="820px 540px">
+                <Text id="titleRegisteredHorses" profile="fs25_textDefault" text="OWNED HORSES" position="24px 70px" size="500px 40px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentOwned" position="24px 58px" size="220px 4px" imageSliceId="noSlice" />
+                <Text id="overviewText" profile="fs25_textDefault" position="24px 8px" size="500px 28px" text="Horses owned: 0" />
+
+                <Text id="tableHeaderName" profile="fs25_textDefault" position="24px -32px" size="118px 24px" text="NAME" textSize="16px" />
+                <Text id="tableHeaderAge" profile="fs25_textDefault" position="142px -32px" size="76px 24px" text="AGE" textSize="16px" />
+                <Text id="tableHeaderSpeed" profile="fs25_textDefault" position="218px -32px" size="72px 24px" text="SPEED" textSize="16px" />
+                <Text id="tableHeaderStamina" profile="fs25_textDefault" position="290px -32px" size="88px 24px" text="STAMINA" textSize="16px" />
+                <Text id="tableHeaderHealth" profile="fs25_textDefault" position="378px -32px" size="74px 24px" text="HEALTH" textSize="16px" />
+                <Text id="tableHeaderAverage" profile="fs25_textDefault" position="452px -32px" size="108px 24px" text="AVERAGE" textSize="16px" />
+                <Text id="tableHeaderSale" profile="fs25_textDefault" position="560px -32px" size="104px 24px" text="SALE MOD" textSize="16px" />
+                <Text id="tableHeaderValue" profile="fs25_textDefault" position="664px -32px" size="128px 24px" text="VALUE" textSize="16px" />
+
+                <GuiElement id="horseRow1" position="24px -67px" size="790px 32px">
+                    <Button id="btnHorse1" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse1" />
+                    <Text id="horse1Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse1Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse1Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse1Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse1Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse1Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse1Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse1Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow2" position="24px -101px" size="790px 32px">
+                    <Button id="btnHorse2" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse2" />
+                    <Text id="horse2Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse2Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse2Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse2Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse2Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse2Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse2Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse2Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow3" position="24px -135px" size="790px 32px">
+                    <Button id="btnHorse3" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse3" />
+                    <Text id="horse3Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse3Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse3Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse3Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse3Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse3Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse3Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse3Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow4" position="24px -169px" size="790px 32px">
+                    <Button id="btnHorse4" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse4" />
+                    <Text id="horse4Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse4Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse4Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse4Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse4Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse4Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse4Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse4Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow5" position="24px -203px" size="790px 32px">
+                    <Button id="btnHorse5" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse5" />
+                    <Text id="horse5Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse5Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse5Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse5Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse5Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse5Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse5Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse5Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow6" position="24px -237px" size="790px 32px">
+                    <Button id="btnHorse6" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse6" />
+                    <Text id="horse6Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse6Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse6Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse6Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse6Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse6Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse6Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse6Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow7" position="24px -271px" size="790px 32px">
+                    <Button id="btnHorse7" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse7" />
+                    <Text id="horse7Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse7Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse7Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse7Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse7Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse7Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse7Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse7Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow8" position="24px -305px" size="790px 32px">
+                    <Button id="btnHorse8" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse8" />
+                    <Text id="horse8Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse8Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse8Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse8Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse8Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse8Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse8Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse8Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow9" position="24px -339px" size="790px 32px">
+                    <Button id="btnHorse9" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse9" />
+                    <Text id="horse9Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse9Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse9Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse9Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse9Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse9Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse9Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse9Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow10" position="24px -373px" size="790px 32px">
+                    <Button id="btnHorse10" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse10" />
+                    <Text id="horse10Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse10Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse10Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse10Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse10Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse10Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse10Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse10Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow11" position="24px -407px" size="790px 32px">
+                    <Button id="btnHorse11" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse11" />
+                    <Text id="horse11Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse11Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse11Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse11Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse11Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse11Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse11Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse11Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow12" position="24px -441px" size="790px 32px">
+                    <Button id="btnHorse12" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse12" />
+                    <Text id="horse12Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse12Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse12Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse12Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse12Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse12Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse12Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse12Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <GuiElement id="horseRow13" position="24px -475px" size="790px 32px">
+                    <Button id="btnHorse13" position="0px 0px" size="790px 32px" text="" onClick="onSelectHorse13" />
+                    <Text id="horse13Name" profile="fs25_textDefault" position="0px 0px" size="118px 32px" text="" />
+                    <Text id="horse13Age" profile="fs25_textDefault" position="118px 0px" size="76px 32px" text="" />
+                    <Text id="horse13Speed" profile="fs25_textDefault" position="194px 0px" size="72px 32px" text="" />
+                    <Text id="horse13Stamina" profile="fs25_textDefault" position="266px 0px" size="88px 32px" text="" />
+                    <Text id="horse13Health" profile="fs25_textDefault" position="354px 0px" size="74px 32px" text="" />
+                    <Text id="horse13Average" profile="fs25_textDefault" position="428px 0px" size="108px 32px" text="" />
+                    <Text id="horse13Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
+                    <Text id="horse13Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
+                </GuiElement>
+                <Text id="moreRecordsText" profile="fs25_textDefault" position="120px -647px" size="500px 28px" text="" />
+                <Text id="btnRefreshLabel" profile="fs25_textDefault" position="24px -647px" size="90px 28px" text="Refresh" />
+                <Button id="btnRefresh" position="24px -647px" size="90px 28px" text="" onClick="onRefreshClick" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxHorseProfile" position="410px -80px" size="700px 300px">
+                <Text id="titleHorseProfile" profile="fs25_textDefault" text="HORSE PROFILE" position="24px 70px" size="280px 40px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentProfile" position="24px 58px" size="280px 4px" imageSliceId="noSlice" />
+                <Text profile="fs25_textDefault" position="24px 8px" size="110px 24px" text="Name:" />
+                <Text id="profileName" profile="fs25_textDefault" position="140px 8px" size="200px 24px" text="-" />
+                <Text profile="fs25_textDefault" position="24px -22px" size="110px 24px" text="Genetic ID:" />
+                <Text id="profileId" profile="fs25_textDefault" position="140px -22px" size="200px 24px" text="-" />
+                <Text profile="fs25_textDefault" position="24px -52px" size="110px 24px" text="Generation:" />
+                <Text id="profileGeneration" profile="fs25_textDefault" position="140px -52px" size="200px 24px" text="-" />
+                <Text profile="fs25_textDefault" position="24px -82px" size="110px 24px" text="Coat:" />
+                <Text id="profileCoat" profile="fs25_textDefault" position="140px -82px" size="200px 24px" text="-" />
+                <Text id="profileAgeLabel" profile="fs25_textDefault" position="24px -112px" size="110px 24px" text="Age:" />
+                <Text id="profileAge" profile="fs25_textDefault" position="140px -112px" size="200px 24px" text="-" />
+                <Text id="profileReproLabel" profile="fs25_textDefault" position="24px -142px" size="110px 24px" text="Reproduction:" />
+                <Text id="profileRepro" profile="fs25_textDefault" position="140px -142px" size="200px 24px" text="-" />
+                <Bitmap id="horsePortrait" position="255px -179px" size="260px 200px" imageSliceId="noSlice"  />
+                <Text id="portraitPlaceholder" profile="fs25_textDefault" position="255px -179px" size="260px 200px" text="" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxGeneticStats" position="410px -410px" size="700px 250px">
+                <Text id="titleGeneticStats" profile="fs25_textDefault" text="GENETIC STATS" position="24px 70px" size="400px 40px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentStats" position="24px 58px" size="230px 4px" imageSliceId="noSlice" />
+                <Bitmap id="iconHealth" position="24px 9px" size="22px 22px" imageSliceId="noSlice" />
+                <Text id="healthLabel" profile="fs25_textDefault" position="50px 8px" size="110px 24px" text="Health" />
+                <Bitmap id="healthTrack" position="160px 11px" size="240px 14px" imageSliceId="noSlice">
+                    <Bitmap id="healthBar" position="0px 0px" size="1px 14px" imageSliceId="noSlice" />
+                </Bitmap>
+                <Text id="healthValue" profile="fs25_textDefault" position="420px 8px" size="90px 24px" text="0 / 100" />
+                <Bitmap id="iconStamina" position="24px -28px" size="22px 22px" imageSliceId="noSlice" />
+                <Text id="staminaLabel" profile="fs25_textDefault" position="50px -29px" size="110px 24px" text="Stamina" />
+                <Bitmap id="staminaTrack" position="160px -26px" size="240px 14px" imageSliceId="noSlice">
+                    <Bitmap id="staminaBar" position="0px 0px" size="1px 14px" imageSliceId="noSlice" />
+                </Bitmap>
+                <Text id="staminaValue" profile="fs25_textDefault" position="420px -29px" size="90px 24px" text="0 / 100" />
+                <Bitmap id="iconSpeed" position="24px -65px" size="22px 22px" imageSliceId="noSlice" />
+                <Text id="speedLabel" profile="fs25_textDefault" position="50px -66px" size="110px 24px" text="Speed" />
+                <Bitmap id="speedTrack" position="160px -63px" size="240px 14px" imageSliceId="noSlice">
+                    <Bitmap id="speedBar" position="0px 0px" size="1px 14px" imageSliceId="noSlice" />
+                </Bitmap>
+                <Text id="speedValue" profile="fs25_textDefault" position="420px -66px" size="90px 24px" text="0 / 100" />
+                <Bitmap id="iconAverage" position="24px -102px" size="22px 22px" imageSliceId="noSlice" />
+                <Text id="averageLabel" profile="fs25_textDefault" position="50px -103px" size="110px 24px" text="Average" />
+                <Bitmap id="averageTrack" position="160px -100px" size="240px 14px" imageSliceId="noSlice">
+                    <Bitmap id="averageBar" position="0px 0px" size="1px 14px" imageSliceId="noSlice" />
+                </Bitmap>
+                <Text id="averageText" profile="fs25_textDefault" position="420px -103px" size="90px 24px" text="0.0 / 100" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxSaleModifiers" position="410px -640px" size="700px 190px">
+                <Text id="titleSaleModifiers" profile="fs25_textDefault" text="SALE VALUE MODIFIERS" position="24px 70px" size="500px 40px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentSale" position="24px 58px" size="360px 4px" imageSliceId="noSlice" />
+                <Text profile="fs25_textDefault" position="24px 8px" size="220px 24px" text="Base multiplier:" />
+                <Text id="saleBaseValue" profile="fs25_textDefault" position="280px 8px" size="180px 24px" text="1.000x" />
+                <Text profile="fs25_textDefault" position="24px -22px" size="220px 24px" text="Exceptional bonus:" />
+                <Text id="saleBonusValue" profile="fs25_textDefault" position="280px -22px" size="180px 24px" text="+0.0%" />
+                <Text profile="fs25_textDefault" position="24px -52px" size="220px 24px" text="Exceptional traits:" />
+                <Text id="saleTraitsValue" profile="fs25_textDefault" position="280px -52px" size="280px 24px" text="None" />
+                <Text id="saleTotalLabel" profile="fs25_textDefault" position="24px -87px" size="250px 24px" text="Total Sale Modifier:" textAlignment="left" />
+                <Text id="saleTotalText" profile="fs25_textDefault" position="280px -87px" size="180px 24px" text="+0.0%" textAlignment="left" />
+            </GuiElement>
+        </GuiElement>
+
+        <GuiElement profile="fs25_subCategorySelectorTabbedContainer" id="panelBreeding" visible="false">
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxBreedPicker" position="-515px -200px" size="520px 520px">
+                <Text id="titleBreedPicker" profile="fs25_textDefault" text="OWNED HORSES" position="24px 190px" size="472px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentBreedPicker" position="24px 178px" size="220px 4px" imageSliceId="noSlice" />
+                <Text id="breedPickerHint" profile="fs25_textDefault" position="24px 128px" size="472px 24px" text="CLICK TO ADD OR REMOVE A HORSE" textAlignment="left" textSize="16px" />
+                <Text id="breedPickHeaderName" profile="fs25_textDefault" position="24px 78px" size="132px 24px" text="NAME" textSize="16px" />
+                <Text id="breedPickHeaderAge" profile="fs25_textDefault" position="156px 78px" size="50px 24px" text="AGE" textSize="16px" />
+                <Text id="breedPickHeaderSpeed" profile="fs25_textDefault" position="206px 78px" size="54px 24px" text="SPEED" textSize="16px" />
+                <Text id="breedPickHeaderStamina" profile="fs25_textDefault" position="260px 78px" size="80px 24px" text="STAMINA" textSize="16px" />
+                <Text id="breedPickHeaderHealth" profile="fs25_textDefault" position="340px 78px" size="72px 24px" text="HEALTH" textSize="16px" />
+                <Text id="breedPickHeaderAverage" profile="fs25_textDefault" position="412px 78px" size="84px 24px" text="AVERAGE" textSize="16px" />
+                <GuiElement id="breedPickRow1" position="24px 45px" size="472px 28px">
+                    <Button id="btnBreedPick1" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick1" />
+                    <Text id="breedPick1Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick1Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick1Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick1Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick1Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick1Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow2" position="24px 15px" size="472px 28px">
+                    <Button id="btnBreedPick2" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick2" />
+                    <Text id="breedPick2Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick2Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick2Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick2Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick2Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick2Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow3" position="24px -15px" size="472px 28px">
+                    <Button id="btnBreedPick3" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick3" />
+                    <Text id="breedPick3Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick3Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick3Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick3Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick3Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick3Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow4" position="24px -45px" size="472px 28px">
+                    <Button id="btnBreedPick4" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick4" />
+                    <Text id="breedPick4Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick4Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick4Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick4Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick4Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick4Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow5" position="24px -75px" size="472px 28px">
+                    <Button id="btnBreedPick5" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick5" />
+                    <Text id="breedPick5Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick5Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick5Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick5Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick5Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick5Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow6" position="24px -105px" size="472px 28px">
+                    <Button id="btnBreedPick6" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick6" />
+                    <Text id="breedPick6Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick6Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick6Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick6Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick6Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick6Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow7" position="24px -135px" size="472px 28px">
+                    <Button id="btnBreedPick7" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick7" />
+                    <Text id="breedPick7Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick7Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick7Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick7Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick7Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick7Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow8" position="24px -165px" size="472px 28px">
+                    <Button id="btnBreedPick8" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick8" />
+                    <Text id="breedPick8Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick8Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick8Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick8Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick8Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick8Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow9" position="24px -195px" size="472px 28px">
+                    <Button id="btnBreedPick9" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick9" />
+                    <Text id="breedPick9Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick9Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick9Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick9Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick9Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick9Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow10" position="24px -225px" size="472px 28px">
+                    <Button id="btnBreedPick10" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick10" />
+                    <Text id="breedPick10Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick10Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick10Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick10Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick10Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick10Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow11" position="24px -255px" size="472px 28px">
+                    <Button id="btnBreedPick11" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick11" />
+                    <Text id="breedPick11Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick11Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick11Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick11Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick11Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick11Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="breedPickRow12" position="24px -285px" size="472px 28px">
+                    <Button id="btnBreedPick12" position="0px 0px" size="472px 28px" text="" onClick="onClickBreedPick12" />
+                    <Text id="breedPick12Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="breedPick12Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="breedPick12Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="breedPick12Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="breedPick12Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="breedPick12Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxBreedHorse1" position="-65px -80px" size="340px 280px">
+                <Text id="titleHorse1" profile="fs25_textDefault" text="HORSE 1" position="24px 70px" size="200px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentHorse1" position="24px 58px" size="200px 4px" imageSliceId="noSlice" />
+                <Text id="breedP1Name" profile="fs25_textDefault" position="24px 8px" size="140px 24px" text="Name: -" />
+                <Text id="breedP1Id" profile="fs25_textDefault" position="24px -19px" size="140px 24px" text="ID: -" />
+                <Text id="breedP1Age" profile="fs25_textDefault" position="24px -49px" size="140px 24px" text="Age: -" />
+                <Bitmap id="iconBreedP1Speed" position="24px -76px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP1Speed" profile="fs25_textDefault" position="50px -77px" size="120px 24px" text="Speed: -" />
+                <Bitmap id="iconBreedP1Stamina" position="24px -104px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP1Stamina" profile="fs25_textDefault" position="50px -105px" size="120px 24px" text="Stamina: -" />
+                <Bitmap id="iconBreedP1Health" position="24px -132px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP1Health" profile="fs25_textDefault" position="50px -133px" size="120px 24px" text="Health: -" />
+                <Bitmap id="iconBreedP1Average" position="24px -160px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP1Average" profile="fs25_textDefault" position="50px -161px" size="120px 24px" text="Average: -" />
+                <Bitmap id="breedP1Portrait" position="190px -40px" size="110px 95px" imageSliceId="noSlice" visible="false" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxBreedCompat" position="280px -80px" size="320px 280px">
+                <Text id="titleCompat" profile="fs25_textDefault" text="AVERAGE STATS" position="24px 70px" size="352px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentCompat" position="24px 58px" size="230px 4px" imageSliceId="noSlice" />
+                <Text id="compatHeadStat" profile="fs25_textDefault" position="50px 8px" size="110px 24px" text="Stat" />
+                <Text id="compatHeadComb" profile="fs25_textDefault" position="170px 8px" size="120px 24px" text="Average" />
+                <Bitmap id="iconCompatSpeed" position="24px -21px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="compatSpeed" profile="fs25_textDefault" position="50px -22px" size="110px 24px" text="Speed" />
+                <Text id="compatSpeedComb" profile="fs25_textDefault" position="170px -22px" size="120px 24px" text="-" />
+                <Bitmap id="iconCompatStamina" position="24px -51px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="compatStamina" profile="fs25_textDefault" position="50px -52px" size="110px 24px" text="Stamina" />
+                <Text id="compatStaminaComb" profile="fs25_textDefault" position="170px -52px" size="120px 24px" text="-" />
+                <Bitmap id="iconCompatHealth" position="24px -81px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="compatHealth" profile="fs25_textDefault" position="50px -82px" size="110px 24px" text="Health" />
+                <Text id="compatHealthComb" profile="fs25_textDefault" position="170px -82px" size="120px 24px" text="-" />
+                <Bitmap id="iconCompatAverage" position="24px -111px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="compatAverage" profile="fs25_textDefault" position="50px -112px" size="110px 24px" text="Average" />
+                <Text id="compatAverageComb" profile="fs25_textDefault" position="170px -112px" size="120px 24px" text="-" />
+                <Text id="breedWarningText" profile="fs25_textDefault" position="24px -152px" size="322px 40px" text="" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxBreedHorse2" position="640px -80px" size="340px 280px">
+                <Text id="titleHorse2" profile="fs25_textDefault" text="HORSE 2" position="24px 70px" size="200px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentHorse2" position="24px 58px" size="200px 4px" imageSliceId="noSlice" />
+                <Text id="breedP2Name" profile="fs25_textDefault" position="24px 8px" size="140px 24px" text="Name: -" />
+                <Text id="breedP2Id" profile="fs25_textDefault" position="24px -19px" size="140px 24px" text="ID: -" />
+                <Text id="breedP2Age" profile="fs25_textDefault" position="24px -49px" size="140px 24px" text="Age: -" />
+                <Bitmap id="iconBreedP2Speed" position="24px -76px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP2Speed" profile="fs25_textDefault" position="50px -77px" size="120px 24px" text="Speed: -" />
+                <Bitmap id="iconBreedP2Stamina" position="24px -104px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP2Stamina" profile="fs25_textDefault" position="50px -105px" size="120px 24px" text="Stamina: -" />
+                <Bitmap id="iconBreedP2Health" position="24px -132px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP2Health" profile="fs25_textDefault" position="50px -133px" size="120px 24px" text="Health: -" />
+                <Bitmap id="iconBreedP2Average" position="24px -160px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedP2Average" profile="fs25_textDefault" position="50px -161px" size="120px 24px" text="Average: -" />
+                <Bitmap id="breedP2Portrait" position="190px -40px" size="110px 95px" imageSliceId="noSlice" visible="false" />
+            </GuiElement>
+
+            <Text id="titleOffspring" profile="fs25_textDefault" text="PREDICTED OFFSPRING" position="-65px -245px" size="340px 28px" textAlignment="left" textSize="30px" />
+            <Bitmap id="accentOffspring" position="-65px -258px" size="310px 4px" imageSliceId="noSlice" />
+            <Text id="breedPreviewNote" profile="fs25_textDefault" position="240px -280px" size="400px 24px" text="Ranges shown until gestation finishes in a stable." />
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxFoal1" position="-65px -460px" size="340px 400px">
+                <Text id="titleFoal1" profile="fs25_textDefault" text="HORSE 1 FOAL" position="24px 150px" size="292px 28px" textAlignment="left" textSize="30px" />
+                <Bitmap id="accentFoal1" position="24px 138px" size="262px 4px" imageSliceId="noSlice" />
+                <Text id="breedF1Name" profile="fs25_textDefault" position="24px 88px" size="292px 22px" text="Name: -" />
+                <Text id="breedF1Id" profile="fs25_textDefault" position="24px 64px" size="292px 22px" text="ID: -" />
+                <Bitmap id="iconBreedF1Speed" position="24px 41px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF1Stats" profile="fs25_textDefault" position="50px 40px" size="266px 22px" text="Speed -" />
+                <Bitmap id="iconBreedF1Stamina" position="24px 17px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF1Stamina" profile="fs25_textDefault" position="50px 16px" size="266px 22px" text="Stamina -" />
+                <Bitmap id="iconBreedF1Health" position="24px -7px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF1Health" profile="fs25_textDefault" position="50px -8px" size="266px 22px" text="Health -" />
+                <Bitmap id="iconBreedF1Average" position="24px -31px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF1Average" profile="fs25_textDefault" position="50px -32px" size="266px 22px" text="Average: -" />
+                <Text id="breedF1AvgNote" profile="fs25_textDefault" position="50px -52px" size="266px 18px" text="Not guaranteed" textSize="14px" />
+                <Text id="breedF1Coat" profile="fs25_textDefault" position="24px -76px" size="292px 22px" text="Coat: -" />
+                <Text id="breedF1Sale" profile="fs25_textDefault" position="24px -100px" size="292px 22px" text="Sale Mod: -" />
+                <Bitmap id="breedF1Portrait" position="80px -230px" size="160px 140px" imageSliceId="noSlice" visible="false" />
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxFoal2" position="640px -460px" size="340px 400px">
+                <Text id="titleFoal2" profile="fs25_textDefault" text="HORSE 2 FOAL" position="24px 150px" size="292px 28px" textAlignment="left" textSize="30px" />
+                <Bitmap id="accentFoal2" position="24px 138px" size="262px 4px" imageSliceId="noSlice" />
+                <Text id="breedF2Name" profile="fs25_textDefault" position="24px 88px" size="292px 22px" text="Name: -" />
+                <Text id="breedF2Id" profile="fs25_textDefault" position="24px 64px" size="292px 22px" text="ID: -" />
+                <Bitmap id="iconBreedF2Speed" position="24px 41px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF2Stats" profile="fs25_textDefault" position="50px 40px" size="266px 22px" text="Speed -" />
+                <Bitmap id="iconBreedF2Stamina" position="24px 17px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF2Stamina" profile="fs25_textDefault" position="50px 16px" size="266px 22px" text="Stamina -" />
+                <Bitmap id="iconBreedF2Health" position="24px -7px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF2Health" profile="fs25_textDefault" position="50px -8px" size="266px 22px" text="Health -" />
+                <Bitmap id="iconBreedF2Average" position="24px -31px" size="20px 20px" imageSliceId="noSlice" />
+                <Text id="breedF2Average" profile="fs25_textDefault" position="50px -32px" size="266px 22px" text="Average: -" />
+                <Text id="breedF2AvgNote" profile="fs25_textDefault" position="50px -52px" size="266px 18px" text="Not guaranteed" textSize="14px" />
+                <Text id="breedF2Coat" profile="fs25_textDefault" position="24px -76px" size="292px 22px" text="Coat: -" />
+                <Text id="breedF2Sale" profile="fs25_textDefault" position="24px -100px" size="292px 22px" text="Sale Mod: -" />
+                <Bitmap id="breedF2Portrait" position="80px -230px" size="160px 140px" imageSliceId="noSlice" visible="false" />
+            </GuiElement>
+
+            <Text id="btnPreviewLabel" profile="fs25_textDefault" position="-180px -530px" size="180px 24px" text="Preview Offspring" />
+            <Button id="btnPreviewOffspring" position="-180px -530px" size="180px 24px" text="" onClick="onClickPreviewOffspring" />
+            <Text id="breedStatusText" profile="fs25_textDefault" position="20px -530px" size="880px 24px" text="Click a horse on the left to add or remove it. Foals are born after gestation." />
+        </GuiElement>
+
+        <GuiElement profile="fs25_subCategorySelectorTabbedContainer" id="panelGeneticInfo" visible="false">
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxHistoryList" position="-515px -200px" size="520px 520px">
+                <Text id="titleGeneticInfo" profile="fs25_textDefault" text="ALL HORSES" position="24px 190px" size="472px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentGeneticInfo" position="24px 178px" size="180px 4px" imageSliceId="noSlice" />
+                <Text id="histOverviewText" profile="fs25_textDefault" position="24px 128px" size="472px 24px" text="All horses ever recorded: 0" />
+                <Text id="histHeaderName" profile="fs25_textDefault" position="24px 93px" size="132px 24px" text="NAME" textSize="16px" />
+                <Text id="histHeaderAge" profile="fs25_textDefault" position="156px 93px" size="50px 24px" text="AGE" textSize="16px" />
+                <Text id="histHeaderSpeed" profile="fs25_textDefault" position="206px 93px" size="54px 24px" text="SPEED" textSize="16px" />
+                <Text id="histHeaderStamina" profile="fs25_textDefault" position="260px 93px" size="80px 24px" text="STAMINA" textSize="16px" />
+                <Text id="histHeaderHealth" profile="fs25_textDefault" position="340px 93px" size="72px 24px" text="HEALTH" textSize="16px" />
+                <Text id="histHeaderAverage" profile="fs25_textDefault" position="412px 93px" size="84px 24px" text="AVERAGE" textSize="16px" />
+                <GuiElement id="histRow1" position="24px 61px" size="472px 28px">
+                    <Button id="btnHist1" position="0px 0px" size="472px 28px" text="" onClick="onClickHist1" />
+                    <Text id="hist1Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist1Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist1Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist1Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist1Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist1Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow2" position="24px 31px" size="472px 28px">
+                    <Button id="btnHist2" position="0px 0px" size="472px 28px" text="" onClick="onClickHist2" />
+                    <Text id="hist2Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist2Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist2Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist2Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist2Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist2Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow3" position="24px 1px" size="472px 28px">
+                    <Button id="btnHist3" position="0px 0px" size="472px 28px" text="" onClick="onClickHist3" />
+                    <Text id="hist3Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist3Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist3Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist3Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist3Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist3Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow4" position="24px -29px" size="472px 28px">
+                    <Button id="btnHist4" position="0px 0px" size="472px 28px" text="" onClick="onClickHist4" />
+                    <Text id="hist4Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist4Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist4Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist4Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist4Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist4Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow5" position="24px -59px" size="472px 28px">
+                    <Button id="btnHist5" position="0px 0px" size="472px 28px" text="" onClick="onClickHist5" />
+                    <Text id="hist5Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist5Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist5Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist5Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist5Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist5Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow6" position="24px -89px" size="472px 28px">
+                    <Button id="btnHist6" position="0px 0px" size="472px 28px" text="" onClick="onClickHist6" />
+                    <Text id="hist6Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist6Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist6Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist6Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist6Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist6Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow7" position="24px -119px" size="472px 28px">
+                    <Button id="btnHist7" position="0px 0px" size="472px 28px" text="" onClick="onClickHist7" />
+                    <Text id="hist7Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist7Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist7Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist7Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist7Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist7Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow8" position="24px -149px" size="472px 28px">
+                    <Button id="btnHist8" position="0px 0px" size="472px 28px" text="" onClick="onClickHist8" />
+                    <Text id="hist8Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist8Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist8Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist8Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist8Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist8Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow9" position="24px -179px" size="472px 28px">
+                    <Button id="btnHist9" position="0px 0px" size="472px 28px" text="" onClick="onClickHist9" />
+                    <Text id="hist9Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist9Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist9Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist9Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist9Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist9Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow10" position="24px -209px" size="472px 28px">
+                    <Button id="btnHist10" position="0px 0px" size="472px 28px" text="" onClick="onClickHist10" />
+                    <Text id="hist10Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist10Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist10Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist10Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist10Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist10Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow11" position="24px -239px" size="472px 28px">
+                    <Button id="btnHist11" position="0px 0px" size="472px 28px" text="" onClick="onClickHist11" />
+                    <Text id="hist11Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist11Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist11Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist11Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist11Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist11Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+                <GuiElement id="histRow12" position="24px -269px" size="472px 28px">
+                    <Button id="btnHist12" position="0px 0px" size="472px 28px" text="" onClick="onClickHist12" />
+                    <Text id="hist12Name" profile="fs25_textDefault" position="0px 0px" size="132px 28px" text="" textSize="16px" />
+                    <Text id="hist12Age" profile="fs25_textDefault" position="132px 0px" size="50px 28px" text="" textSize="16px" />
+                    <Text id="hist12Speed" profile="fs25_textDefault" position="182px 0px" size="54px 28px" text="" textSize="16px" />
+                    <Text id="hist12Stamina" profile="fs25_textDefault" position="236px 0px" size="80px 28px" text="" textSize="16px" />
+                    <Text id="hist12Health" profile="fs25_textDefault" position="316px 0px" size="72px 28px" text="" textSize="16px" />
+                    <Text id="hist12Average" profile="fs25_textDefault" position="388px 0px" size="84px 28px" text="" textSize="16px" />
+                </GuiElement>
+            </GuiElement>
+
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxFamilyTree" position="380px -200px" size="680px 520px">
+                <Text id="titleFamilyTree" profile="fs25_textDefault" text="FAMILY TREE" position="24px 190px" size="400px 28px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentFamilyTree" position="24px 178px" size="200px 4px" imageSliceId="noSlice" />
+                <Text id="treeHint" profile="fs25_textDefault" position="24px 128px" size="630px 24px" text="Click a parent or foal to move through the tree." />
+
+                <Text id="treeParentsLabel" profile="fs25_textDefault" position="24px 93px" size="200px 24px" text="PARENTS" />
+                <GuiElement id="treeParent1Box" position="24px 13px" size="300px 110px">
+                    <Button id="btnTreeP1" position="0px 0px" size="300px 110px" text="" onClick="onClickTreeP1" />
+                    <Text id="treeP1Name" profile="fs25_textDefault" position="16px 30px" size="268px 24px" text="Unknown" />
+                    <Bitmap id="treeP1IconSpeed" position="16px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP1Speed" profile="fs25_textDefault" position="34px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP1IconStamina" position="74px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP1Stamina" profile="fs25_textDefault" position="92px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP1IconHealth" position="132px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP1Health" profile="fs25_textDefault" position="150px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP1IconAverage" position="190px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP1Average" profile="fs25_textDefault" position="208px 4px" size="50px 22px" text="" />
+                    <Text id="treeP1Stats" profile="fs25_textDefault" position="16px 4px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeP1Value" profile="fs25_textDefault" position="16px -22px" size="268px 22px" text="" />
+                </GuiElement>
+                <GuiElement id="treeParent2Box" position="350px 13px" size="300px 110px">
+                    <Button id="btnTreeP2" position="0px 0px" size="300px 110px" text="" onClick="onClickTreeP2" />
+                    <Text id="treeP2Name" profile="fs25_textDefault" position="16px 30px" size="268px 24px" text="Unknown" />
+                    <Bitmap id="treeP2IconSpeed" position="16px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP2Speed" profile="fs25_textDefault" position="34px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP2IconStamina" position="74px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP2Stamina" profile="fs25_textDefault" position="92px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP2IconHealth" position="132px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP2Health" profile="fs25_textDefault" position="150px 4px" size="36px 22px" text="" />
+                    <Bitmap id="treeP2IconAverage" position="190px 6px" size="16px 16px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeP2Average" profile="fs25_textDefault" position="208px 4px" size="50px 22px" text="" />
+                    <Text id="treeP2Stats" profile="fs25_textDefault" position="16px 4px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeP2Value" profile="fs25_textDefault" position="16px -22px" size="268px 22px" text="" />
+                </GuiElement>
+
+                <Text id="treeFocusLabel" profile="fs25_textDefault" position="24px -67px" size="200px 24px" text="SELECTED" />
+                <GuiElement id="treeFocusBox" position="24px -157px" size="500px 140px">
+                    <Text id="treeFocusName" profile="fs25_textDefault" position="16px 40px" size="280px 24px" text="Select a horse" />
+                    <Text id="treeFocusId" profile="fs25_textDefault" position="16px 14px" size="280px 22px" text="" />
+                    <Bitmap id="treeFocusIconSpeed" position="16px -10px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeFocusSpeed" profile="fs25_textDefault" position="38px -12px" size="40px 22px" text="" />
+                    <Bitmap id="treeFocusIconStamina" position="84px -10px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeFocusStamina" profile="fs25_textDefault" position="106px -12px" size="40px 22px" text="" />
+                    <Bitmap id="treeFocusIconHealth" position="152px -10px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeFocusHealth" profile="fs25_textDefault" position="174px -12px" size="40px 22px" text="" />
+                    <Text id="treeFocusStats" profile="fs25_textDefault" position="16px -12px" size="1px 1px" text="" visible="false" />
+                    <Bitmap id="treeFocusIconAverage" position="16px -36px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeFocusAverage" profile="fs25_textDefault" position="38px -38px" size="240px 22px" text="" />
+                    <Text id="treeFocusValue" profile="fs25_textDefault" position="16px -64px" size="280px 22px" text="" />
+                    <Bitmap id="treeFocusPortrait" position="310px -10px" size="120px 120px" imageSliceId="noSlice" visible="false" />
+                </GuiElement>
+
+                <Text id="treeKidsLabel" profile="fs25_textDefault" position="24px -287px" size="630px 24px" text="OFFSPRING" />
+                <GuiElement id="treeChild1Box" position="24px -329px" size="630px 40px">
+                    <Button id="btnTreeC1" position="0px 0px" size="630px 40px" text="" onClick="onClickTreeC1" />
+                    <Bitmap id="treeC1Portrait" position="4px 0px" size="36px 36px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC1Name" profile="fs25_textDefault" position="48px 0px" size="118px 22px" text="" />
+                    <Bitmap id="treeC1IconSpeed" position="172px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC1Speed" profile="fs25_textDefault" position="192px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC1IconStamina" position="228px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC1Stamina" profile="fs25_textDefault" position="248px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC1IconHealth" position="284px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC1Health" profile="fs25_textDefault" position="304px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC1IconAverage" position="340px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC1Average" profile="fs25_textDefault" position="360px 0px" size="50px 22px" text="" />
+                    <Text id="treeC1Stats" profile="fs25_textDefault" position="220px 0px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeC1Value" profile="fs25_textDefault" position="418px 0px" size="200px 22px" text="" />
+                </GuiElement>
+                <GuiElement id="treeChild2Box" position="24px -371px" size="630px 40px">
+                    <Button id="btnTreeC2" position="0px 0px" size="630px 40px" text="" onClick="onClickTreeC2" />
+                    <Bitmap id="treeC2Portrait" position="4px 0px" size="36px 36px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC2Name" profile="fs25_textDefault" position="48px 0px" size="118px 22px" text="" />
+                    <Bitmap id="treeC2IconSpeed" position="172px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC2Speed" profile="fs25_textDefault" position="192px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC2IconStamina" position="228px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC2Stamina" profile="fs25_textDefault" position="248px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC2IconHealth" position="284px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC2Health" profile="fs25_textDefault" position="304px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC2IconAverage" position="340px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC2Average" profile="fs25_textDefault" position="360px 0px" size="50px 22px" text="" />
+                    <Text id="treeC2Stats" profile="fs25_textDefault" position="220px 0px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeC2Value" profile="fs25_textDefault" position="418px 0px" size="200px 22px" text="" />
+                </GuiElement>
+                <GuiElement id="treeChild3Box" position="24px -413px" size="630px 40px">
+                    <Button id="btnTreeC3" position="0px 0px" size="630px 40px" text="" onClick="onClickTreeC3" />
+                    <Bitmap id="treeC3Portrait" position="4px 0px" size="36px 36px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC3Name" profile="fs25_textDefault" position="48px 0px" size="118px 22px" text="" />
+                    <Bitmap id="treeC3IconSpeed" position="172px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC3Speed" profile="fs25_textDefault" position="192px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC3IconStamina" position="228px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC3Stamina" profile="fs25_textDefault" position="248px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC3IconHealth" position="284px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC3Health" profile="fs25_textDefault" position="304px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC3IconAverage" position="340px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC3Average" profile="fs25_textDefault" position="360px 0px" size="50px 22px" text="" />
+                    <Text id="treeC3Stats" profile="fs25_textDefault" position="220px 0px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeC3Value" profile="fs25_textDefault" position="418px 0px" size="200px 22px" text="" />
+                </GuiElement>
+                <GuiElement id="treeChild4Box" position="24px -455px" size="630px 40px">
+                    <Button id="btnTreeC4" position="0px 0px" size="630px 40px" text="" onClick="onClickTreeC4" />
+                    <Bitmap id="treeC4Portrait" position="4px 0px" size="36px 36px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC4Name" profile="fs25_textDefault" position="48px 0px" size="118px 22px" text="" />
+                    <Bitmap id="treeC4IconSpeed" position="172px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC4Speed" profile="fs25_textDefault" position="192px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC4IconStamina" position="228px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC4Stamina" profile="fs25_textDefault" position="248px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC4IconHealth" position="284px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC4Health" profile="fs25_textDefault" position="304px 0px" size="34px 22px" text="" />
+                    <Bitmap id="treeC4IconAverage" position="340px 0px" size="18px 18px" imageSliceId="noSlice" visible="false" />
+                    <Text id="treeC4Average" profile="fs25_textDefault" position="360px 0px" size="50px 22px" text="" />
+                    <Text id="treeC4Stats" profile="fs25_textDefault" position="220px 0px" size="1px 1px" text="" visible="false" />
+                    <Text id="treeC4Value" profile="fs25_textDefault" position="418px 0px" size="200px 22px" text="" />
+                </GuiElement>
+            </GuiElement>
+        </GuiElement>
+
+        <GuiElement profile="fs25_subCategorySelectorTabbedContainer" id="panelSettings" visible="false">
+            <GuiElement profile="fs25_statisticsHeaderBox" id="boxSettings" position="-80px -80px" size="1000px 520px">
+                <Text id="titleSettings" profile="fs25_textDefault" text="SETTINGS" position="24px 70px" size="900px 40px" textAlignment="left" textSize="26px" />
+                <Bitmap id="accentSettings" position="24px 58px" size="150px 4px" imageSliceId="noSlice" />
+                <Text id="settingsHint" profile="fs25_textDefault" position="24px 8px" size="900px 28px" text="Host settings apply in multiplayer." />
+
+                <Text profile="fs25_textDefault" position="24px -42px" size="280px 28px" text="Gestation time" />
+                <Button id="btnGestationDown" position="320px -42px" size="40px 32px" text="-" onClick="onClickGestationDown" />
+                <Text id="gestationValue" profile="fs25_textDefault" position="380px -42px" size="260px 32px" text="11 months (Vanilla)" />
+                <Button id="btnGestationUp" position="660px -42px" size="40px 32px" text="+" onClick="onClickGestationUp" />
+                <Text id="gestationHelp" profile="fs25_textDefault" position="24px -77px" size="900px 24px" text="Vanilla horses take 11 months. Foals are born after this many months." />
+
+                <Text profile="fs25_textDefault" position="24px -132px" size="280px 28px" text="Sale value modifiers" />
+                <Button id="btnValueDown" position="320px -132px" size="40px 32px" text="-" onClick="onClickValueDown" />
+                <Text id="valueModifierValue" profile="fs25_textDefault" position="380px -132px" size="260px 32px" text="100% (Default)" />
+                <Button id="btnValueUp" position="660px -132px" size="40px 32px" text="+" onClick="onClickValueUp" />
+                <Text id="valueModifierHelp" profile="fs25_textDefault" position="24px -167px" size="900px 24px" text="How strongly genetics change sale price. Off uses Vanilla prices." />
+            </GuiElement>
+        </GuiElement>
+    </GuiElement>
+</GUI>

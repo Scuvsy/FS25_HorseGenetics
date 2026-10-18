@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modDesc descVersion="114">
+    <author>Scuvsy</author>
+    <version>1.0.2.0</version>
+
+    <title>
+        <en>Horse Genetics</en>
+    </title>
+
+    <description>
+        <en>PC only. Not compatible with Xbox or PlayStation.
+Multiplayer compatible on PC.
+
+Every horse gets unique Speed, Stamina and Health genes (0-100). Average is the mean of those three. Stats change sale price and are inherited by foals.
+
+Open Horse Genetics from the Esc menu (next to Animals). Four pages:
+MY HORSES: owned horses, age, stats, sale modifier, live shop value, and a profile with reproduction or puberty.
+BREEDING: pair two owned horses to preview likely foal ranges. This page does not spawn foals.
+GENETIC INFO: every recorded horse, including sold horses, plus a family tree of parents and offspring.
+SETTINGS: gestation length and how strongly genetics change sale price. Host settings apply in multiplayer.
+
+Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses aged 22 months or older in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months, the same as vanilla horses. Change it in Settings (1 to 22 months). When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names.
+
+The animals menu reproduction bar fills during pregnancy using your Settings gestation. Foals show a puberty bar until they are 22 months old. Vanilla automatic horse births are turned off so this mod owns horse breeding.
+
+Foals inherit the average of both parents, plus variation (-8 to +8), a possible high-quality bonus, and a coat colour from the parents or a 10% chance of another colour.
+
+Sale price uses the vanilla horse price, then a genetics multiplier. At the default 100% strength that ranges from 0.75x to 1.60x. Set sale modifiers to Off to keep vanilla prices.
+
+Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breeding, gestation, genetics, names and sale values stay on Horse Genetics. Other animals stay on Enhanced Animal System. When both mods are loaded, Horse Genetics portraits use foal-age horse visuals.
+
+Works in single player and PC multiplayer. It does not work on console. Every player and the dedicated server need the zip (FS25_HorseGenetics.zip with modDesc.xml at the zip root). Stats are rolled on the host and synced. Each farm only sees its own horses.</en>
+    </description>
+
+    <iconFilename>icon.dds</iconFilename>
+    <multiplayer supported="true" />
+
+    <extraSourceFiles>
+        <sourceFile filename="scripts/HorseGenetics_v17.lua" />
+    </extraSourceFiles>
+</modDesc>
