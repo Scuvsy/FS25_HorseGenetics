@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="114">
     <author>Scuvsy</author>
-    <version>1.0.9.0</version>
+    <version>1.0.18.0</version>
 
     <title>
         <en>Horse Genetics</en>
     </title>
 
     <description>
-        <en>PC only. Not compatible with Xbox or PlayStation.
+        <en><![CDATA[PC only. Not compatible with Xbox or PlayStation.
 Multiplayer compatible on PC.
 
 Every horse gets unique Speed, Stamina and Health genes (0-100). Average is the mean of those three. Stats change sale price and are inherited by foals.
@@ -17,23 +17,46 @@ Open Horse Genetics from the Esc menu (next to Animals). Four pages:
 MY HORSES: owned horses, age, stats, sale modifier, live shop value, and a profile with reproduction or puberty.
 BREEDING: pair two owned horses to preview likely foal ranges. This page does not spawn foals.
 GENETIC INFO: every recorded horse, including sold horses, plus a family tree of parents and offspring.
-SETTINGS: gestation length and how strongly genetics change sale price. Host settings apply in multiplayer.
+SETTINGS: gestation length, puberty age, and how strongly genetics change sale price. Host settings apply in multiplayer.
 
-Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses aged 22 months or older in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months, the same as vanilla horses. Change it in Settings (1 to 22 months). When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names.
+Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses at or above your Settings puberty age in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months and default puberty is 22 months, matching vanilla horses. Settings offers 1, 3, 6, 8, 11, 14, 16, 18 or 22 months for both. When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names.
 
-The animals menu reproduction bar fills during pregnancy using your Settings gestation. Foals show a puberty bar until they are 22 months old. Vanilla automatic horse births are turned off so this mod owns horse breeding.
+The animals menu reproduction bar fills during pregnancy using your Settings gestation. Foals show a puberty bar until they reach the Settings puberty age. Vanilla automatic horse births are turned off so this mod owns horse breeding.
 
 Foals inherit the average of both parents, plus variation (-8 to +8), a possible high-quality bonus, and a coat colour from the parents or a 10% chance of another colour.
 
-Sale price uses the vanilla horse price, then a genetics multiplier. At the default 100% strength that ranges from 0.75x to 1.60x. Set sale modifiers to Off to keep vanilla prices.
+Sale price uses the vanilla horse price, then a genetics multiplier. At the default 100% strength that ranges from 0.75x to 1.60x. Off keeps vanilla prices. 200% can range from 0.50x to 2.20x.
 
 Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breeding, gestation, genetics, names and sale values stay on Horse Genetics. Other animals stay on Enhanced Animal System. When both mods are loaded, Horse Genetics portraits use foal-age horse visuals.
 
-Works in single player and PC multiplayer. It does not work on console. Every player and the dedicated server need the zip (FS25_HorseGenetics.zip with modDesc.xml at the zip root). Stats are rolled on the host and synced. Each farm only sees its own horses.</en>
+Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.]]></en>
+        <de><![CDATA[Nur PC. Nicht kompatibel mit Xbox oder PlayStation.
+Mehrspieler auf dem PC möglich.
+
+Jedes Pferd erhält eigene Gene für Tempo, Ausdauer und Gesundheit (0-100). Der Durchschnitt ist das Mittel dieser drei Werte. Die Werte ändern den Verkaufspreis und werden an Fohlen vererbt.
+
+Horse Genetics öffnet ihr über das Esc-Menü (neben Animals). Vier Seiten:
+MEINE PFERDE: eigene Pferde, Alter, Werte, Verkaufsmodifikator, aktueller Shop-Wert und ein Profil mit Trächtigkeit oder Pubertät.
+ZUCHT: zwei eigene Pferde paaren und wahrscheinliche Fohlenbereiche sehen. Diese Seite erzeugt keine Fohlen.
+GENETIK: jedes erfasste Pferd, auch verkaufte, plus Stammbaum mit Eltern und Nachkommen.
+EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis ändert. Im Mehrspieler gelten die Host-Einstellungen.
+
+Shop-Pferde werden zu Gründungstieren (jeder Wert 35-75). Echte Geburten finden im Stall statt. Zwei Pferde ab dem Pubertätsalter aus den Einstellungen im selben Gebäude starten zum Monatswechsel eine Trächtigkeit. Standard-Tragzeit ist 11 Monate und Standard-Pubertät 22 Monate wie bei Vanilla-Pferden. Einstellungen für beides: 1, 3, 6, 8, 11, 14, 16, 18 oder 22 Monate. Sind nach der Tragzeit zwei Boxen frei, bekommt jedes Elterntier ein Fohlen. Namen kommen aus dem Basisspiel.
+
+Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Trächtigkeit nach eurer Tragzeit. Fohlen zeigen einen Pubertätsbalken bis zum eingestellten Pubertätsalter. Die Vanilla-Pferdegeburten sind aus, damit dieser Mod die Zucht steuert.
+
+Fohlen erben den Mittelwert beider Eltern plus Streuung (-8 bis +8), einen möglichen Qualitätsbonus und eine Fellfarbe der Eltern oder mit 10% eine andere Farbe.
+
+Der Verkaufspreis startet beim Vanilla-Preis, dann kommt ein Genetik-Multiplikator. Bei der Standardstärke 100% liegt er zwischen 0,75x und 1,60x. Aus behält Vanilla-Preise. 200% kann zwischen 0,50x und 2,20x liegen.
+
+Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, Tragzeit, Genetik, Namen und Verkaufswerte bleiben bei Horse Genetics. Andere Tiere bleiben beim Enhanced Animal System. Sind beide Mods geladen, nutzen die Porträts Fohlen-Grafiken.
+
+Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.]]></de>
     </description>
 
     <iconFilename>icon.dds</iconFilename>
     <multiplayer supported="true" />
+    <l10n filenamePrefix="translations/l10n" />
 
     <extraSourceFiles>
         <sourceFile filename="data/horses.lua" />
