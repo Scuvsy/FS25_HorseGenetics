@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="115">
     <author>Scuvsy</author>
-    <version>1.0.24.0</version>
+    <version>1.0.25.0</version>
 
     <title>
         <en>Horse Genetics</en>
@@ -34,6 +34,8 @@ Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breedi
 Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.
 
 CHANGELOG
+1.0.25.0
+- GUI sizes stay numbers at runtime so the Esc menu no longer throws after load.
 1.0.24.0
 - Stopped a GuiUtils layout error from running every frame after the menu was added.
 1.0.23.0
@@ -70,6 +72,8 @@ Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, 
 Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.
 
 CHANGELOG
+1.0.25.0
+- GUI-Größen bleiben Zahlen zur Laufzeit, damit das Esc-Menü nach dem Laden nicht mehr wirft.
 1.0.24.0
 - GuiUtils-Fehler gestoppt, der nach dem Menüaufbau jede Frame auslöste.
 1.0.23.0
@@ -106,6 +110,8 @@ Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, ge
 Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.
 
 CHANGELOG
+1.0.25.0
+- Les tailles d'interface restent des nombres à l'exécution pour que le menu Échap ne plante plus après le chargement.
 1.0.24.0
 - Correction d'une erreur GuiUtils déclenchée à chaque image après l'ajout du menu.
 1.0.23.0

@@ -3553,199 +3553,47 @@ end
 
 local HG_BAR_TRACK_WIDTH = 240
 local HG_BAR_TRACK_HEIGHT = 14
-local HG_BAR_SIZE_API = nil
-local HG_PORTRAIT_SIZE_STR = "260px 200px"
-local HG_PORTRAIT_POS_X = 255
-local HG_PORTRAIT_POS_Y = -179
-local HG_PORTRAIT_POS_STR = "255px -179px"
-local HG_PORTRAIT_SIZE_N = {260 / 1920, 200 / 1080}
-
-local function hgApplyPxSize(element, widthPx, heightPx)
-    if element == nil or element.setSize == nil then
-        return
-    end
-    element:setSize(string.format("%dpx %dpx", widthPx, heightPx))
-    hgSafeCall(function()
-        if element.overlay ~= nil then
-            element.overlay.width = widthPx / 1920
-            element.overlay.height = heightPx / 1080
-        end
-        if element.updateAbsoluteSize ~= nil then
-            element:updateAbsoluteSize()
-        end
-        if element.updateAbsolutePosition ~= nil then
-            element:updateAbsolutePosition()
-        end
-    end)
-end
-
-local function hgApplyPxPosition(element, xPx, yPx)
-    if element == nil or element.setPosition == nil then
-        return
-    end
-    element:setPosition(string.format("%dpx %dpx", xPx, yPx))
-end
-
-local function hgReadAbsSize(element)
-    if element == nil then
-        return nil, nil
-    end
-    local size = element.absSize
-    if type(size) ~= "table" then
-        size = element.size
-    end
-    if type(size) ~= "table" then
-        return nil, nil
-    end
-    return tonumber(size[1]), tonumber(size[2])
-end
 
 local function hgSyncOverlaySize(element, wNorm, hNorm)
     if element == nil or element.overlay == nil then
         return
     end
-    hgSafeCall(function()
-        if element.overlay.setDimension ~= nil then
-            element.overlay:setDimension(wNorm, hNorm)
-        else
-            element.overlay.width = wNorm
-            element.overlay.height = hNorm
-        end
-    end)
-end
-
-local function hgSizeChanged(beforeW, beforeH, afterW, afterH)
-    if afterW == nil then
-        return false
-    end
-    if beforeW == nil then
-        return true
-    end
-    return math.abs(afterW - beforeW) > 1e-6 or math.abs((afterH or 0) - (beforeH or 0)) > 1e-6
-end
-
-local function hgBarWidthPlausible(afterW, trackAbsW, screenW)
-    if afterW == nil or afterW < 0 then
-        return false
-    end
-    local maxW = screenW
-    if trackAbsW ~= nil and trackAbsW > 0 then
-        maxW = math.max(trackAbsW * 1.08, screenW)
-    end
-    return afterW <= maxW + 1e-4
-end
-
-local function hgTrySetBarSize(element, name, value, widthPx, heightPx)
-    local screenW = widthPx / 1920
-    local screenH = heightPx / 1080
-    local parentW = 1
-    local parentH = 1
-    local trackAbsW, trackAbsH = nil, nil
-    if element.parent ~= nil then
-        trackAbsW, trackAbsH = hgReadAbsSize(element.parent)
-        if trackAbsW ~= nil and trackAbsW > 1e-6 then
-            parentW = (widthPx / 1920) / trackAbsW
-        else
-            parentW = value / 100
-        end
-        if trackAbsH ~= nil and trackAbsH > 1e-6 then
-            parentH = (heightPx / 1080) / trackAbsH
-        else
-            parentH = 1
-        end
+    if element.overlay.setDimension ~= nil then
+        element.overlay:setDimension(wNorm, hNorm)
     else
-        parentW = value / 100
-        parentH = 1
+        element.overlay.width = wNorm
+        element.overlay.height = hNorm
     end
-    if parentW < 0 then
-        parentW = 0
-    end
-
-    local attempts = {
-        {
-            name = "pxString",
-            apply = function()
-                element:setSize(string.format("%dpx %dpx", widthPx, heightPx))
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        }
-    }
-
-    local function runAttempt(attempt)
-        local beforeW, beforeH = hgReadAbsSize(element)
-        local ok = hgSafeCall(attempt.apply)
-        if not ok then
-            return false, beforeW, beforeH, nil, nil
-        end
-        if element.updateAbsolutePosition ~= nil then
-            hgSafeCall(element.updateAbsolutePosition, element)
-        end
-        hgSyncOverlaySize(element, attempt.overlayW, attempt.overlayH)
-        local afterW, afterH = hgReadAbsSize(element)
-        local plausible = hgBarWidthPlausible(afterW, trackAbsW, screenW)
-        local changed = hgSizeChanged(beforeW, beforeH, afterW, afterH)
-        return plausible and (changed or HG_BAR_SIZE_API == attempt.name), beforeW, beforeH, afterW, afterH
-    end
-
-    if HG_BAR_SIZE_API ~= nil then
-        for i = 1, #attempts do
-            if attempts[i].name == HG_BAR_SIZE_API then
-                local ok, _, _, afterW = runAttempt(attempts[i])
-                if ok then
-                    return attempts[i].name, afterW
-                end
-                HG_BAR_SIZE_API = nil
-                break
-            end
-        end
-    end
-
-    for i = 1, #attempts do
-        local ok, _, _, afterW = runAttempt(attempts[i])
-        if ok then
-            HG_BAR_SIZE_API = attempts[i].name
-            return attempts[i].name, afterW
-        end
-    end
-
-    hgSyncOverlaySize(element, screenW, screenH)
-    local afterW = select(1, hgReadAbsSize(element))
-    return HG_BAR_SIZE_API or "pxString", afterW
 end
 
+-- Runtime GuiElement.size must stay numbers. XML "Npx Npx" is parsed at load;
+-- passing those strings to setSize poisons layout (GuiElement math.max, GuiUtils).
 local function hgSetBarFill(bar, value, name)
-    hgSafeCall(function()
-        if bar == nil then
-            return
+    if bar == nil then
+        return
+    end
+    value = math.max(0, math.min(100, tonumber(value) or 0))
+    local fraction = value / 100
+    if fraction < 0.004 then
+        fraction = 0.004
+        if bar.setVisible ~= nil then
+            bar:setVisible(false)
         end
-        value = math.max(0, math.min(100, tonumber(value) or 0))
-        local widthPx = HG_BAR_TRACK_WIDTH * value / 100
-        if widthPx < 1 then
-            widthPx = 1
-            if bar.setVisible ~= nil then
-                bar:setVisible(false)
-            end
-        elseif bar.setVisible ~= nil then
-            bar:setVisible(true)
-        end
-        -- Nested fills stay at 0,0 (left of the track). Do not re-center; shrinking the
-        -- fill bitmap is what makes the bar read as a percentage.
-        if bar.setPosition ~= nil then
-            bar:setPosition("0px 0px")
-        end
-        hgTrySetBarSize(bar, name, value, widthPx, HG_BAR_TRACK_HEIGHT)
-    end)
+    elseif bar.setVisible ~= nil then
+        bar:setVisible(true)
+    end
+    if type(bar.size) == "table" then
+        bar.size[1] = fraction
+        bar.size[2] = 1
+    end
+    if type(bar.position) == "table" then
+        bar.position[1] = 0
+        bar.position[2] = 0
+    end
+    hgSyncOverlaySize(bar, (HG_BAR_TRACK_WIDTH * fraction) / 1920, HG_BAR_TRACK_HEIGHT / 1080)
 end
 
 local function hgApplyPortraitLayout(element)
-    if element == nil then
-        return
-    end
-    if element.setSize ~= nil then
-        element:setSize(HG_PORTRAIT_SIZE_STR)
-    end
-    hgApplyPxPosition(element, HG_PORTRAIT_POS_X, HG_PORTRAIT_POS_Y)
 end
 
 local function hgHideLeftoverScrollChrome(page)
@@ -4829,17 +4677,6 @@ function HorseGeneticsMenu:onRefreshClick()
     end
 end
 
-local HG_COAT_PORTRAIT_LAYOUT = {
-    breedP1Portrait = {190, -40, 110, 95},
-    breedP2Portrait = {190, -40, 110, 95},
-    breedF1Portrait = {80, -230, 160, 140},
-    breedF2Portrait = {80, -230, 160, 140},
-    treeC1Portrait = {4, 0, 36, 36},
-    treeC2Portrait = {4, 0, 36, 36},
-    treeC3Portrait = {4, 0, 36, 36},
-    treeC4Portrait = {4, 0, 36, 36}
-}
-
 function HorseGeneticsMenu:bindCoatPortrait(element, coatColour)
     if element == nil then
         return
@@ -4859,28 +4696,6 @@ function HorseGeneticsMenu:bindCoatPortrait(element, coatColour)
         if ok then
             break
         end
-    end
-    local layout = nil
-    if element.id ~= nil then
-        layout = HG_COAT_PORTRAIT_LAYOUT[element.id]
-    end
-    if layout == nil then
-        for id, box in pairs(HG_COAT_PORTRAIT_LAYOUT) do
-            if self[id] == element then
-                layout = box
-                break
-            end
-        end
-    end
-    if layout ~= nil then
-        hgSafeCall(function()
-            if element.setPosition ~= nil then
-                element:setPosition(string.format("%dpx %dpx", layout[1], layout[2]))
-            end
-            if element.setSize ~= nil then
-                element:setSize(string.format("%dpx %dpx", layout[3], layout[4]))
-            end
-        end)
     end
     if element.setVisible ~= nil then
         hgSafeCall(element.setVisible, element, true)
@@ -5582,6 +5397,9 @@ local function hgFixInGameMenuTabScroll()
         alignStart = ListElement.ALIGN_START
     end
     tabList.listItemAlignment = alignStart
+    if tabList.firstVisibleItem == nil then
+        tabList.firstVisibleItem = 1
+    end
 
     if tabList.setIsScrollAllowed ~= nil then
         hgSafeCall(tabList.setIsScrollAllowed, tabList, true)
@@ -5590,38 +5408,6 @@ local function hgFixInGameMenuTabScroll()
     end
     if tabList.supportsMouseScrolling ~= nil then
         tabList.supportsMouseScrolling = true
-    end
-
-    if tabList.updateAbsolutePosition ~= nil then
-        tabList:updateAbsolutePosition()
-    end
-    if tabList.reloadData ~= nil then
-        tabList:reloadData()
-    end
-    if tabList.updateView ~= nil then
-        tabList:updateView(true)
-    end
-    if tabList.updateItemPositions ~= nil then
-        tabList:updateItemPositions()
-    end
-
-    local idx = menu.currentPageListIndex
-    if idx == nil and tabList.selectedIndex ~= nil then
-        idx = tabList.selectedIndex
-    end
-    if idx ~= nil then
-        if tabList.setSelectedIndex ~= nil then
-            hgSafeCall(tabList.setSelectedIndex, tabList, idx)
-        end
-        if tabList.makeCellVisible ~= nil then
-            hgSafeCall(tabList.makeCellVisible, tabList, idx)
-        elseif tabList.scrollTo ~= nil then
-            hgSafeCall(tabList.scrollTo, tabList, idx)
-        elseif tabList.setFirstVisibleItem ~= nil then
-            local visible = tabList.maxNumVisibleItems or tabList.visibleItems or 7
-            local first = math.max(1, idx - math.max(0, visible - 1))
-            hgSafeCall(tabList.setFirstVisibleItem, tabList, first)
-        end
     end
 end
 
