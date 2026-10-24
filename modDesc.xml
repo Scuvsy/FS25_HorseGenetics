@@ -36,6 +36,7 @@ Works in single player and PC multiplayer. Every player and the dedicated server
 CHANGELOG
 1.0.30.0
 - Settings values are centred between minus and plus.
+- Stat-bar textures are 512x32 so the log does not warn about non-power-of-two sizes.
 1.0.29.0
 - Settings minus and plus sit next to the value instead of across the row.
 1.0.28.0
@@ -84,6 +85,7 @@ Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedic
 CHANGELOG
 1.0.30.0
 - Einstellungswerte stehen mittig zwischen Minus und Plus.
+- Genetik-Balken-Texturen sind 512x32, damit das Log nicht vor Nicht-Zweierpotenz warnt.
 1.0.29.0
 - Minus und Plus in den Einstellungen sitzen neben dem Wert, nicht über die ganze Zeile.
 1.0.28.0
@@ -132,6 +134,7 @@ Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doi
 CHANGELOG
 1.0.30.0
 - Les valeurs des Paramètres sont centrées entre moins et plus.
+- Textures des barres 512x32 pour éviter l'avertissement non power-of-two dans le log.
 1.0.29.0
 - Les boutons moins et plus des Paramètres restent à côté de la valeur.
 1.0.28.0
