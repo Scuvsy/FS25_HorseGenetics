@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="115">
     <author>Scuvsy</author>
-    <version>1.0.28.0</version>
+    <version>1.0.29.0</version>
 
     <title>
         <en>Horse Genetics</en>
@@ -34,6 +34,8 @@ Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breedi
 Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.
 
 CHANGELOG
+1.0.29.0
+- Settings minus and plus sit next to the value instead of across the row.
 1.0.28.0
 - Removed the Refresh control on MY HORSES; the list updates when you open the page.
 1.0.27.0
@@ -78,6 +80,8 @@ Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, 
 Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.
 
 CHANGELOG
+1.0.29.0
+- Minus und Plus in den Einstellungen sitzen neben dem Wert, nicht über die ganze Zeile.
 1.0.28.0
 - Aktualisieren auf MEINE PFERDE entfernt; die Liste aktualisiert sich beim Öffnen der Seite.
 1.0.27.0
@@ -122,6 +126,8 @@ Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, ge
 Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.
 
 CHANGELOG
+1.0.29.0
+- Les boutons moins et plus des Paramètres restent à côté de la valeur.
 1.0.28.0
 - Contrôle Actualiser retiré de MES CHEVAUX ; la liste se met à jour à l'ouverture de la page.
 1.0.27.0
