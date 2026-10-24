@@ -66,6 +66,9 @@
         <text name="hg_settings_hint" text="Host settings apply in multiplayer." />
         <text name="hg_gestation_time" text="Gestation time" />
         <text name="hg_gestation_help" text="Vanilla horses take 11 months. Foals are born after this many months." />
+        <text name="hg_puberty_time" text="Puberty time" />
+        <text name="hg_puberty_help" text="Vanilla horses can breed from 22 months. The puberty bar fills until this age." />
+        <text name="hg_puberty_vanilla" text="22 months (Vanilla)" />
         <text name="hg_sale_mods" text="Sale value modifiers" />
         <text name="hg_sale_help" text="How strongly genetics change sale price. Off uses Vanilla prices." />
         <text name="hg_months_vanilla" text="11 months (Vanilla)" />

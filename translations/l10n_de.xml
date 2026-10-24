@@ -66,6 +66,9 @@
         <text name="hg_settings_hint" text="Im Mehrspieler gelten die Host-Einstellungen." />
         <text name="hg_gestation_time" text="Tragzeit" />
         <text name="hg_gestation_help" text="Vanilla-Pferde brauchen 11 Monate. Fohlen werden nach dieser Zeit geboren." />
+        <text name="hg_puberty_time" text="Pubertät" />
+        <text name="hg_puberty_help" text="Vanilla-Pferde können ab 22 Monaten züchten. Der Pubertätsbalken füllt sich bis zu diesem Alter." />
+        <text name="hg_puberty_vanilla" text="22 Monate (Vanilla)" />
         <text name="hg_sale_mods" text="Verkaufsmodifikatoren" />
         <text name="hg_sale_help" text="Wie stark die Genetik den Verkaufspreis ändert. Aus behält Vanilla-Preise." />
         <text name="hg_months_vanilla" text="11 Monate (Vanilla)" />

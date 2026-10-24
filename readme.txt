@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.14.0
+Version: 1.0.15.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -83,8 +83,8 @@ When the month changes the mod looks at each horse husbandry:
   - When elapsed months reach the chosen gestation and two stalls are free,
     both foals are born.
   - If no pregnancy is running, a new one can start when there are at least
-    two horses that are 22 months old or older in the same building. The two
-    oldest eligible horses are paired.
+    two horses at or above the Settings puberty age in the same building. The
+    two oldest eligible horses are paired. Default puberty is 22 months.
 
 A pregnancy can start even if the stable is full. Birth still needs two empty
 stalls, because each parent produces one foal.
@@ -101,8 +101,9 @@ REPRODUCTION AND PUBERTY BARS
 
 The animals menu bar is driven by this mod.
 
-Foals (under 22 months)
-  A puberty bar fills with age until 22 months, the vanilla horse breeding age.
+Foals (under the Settings puberty age)
+  A puberty bar fills with age until that age. Default is 22 months, matching
+  vanilla horses. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 
 Adults
   The bar stays empty until a Horse Genetics pregnancy starts. During pregnancy
@@ -334,7 +335,7 @@ TIPS
 - Two free stalls are required at birth. One empty stall is not enough.
 - A pregnancy can start while the stable is full. Clear two stalls before the
   gestation finishes if you want the foals to appear on time.
-- Both parents must be at least 22 months old.
+- Both parents must be at least the Settings puberty age (default 22 months).
 - Watch the animals menu bar: empty adults are waiting to pair, filling adults
   are pregnant, filling foals are still in puberty.
 - Preview Horse 1 Foal and Horse 2 Foal are two independent rolls of the same

@@ -719,11 +719,17 @@
                 <Button id="btnGestationUp" position="660px -42px" size="40px 32px" text="+" onClick="onClickGestationUp" />
                 <Text id="gestationHelp" profile="fs25_textDefault" position="24px -77px" size="900px 24px" text="$l10n_hg_gestation_help" />
 
-                <Text profile="fs25_textDefault" position="24px -132px" size="280px 28px" text="$l10n_hg_sale_mods" />
-                <Button id="btnValueDown" position="320px -132px" size="40px 32px" text="-" onClick="onClickValueDown" />
-                <Text id="valueModifierValue" profile="fs25_textDefault" position="380px -132px" size="260px 32px" text="$l10n_hg_value_default" />
-                <Button id="btnValueUp" position="660px -132px" size="40px 32px" text="+" onClick="onClickValueUp" />
-                <Text id="valueModifierHelp" profile="fs25_textDefault" position="24px -167px" size="900px 24px" text="$l10n_hg_sale_help" />
+                <Text profile="fs25_textDefault" position="24px -132px" size="280px 28px" text="$l10n_hg_puberty_time" />
+                <Button id="btnPubertyDown" position="320px -132px" size="40px 32px" text="-" onClick="onClickPubertyDown" />
+                <Text id="pubertyValue" profile="fs25_textDefault" position="380px -132px" size="260px 32px" text="$l10n_hg_puberty_vanilla" />
+                <Button id="btnPubertyUp" position="660px -132px" size="40px 32px" text="+" onClick="onClickPubertyUp" />
+                <Text id="pubertyHelp" profile="fs25_textDefault" position="24px -167px" size="900px 24px" text="$l10n_hg_puberty_help" />
+
+                <Text profile="fs25_textDefault" position="24px -222px" size="280px 28px" text="$l10n_hg_sale_mods" />
+                <Button id="btnValueDown" position="320px -222px" size="40px 32px" text="-" onClick="onClickValueDown" />
+                <Text id="valueModifierValue" profile="fs25_textDefault" position="380px -222px" size="260px 32px" text="$l10n_hg_value_default" />
+                <Button id="btnValueUp" position="660px -222px" size="40px 32px" text="+" onClick="onClickValueUp" />
+                <Text id="valueModifierHelp" profile="fs25_textDefault" position="24px -257px" size="900px 24px" text="$l10n_hg_sale_help" />
             </GuiElement>
         </GuiElement>
     </GuiElement>

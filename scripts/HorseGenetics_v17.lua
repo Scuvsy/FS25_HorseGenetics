@@ -118,6 +118,7 @@ HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#soldP
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastKnownSellPrice", "Last shop sell price")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastAgeMonths", "Last known age in months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#gestationMonths", "Gestation months")
+HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#pubertyMonths", "Puberty months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#valueModifierPercent", "Sale modifier strength")
 HorseGenetics.xmlSchema:register(XMLValueType.STRING, "horseGenetics.history(?)#parent1Id", "History parent 1")
 HorseGenetics.xmlSchema:register(XMLValueType.STRING, "horseGenetics.history(?)#parent1Name", "History parent 1 name")
@@ -147,9 +148,11 @@ HorseGenetics.pregnancies = {}
 HorseGenetics.VANILLA_GESTATION_MONTHS = 11
 HorseGenetics.VANILLA_MATURITY_MONTHS = 22
 HorseGenetics.GESTATION_OPTIONS = {1, 3, 6, 8, 11, 14, 16, 18, 22}
+HorseGenetics.MATURITY_OPTIONS = {1, 3, 6, 8, 11, 14, 16, 18, 22}
 HorseGenetics.VALUE_MODIFIER_OPTIONS = {0, 25, 50, 75, 100, 125, 150, 175, 200}
 HorseGenetics.settings = {
     gestationMonths = HorseGenetics.VANILLA_GESTATION_MONTHS,
+    pubertyMonths = HorseGenetics.VANILLA_MATURITY_MONTHS,
     valueModifierPercent = 100
 }
 
@@ -207,6 +210,14 @@ function HorseGenetics.getGestationMonths()
     )
 end
 
+function HorseGenetics.getPubertyMonths()
+    return HorseGenetics.clampChoice(
+        HorseGenetics.settings.pubertyMonths,
+        HorseGenetics.MATURITY_OPTIONS,
+        HorseGenetics.VANILLA_MATURITY_MONTHS
+    )
+end
+
 function HorseGenetics.getValueModifierPercent()
     return HorseGenetics.clampChoice(HorseGenetics.settings.valueModifierPercent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
 end
@@ -226,6 +237,17 @@ function HorseGenetics.gestationLabel(months)
     return hgT("hg_months_n", months)
 end
 
+function HorseGenetics.pubertyLabel(months)
+    months = HorseGenetics.clampChoice(months, HorseGenetics.MATURITY_OPTIONS, HorseGenetics.VANILLA_MATURITY_MONTHS)
+    if months == HorseGenetics.VANILLA_MATURITY_MONTHS then
+        return hgT("hg_puberty_vanilla")
+    end
+    if months == 1 then
+        return hgT("hg_month_one")
+    end
+    return hgT("hg_months_n", months)
+end
+
 function HorseGenetics.valueModifierLabel(percent)
     percent = HorseGenetics.clampChoice(percent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
     if percent == 0 then
@@ -237,11 +259,13 @@ function HorseGenetics.valueModifierLabel(percent)
     return tostring(percent) .. "%"
 end
 
-function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, skipNetwork)
+function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, pubertyMonths, skipNetwork)
     HorseGenetics.settings.gestationMonths = HorseGenetics.clampChoice(
         gestationMonths, HorseGenetics.GESTATION_OPTIONS, HorseGenetics.VANILLA_GESTATION_MONTHS)
     HorseGenetics.settings.valueModifierPercent = HorseGenetics.clampChoice(
         valueModifierPercent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
+    HorseGenetics.settings.pubertyMonths = HorseGenetics.clampChoice(
+        pubertyMonths, HorseGenetics.MATURITY_OPTIONS, HorseGenetics.VANILLA_MATURITY_MONTHS)
     for _, entry in ipairs(HorseGenetics.pregnancies or {}) do
         HorseGenetics.normalizePregnancy(entry)
     end
@@ -259,9 +283,9 @@ function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, skip
     end
 end
 
-function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent)
+function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent, pubertyMonths)
     if HorseGenetics.isAuthoritative() then
-        HorseGenetics.applySettings(gestationMonths, valueModifierPercent)
+        HorseGenetics.applySettings(gestationMonths, valueModifierPercent, pubertyMonths)
         return
     end
     if g_client == nil or HorseGeneticsSettingsEvent == nil then
@@ -269,7 +293,7 @@ function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent)
     end
     local connection = g_client.getServerConnection ~= nil and g_client:getServerConnection() or nil
     if connection ~= nil then
-        connection:sendEvent(HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent))
+        connection:sendEvent(HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent, pubertyMonths))
     end
 end
 
@@ -463,6 +487,7 @@ function HorseGenetics:saveToXMLFile(xmlFile, key)
     xmlFile:setInt(key .. "#version", 1)
     xmlFile:setInt(key .. "#nextHorseId", self.nextHorseId)
     xmlFile:setInt(key .. "#gestationMonths", HorseGenetics.getGestationMonths())
+    xmlFile:setInt(key .. "#pubertyMonths", HorseGenetics.getPubertyMonths())
     xmlFile:setInt(key .. "#valueModifierPercent", HorseGenetics.getValueModifierPercent())
 
     local index = 0
@@ -534,6 +559,7 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
     HorseGenetics.applySettings(
         xmlFile:getInt(key .. "#gestationMonths", HorseGenetics.VANILLA_GESTATION_MONTHS),
         xmlFile:getInt(key .. "#valueModifierPercent", 100),
+        xmlFile:getInt(key .. "#pubertyMonths", HorseGenetics.VANILLA_MATURITY_MONTHS),
         true
     )
 
@@ -1688,10 +1714,7 @@ function HorseGenetics.getRecordLifeState(record)
     local cluster = HorseGenetics.getRecordCluster(record)
     local pregnancy = HorseGenetics.getPregnancyForHorseId(record.id)
     local age = HorseGenetics.getRecordAgeMonths(record)
-    local maturity = HorseGenetics.VANILLA_MATURITY_MONTHS
-    if cluster ~= nil then
-        maturity = HorseGenetics.getMaturityMonths(cluster)
-    end
+    local maturity = HorseGenetics.getMaturityMonths(cluster)
     if age ~= nil and age < maturity then
         local percent = 0
         if cluster ~= nil then
@@ -1758,23 +1781,7 @@ function HorseGenetics.getClusterAgeMonths(cluster)
 end
 
 function HorseGenetics.getMaturityMonths(cluster)
-    local months = HorseGenetics.VANILLA_MATURITY_MONTHS
-    pcall(function()
-        local subType
-        if cluster ~= nil and cluster.getSubType ~= nil then
-            subType = cluster:getSubType()
-        elseif cluster ~= nil and cluster.getSubTypeIndex ~= nil
-            and g_currentMission ~= nil and g_currentMission.animalSystem ~= nil then
-            subType = g_currentMission.animalSystem:getSubTypeByIndex(cluster:getSubTypeIndex())
-        end
-        if subType ~= nil and type(subType.reproductionMinAgeMonth) == "number" then
-            months = subType.reproductionMinAgeMonth
-        end
-    end)
-    if months < 1 then
-        months = HorseGenetics.VANILLA_MATURITY_MONTHS
-    end
-    return months
+    return HorseGenetics.getPubertyMonths()
 end
 
 function HorseGenetics.isHorseMature(cluster)
@@ -3056,7 +3063,12 @@ function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregn
         HorseGenetics.normalizePregnancy(entry)
     end
     if type(settings) == "table" then
-        HorseGenetics.applySettings(settings.gestationMonths, settings.valueModifierPercent, true)
+        HorseGenetics.applySettings(
+            settings.gestationMonths,
+            settings.valueModifierPercent,
+            settings.pubertyMonths,
+            true
+        )
     end
     HorseGenetics.applyClusterBindings(clusterBindings)
     HorseGenetics.notifyUiDirty()
@@ -3158,7 +3170,8 @@ function HorseGenetics.registerEventClasses()
             HorseGenetics.pregnancies or {},
             {
                 gestationMonths = HorseGenetics.getGestationMonths(),
-                valueModifierPercent = HorseGenetics.getValueModifierPercent()
+                valueModifierPercent = HorseGenetics.getValueModifierPercent(),
+                pubertyMonths = HorseGenetics.getPubertyMonths()
             },
             HorseGenetics.collectClusterBindings()
         )
@@ -3206,6 +3219,7 @@ function HorseGenetics.registerEventClasses()
         local settings = self.settings or HorseGenetics.settings or {}
         streamWriteInt32(streamId, tonumber(settings.gestationMonths) or HorseGenetics.VANILLA_GESTATION_MONTHS)
         streamWriteInt32(streamId, tonumber(settings.valueModifierPercent) or 100)
+        streamWriteInt32(streamId, tonumber(settings.pubertyMonths) or HorseGenetics.VANILLA_MATURITY_MONTHS)
         local bindings = self.clusterBindings or {}
         streamWriteInt32(streamId, #bindings)
         for i = 1, #bindings do
@@ -3266,7 +3280,8 @@ function HorseGenetics.registerEventClasses()
         end
         self.settings = {
             gestationMonths = streamReadInt32(streamId),
-            valueModifierPercent = streamReadInt32(streamId)
+            valueModifierPercent = streamReadInt32(streamId),
+            pubertyMonths = streamReadInt32(streamId)
         }
         local bindingCount = streamReadInt32(streamId)
         self.clusterBindings = {}
@@ -3357,35 +3372,42 @@ function HorseGenetics.registerEventClasses()
         return Event.new(HorseGeneticsSettingsEvent_mt)
     end
 
-    function HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent)
+    function HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent, pubertyMonths)
         local self = HorseGeneticsSettingsEvent.emptyNew()
         self.gestationMonths = gestationMonths
         self.valueModifierPercent = valueModifierPercent
+        self.pubertyMonths = pubertyMonths
         return self
     end
 
     function HorseGeneticsSettingsEvent.newFromCurrent()
-        return HorseGeneticsSettingsEvent.new(HorseGenetics.getGestationMonths(), HorseGenetics.getValueModifierPercent())
+        return HorseGeneticsSettingsEvent.new(
+            HorseGenetics.getGestationMonths(),
+            HorseGenetics.getValueModifierPercent(),
+            HorseGenetics.getPubertyMonths()
+        )
     end
 
     function HorseGeneticsSettingsEvent:writeStream(streamId, connection)
         streamWriteInt32(streamId, tonumber(self.gestationMonths) or HorseGenetics.VANILLA_GESTATION_MONTHS)
         streamWriteInt32(streamId, tonumber(self.valueModifierPercent) or 100)
+        streamWriteInt32(streamId, tonumber(self.pubertyMonths) or HorseGenetics.VANILLA_MATURITY_MONTHS)
     end
 
     function HorseGeneticsSettingsEvent:readStream(streamId, connection)
         self.gestationMonths = streamReadInt32(streamId)
         self.valueModifierPercent = streamReadInt32(streamId)
+        self.pubertyMonths = streamReadInt32(streamId)
         self:run(connection)
     end
 
     function HorseGeneticsSettingsEvent:run(connection)
         if g_server ~= nil and connection ~= nil and not connection:getIsServer() then
-            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent)
+            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, self.pubertyMonths)
             return
         end
         if connection ~= nil and connection:getIsServer() then
-            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, true)
+            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, self.pubertyMonths, true)
         end
     end
 
@@ -3890,13 +3912,15 @@ end
 
 function HorseGeneticsMenu:renderSettingsPage()
     hgSetText(self.gestationValue, HorseGenetics.gestationLabel(HorseGenetics.getGestationMonths()))
+    hgSetText(self.pubertyValue, HorseGenetics.pubertyLabel(HorseGenetics.getPubertyMonths()))
     hgSetText(self.valueModifierValue, HorseGenetics.valueModifierLabel(HorseGenetics.getValueModifierPercent()))
 end
 
 function HorseGeneticsMenu:onClickGestationDown()
     HorseGenetics.requestSetSettings(
         HorseGenetics.cycleSetting(HorseGenetics.GESTATION_OPTIONS, HorseGenetics.getGestationMonths(), -1),
-        HorseGenetics.getValueModifierPercent()
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3904,7 +3928,26 @@ end
 function HorseGeneticsMenu:onClickGestationUp()
     HorseGenetics.requestSetSettings(
         HorseGenetics.cycleSetting(HorseGenetics.GESTATION_OPTIONS, HorseGenetics.getGestationMonths(), 1),
-        HorseGenetics.getValueModifierPercent()
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.getPubertyMonths()
+    )
+    self:renderSettingsPage()
+end
+
+function HorseGeneticsMenu:onClickPubertyDown()
+    HorseGenetics.requestSetSettings(
+        HorseGenetics.getGestationMonths(),
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.cycleSetting(HorseGenetics.MATURITY_OPTIONS, HorseGenetics.getPubertyMonths(), -1)
+    )
+    self:renderSettingsPage()
+end
+
+function HorseGeneticsMenu:onClickPubertyUp()
+    HorseGenetics.requestSetSettings(
+        HorseGenetics.getGestationMonths(),
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.cycleSetting(HorseGenetics.MATURITY_OPTIONS, HorseGenetics.getPubertyMonths(), 1)
     )
     self:renderSettingsPage()
 end
@@ -3912,7 +3955,8 @@ end
 function HorseGeneticsMenu:onClickValueDown()
     HorseGenetics.requestSetSettings(
         HorseGenetics.getGestationMonths(),
-        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), -1)
+        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), -1),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3920,7 +3964,8 @@ end
 function HorseGeneticsMenu:onClickValueUp()
     HorseGenetics.requestSetSettings(
         HorseGenetics.getGestationMonths(),
-        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), 1)
+        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), 1),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3984,6 +4029,7 @@ function HorseGeneticsMenu:styleSectionTitles()
     hgStyleSectionTitle(self.titleBreedPicker)
     hgSetColor(self.settingsHint, HG_COLOR_MUTED)
     hgSetColor(self.gestationHelp, HG_COLOR_MUTED)
+    hgSetColor(self.pubertyHelp, HG_COLOR_MUTED)
     hgSetColor(self.valueModifierHelp, HG_COLOR_MUTED)
     hgStyleColumnHeader(self.histHeaderName)
     hgStyleColumnHeader(self.histHeaderAge)
