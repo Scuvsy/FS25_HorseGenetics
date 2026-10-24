@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.15.0
+Version: 1.0.16.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -62,8 +62,10 @@ GENETIC INFO
   scroll offspring.
 
 SETTINGS
-  Gestation time (default 11 months, vanilla) and sale-value modifier strength
-  (default 100%). In multiplayer the host's settings apply.
+  Gestation time (default 11 months, vanilla), puberty time (default 22 months,
+  vanilla), and sale-value modifier strength (default 100%). Both month settings
+  use 1, 3, 6, 8, 11, 14, 16, 18 or 22 months. In multiplayer the host's
+  settings apply.
 
 
 ================================================================================
@@ -112,7 +114,8 @@ Adults
 
 Settings
   Changing gestation while a pregnancy is running rescales the remaining time
-  and the bar from months already elapsed.
+  and the bar from months already elapsed. Changing puberty age updates the
+  foal bar and when a horse can start a pregnancy.
 
 
 ================================================================================
