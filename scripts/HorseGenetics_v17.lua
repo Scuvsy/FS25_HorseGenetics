@@ -3551,23 +3551,7 @@ local function hgSetColor(element, color)
     end
 end
 
-local HG_BAR_TRACK_WIDTH = 240
-local HG_BAR_TRACK_HEIGHT = 14
-
-local function hgSyncOverlaySize(element, wNorm, hNorm)
-    if element == nil or element.overlay == nil then
-        return
-    end
-    if element.overlay.setDimension ~= nil then
-        element.overlay:setDimension(wNorm, hNorm)
-    else
-        element.overlay.width = wNorm
-        element.overlay.height = hNorm
-    end
-end
-
--- Runtime GuiElement.size must stay numbers. XML "Npx Npx" is parsed at load;
--- passing those strings to setSize poisons layout (GuiElement math.max, GuiUtils).
+-- Runtime GuiElement.size must stay numbers. Nested bar fills are 0-1 of the track.
 local function hgSetBarFill(bar, value, name)
     if bar == nil then
         return
@@ -3590,10 +3574,6 @@ local function hgSetBarFill(bar, value, name)
         bar.position[1] = 0
         bar.position[2] = 0
     end
-    hgSyncOverlaySize(bar, (HG_BAR_TRACK_WIDTH * fraction) / 1920, HG_BAR_TRACK_HEIGHT / 1080)
-end
-
-local function hgApplyPortraitLayout(element)
 end
 
 local function hgHideLeftoverScrollChrome(page)
@@ -4523,9 +4503,6 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
     if element == nil or element.setImageFilename == nil then
         return
     end
-    hgSafeCall(hgApplyPortraitLayout, element)
-    hgSafeCall(hgApplyPortraitLayout, self.portraitPlaceholder)
-
     local paths, key = nil, hgNormalizeCoatKey(coatColour)
     hgSafeCall(function()
         paths, key = hgCollectHorseStoreIconPaths(coatColour)
@@ -4577,8 +4554,6 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
         self.hgPortraitBindFailedCoat = key
         hgSetText(self.portraitPlaceholder, string.upper(tostring(key or "BAY")))
     end
-    hgSafeCall(hgApplyPortraitLayout, element)
-    hgSafeCall(hgApplyPortraitLayout, self.portraitPlaceholder)
 end
 
 function HorseGeneticsMenu:renderProfile()
@@ -5458,6 +5433,52 @@ local function hgMovePageInList(list, page, position)
     end
 end
 
+local function hgCopyNumericVec(dst, src)
+    if type(src) ~= "table" or type(src[1]) ~= "number" or type(src[2]) ~= "number" then
+        return dst
+    end
+    if type(dst) ~= "table" then
+        return { src[1], src[2] }
+    end
+    dst[1] = src[1]
+    dst[2] = src[2]
+    return dst
+end
+
+-- loadGui frames default to full screen. Copy the Animals page rect so this
+-- page sits in the Esc content area instead of covering the left tab rail.
+local function hgFitPageIntoInGameMenu(page)
+    local menu = g_inGameMenu
+    if menu == nil or page == nil then
+        return
+    end
+    local template = menu.pageAnimals or menu.pageCalendar or menu.pageMapOverview or menu.pageSettings
+    if template ~= nil then
+        page.size = hgCopyNumericVec(page.size, template.size)
+        page.position = hgCopyNumericVec(page.position, template.position)
+        page.absSize = hgCopyNumericVec(page.absSize, template.absSize)
+        page.absPosition = hgCopyNumericVec(page.absPosition, template.absPosition)
+        if template.anchorLeft ~= nil then
+            page.anchorLeft = template.anchorLeft
+            page.anchorRight = template.anchorRight
+            page.anchorTop = template.anchorTop
+            page.anchorBottom = template.anchorBottom
+        end
+        if template.screenAlign ~= nil then
+            page.screenAlign = template.screenAlign
+        end
+    end
+    if menu.pagingElement ~= nil and menu.pagingElement.updateAbsolutePosition ~= nil then
+        menu.pagingElement:updateAbsolutePosition()
+    end
+    if page.applyScreenAlignment ~= nil then
+        page:applyScreenAlignment()
+    end
+    if page.updateAbsolutePosition ~= nil then
+        page:updateAbsolutePosition()
+    end
+end
+
 local function hgFindAnimalsTabInsertPosition()
     local menu = g_inGameMenu
     local paging = menu ~= nil and menu.pagingElement or nil
@@ -5547,20 +5568,13 @@ function HorseGenetics.installGeneticsMenu()
     g_inGameMenu.pagingElement:addElement(page)
     hgMovePageInList(g_inGameMenu.pagingElement.elements, page, insertPosition)
     hgMovePageInList(g_inGameMenu.pagingElement.pages, page, insertPosition)
+    hgFitPageIntoInGameMenu(page)
     g_inGameMenu.pagingElement:updatePageMapping()
     g_inGameMenu:registerPage(page, insertPosition, function() return true end)
 
     local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
-    local tabOk = false
     if g_inGameMenu.addPageTab ~= nil then
-        tabOk = hgSafeCall(function()
-            g_inGameMenu:addPageTab(page, iconPath)
-        end)
-        if not tabOk then
-            tabOk = hgSafeCall(function()
-                g_inGameMenu:addPageTab(page, iconPath, {0, 0, 1, 1})
-            end)
-        end
+        g_inGameMenu:addPageTab(page, iconPath)
     end
     hgMovePageInList(g_inGameMenu.pageFrames, page, insertPosition)
     if g_inGameMenu.rebuildTabList ~= nil then
