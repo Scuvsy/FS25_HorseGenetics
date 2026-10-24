@@ -3551,7 +3551,26 @@ local function hgSetColor(element, color)
     end
 end
 
--- Runtime GuiElement.size must stay numbers. Nested bar fills are 0-1 of the track.
+local function hgAbsSize(element)
+    if element == nil or type(element.absSize) ~= "table" then
+        return nil, nil
+    end
+    return tonumber(element.absSize[1]), tonumber(element.absSize[2])
+end
+
+local function hgSetOverlayDimension(overlay, w, h)
+    if overlay == nil or w == nil or h == nil then
+        return
+    end
+    if overlay.setDimension ~= nil then
+        overlay:setDimension(w, h)
+    else
+        overlay.width = w
+        overlay.height = h
+    end
+end
+
+-- Fill width is screen-normalized numbers from the track absSize, then the overlay.
 local function hgSetBarFill(bar, value, name)
     if bar == nil then
         return
@@ -3566,14 +3585,26 @@ local function hgSetBarFill(bar, value, name)
     elseif bar.setVisible ~= nil then
         bar:setVisible(true)
     end
-    if type(bar.size) == "table" then
-        bar.size[1] = fraction
-        bar.size[2] = 1
+    local trackW, trackH = hgAbsSize(bar.parent)
+    if trackW == nil or trackW < 1e-5 then
+        trackW = 240 / 1920
+        trackH = 14 / 1080
     end
+    local w = trackW * fraction
+    local h = trackH or (14 / 1080)
     if type(bar.position) == "table" then
         bar.position[1] = 0
         bar.position[2] = 0
     end
+    if type(bar.size) == "table" then
+        bar.size[1] = w
+        bar.size[2] = h
+    end
+    if type(bar.absSize) == "table" then
+        bar.absSize[1] = w
+        bar.absSize[2] = h
+    end
+    hgSetOverlayDimension(bar.overlay, w, h)
 end
 
 local function hgHideLeftoverScrollChrome(page)
@@ -5573,8 +5604,15 @@ function HorseGenetics.installGeneticsMenu()
     g_inGameMenu:registerPage(page, insertPosition, function() return true end)
 
     local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
+    local iconUVs = {0, 1, 1, 1, 0, 0, 1, 0}
+    if GuiUtils ~= nil and GuiUtils.getUVs ~= nil then
+        local parsed = GuiUtils.getUVs("0px 0px 256px 256px", {256, 256})
+        if type(parsed) == "table" then
+            iconUVs = parsed
+        end
+    end
     if g_inGameMenu.addPageTab ~= nil then
-        g_inGameMenu:addPageTab(page, iconPath)
+        g_inGameMenu:addPageTab(page, iconPath, iconUVs)
     end
     hgMovePageInList(g_inGameMenu.pageFrames, page, insertPosition)
     if g_inGameMenu.rebuildTabList ~= nil then
