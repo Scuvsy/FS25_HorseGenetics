@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="160" fill="#23382d"/>
-  <circle cx="512" cy="512" r="390" fill="#6d8f62" stroke="#e6e0c7" stroke-width="28"/>
-  <path d="M300 690 L332 495 L398 386 L515 328 L624 354 L695 424 L656 479 L600 468 L571 522 L584 625 L536 690 L477 690 L484 589 L438 548 L406 690 Z" fill="#f2ead5"/>
-  <path d="M395 389 L360 295 L445 350 L515 328 L553 265 L590 366" fill="#f2ead5"/>
-  <circle cx="562" cy="420" r="18" fill="#23382d"/>
-  <text x="512" y="850" font-family="Arial, sans-serif" font-size="100" font-weight="bold" text-anchor="middle" fill="#f2ead5">HG</text>
-</svg>

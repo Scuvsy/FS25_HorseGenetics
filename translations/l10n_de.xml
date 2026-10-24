@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<l10n>
+    <texts>
+        <text name="hg_title" text="HORSE GENETICS" />
+        <text name="hg_tab_myHorses" text="MEINE PFERDE" />
+        <text name="hg_tab_breeding" text="ZUCHT" />
+        <text name="hg_tab_info" text="GENETIK" />
+        <text name="hg_tab_settings" text="EINSTELLUNGEN" />
+        <text name="hg_owned_horses" text="EIGENE PFERDE" />
+        <text name="hg_horses_owned" text="Pferde im Besitz: %d" />
+        <text name="hg_showing_scroll" text="Anzeige %d-%d von %d  (Scrollen)" />
+        <text name="hg_refresh" text="Aktual." />
+        <text name="hg_col_name" text="NAME" />
+        <text name="hg_col_age" text="ALTER" />
+        <text name="hg_col_speed" text="TEMPO" />
+        <text name="hg_col_stamina" text="AUSD." />
+        <text name="hg_col_health" text="GES." />
+        <text name="hg_col_average" text="SCHNITT" />
+        <text name="hg_col_sale" text="VK-MOD" />
+        <text name="hg_col_value" text="WERT" />
+        <text name="hg_horse_profile" text="PFERDEPROFIL" />
+        <text name="hg_label_name" text="Name:" />
+        <text name="hg_label_id" text="Genetik-ID:" />
+        <text name="hg_label_generation" text="Generation:" />
+        <text name="hg_label_coat" text="Fell:" />
+        <text name="hg_label_age" text="Alter:" />
+        <text name="hg_label_repro" text="Trächtigkeit:" />
+        <text name="hg_label_puberty" text="Pubertät:" />
+        <text name="hg_genetic_stats" text="GENETIKWERTE" />
+        <text name="hg_stat_health" text="Gesundheit" />
+        <text name="hg_stat_stamina" text="Ausdauer" />
+        <text name="hg_stat_speed" text="Tempo" />
+        <text name="hg_stat_average" text="Schnitt" />
+        <text name="hg_stat" text="Wert" />
+        <text name="hg_sale_title" text="VERKAUFSMODIFIKATOREN" />
+        <text name="hg_sale_base" text="Grundmultiplikator:" />
+        <text name="hg_sale_bonus" text="Sonderbonus:" />
+        <text name="hg_sale_traits" text="Sonderwerte:" />
+        <text name="hg_sale_total" text="Verkaufsmodifikator:" />
+        <text name="hg_none" text="Keine" />
+        <text name="hg_click_add_remove" text="KLICKEN ZUM HINZUFÜGEN ODER ENTFERNEN" />
+        <text name="hg_horse_n" text="PFERD %d" />
+        <text name="hg_horse1" text="PFERD 1" />
+        <text name="hg_horse2" text="PFERD 2" />
+        <text name="hg_average_stats" text="MITTELWERTE" />
+        <text name="hg_predicted" text="ERWARTETE NACHKOMMEN" />
+        <text name="hg_horse1_foal" text="FOHLEN PFERD 1" />
+        <text name="hg_horse2_foal" text="FOHLEN PFERD 2" />
+        <text name="hg_preview_offspring" text="Nachkommen zeigen" />
+        <text name="hg_preview_note" text="Bereiche gelten bis zur Geburt im Stall." />
+        <text name="hg_preview_note_alt" text="Bereiche gelten bis zur Zucht im Stall." />
+        <text name="hg_not_guaranteed" text="Nicht garantiert" />
+        <text name="hg_breed_hint" text="Pferd links anklicken zum Hinzufügen oder Entfernen. Fohlen entstehen nach der Tragzeit." />
+        <text name="hg_breed_hint_list" text="Pferd in der Liste anklicken zum Hinzufügen oder Entfernen. Fohlen entstehen im Stall." />
+        <text name="hg_all_horses" text="ALLE PFERDE" />
+        <text name="hg_all_recorded" text="Alle erfassten Pferde: %d" />
+        <text name="hg_family_tree" text="STAMMBAUM" />
+        <text name="hg_tree_hint" text="Eltern oder Fohlen anklicken, um im Stammbaum zu wechseln." />
+        <text name="hg_parents" text="ELTERN" />
+        <text name="hg_selected" text="AUSGEWÄHLT" />
+        <text name="hg_offspring" text="NACHKOMMEN" />
+        <text name="hg_offspring_none" text="NACHKOMMEN  (Keine)" />
+        <text name="hg_offspring_n" text="NACHKOMMEN  (%d)" />
+        <text name="hg_offspring_scroll" text="NACHKOMMEN  (%d, hier scrollen)" />
+        <text name="hg_settings" text="EINSTELLUNGEN" />
+        <text name="hg_settings_hint" text="Im Mehrspieler gelten die Host-Einstellungen." />
+        <text name="hg_gestation_time" text="Tragzeit" />
+        <text name="hg_gestation_help" text="Vanilla-Pferde brauchen 11 Monate. Fohlen werden nach dieser Zeit geboren." />
+        <text name="hg_sale_mods" text="Verkaufsmodifikatoren" />
+        <text name="hg_sale_help" text="Wie stark die Genetik den Verkaufspreis ändert. Aus behält Vanilla-Preise." />
+        <text name="hg_months_vanilla" text="11 Monate (Vanilla)" />
+        <text name="hg_month_one" text="1 Monat" />
+        <text name="hg_months_n" text="%d Monate" />
+        <text name="hg_value_off" text="Aus (Vanilla-Preise)" />
+        <text name="hg_value_default" text="100% (Standard)" />
+        <text name="hg_field_name" text="Name: %s" />
+        <text name="hg_field_id" text="ID: %s" />
+        <text name="hg_field_age" text="Alter: %s" />
+        <text name="hg_field_speed" text="Tempo: %s" />
+        <text name="hg_field_stamina" text="Ausdauer: %s" />
+        <text name="hg_field_health" text="Gesundheit: %s" />
+        <text name="hg_field_average" text="Schnitt: %s" />
+        <text name="hg_field_coat" text="Fell: %s" />
+        <text name="hg_field_sale" text="VK-Mod: %s" />
+        <text name="hg_field_speed_blank" text="Tempo -" />
+        <text name="hg_field_stamina_blank" text="Ausdauer -" />
+        <text name="hg_field_health_blank" text="Gesundheit -" />
+        <text name="hg_dash" text="-" />
+        <text name="hg_unnamed" text="Unbenannt" />
+        <text name="hg_unknown" text="Unbekannt" />
+        <text name="hg_unknown_parent" text="Unbekanntes Elterntier" />
+        <text name="hg_select_horse" text="Pferd wählen" />
+        <text name="hg_id_gen" text="ID: %s   Gen: %d" />
+        <text name="hg_sold" text="Verkauft: %s" />
+        <text name="hg_value_line" text="Wert: %s" />
+        <text name="hg_age_ym" text="%dJ %dM" />
+        <text name="hg_age_y" text="%dJ" />
+        <text name="hg_age_m" text="%dM" />
+        <text name="hg_id_on_breed" text="ID: Bei der Zucht" />
+        <text name="hg_name_at_birth" text="Name: Bei der Geburt" />
+        <text name="hg_sale_depends" text="Hängt vom Wurf ab" />
+        <text name="hg_coat_likely_one" text="%s (wahrscheinlich) oder andere (10%%)" />
+        <text name="hg_coat_likely_two" text="%s / %s (wahrscheinlich) oder andere (10%%)" />
+        <text name="hg_coat_bay" text="Brauner" />
+        <text name="hg_coat_black" text="Rappe" />
+        <text name="hg_coat_chestnut" text="Fuchs" />
+        <text name="hg_coat_grey" text="Schimmel" />
+        <text name="hg_coat_palomino" text="Palomino" />
+        <text name="hg_coat_buckskin" text="Buckskin" />
+        <text name="hg_coat_pinto" text="Schecke" />
+        <text name="hg_coat_sealbrown" text="Schwarzbraun" />
+        <text name="hg_bonus_high" text="%s +5%%" />
+        <text name="hg_bonus_mid" text="%s +2,5%%" />
+        <text name="hg_warn_self" text="Ein Pferd kann nicht mit sich selbst gepaart werden. Zwei verschiedene Pferde wählen." />
+        <text name="hg_warn_need_two" text="Zwei verschiedene Pferde zum Vergleichen und Züchten wählen." />
+        <text name="hg_status_removed" text="%s von Pferd %d entfernt. Anderes Pferd wählen." />
+        <text name="hg_status_selected" text="%s gewählt. Erneut klicken zum Entfernen, oder ein anderes Pferd klicken, um Pferd 1 zu ersetzen." />
+        <text name="hg_status_pick_first" text="Zuerst ein Pferd in der Besitzliste wählen." />
+        <text name="hg_status_set" text="Pferd %d ist jetzt %s." />
+        <text name="hg_status_need_pair" text="Vor der Vorschau zwei Pferde wählen." />
+        <text name="hg_status_different" text="Zwei verschiedene Pferde wählen." />
+        <text name="hg_status_preview" text="Nur Vorschau. Beide ausgewachsenen Pferde in denselben Stall mit 2 freien Boxen stellen; jedes bekommt zum Monatswechsel ein Fohlen." />
+    </texts>
+</l10n>

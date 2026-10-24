@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<l10n>
+    <texts>
+        <text name="hg_title" text="HORSE GENETICS" />
+        <text name="hg_tab_myHorses" text="MY HORSES" />
+        <text name="hg_tab_breeding" text="BREEDING" />
+        <text name="hg_tab_info" text="GENETIC INFO" />
+        <text name="hg_tab_settings" text="SETTINGS" />
+        <text name="hg_owned_horses" text="OWNED HORSES" />
+        <text name="hg_horses_owned" text="Horses owned: %d" />
+        <text name="hg_showing_scroll" text="Showing %d-%d of %d  (Scroll)" />
+        <text name="hg_refresh" text="Refresh" />
+        <text name="hg_col_name" text="NAME" />
+        <text name="hg_col_age" text="AGE" />
+        <text name="hg_col_speed" text="SPEED" />
+        <text name="hg_col_stamina" text="STAMINA" />
+        <text name="hg_col_health" text="HEALTH" />
+        <text name="hg_col_average" text="AVERAGE" />
+        <text name="hg_col_sale" text="SALE MOD" />
+        <text name="hg_col_value" text="VALUE" />
+        <text name="hg_horse_profile" text="HORSE PROFILE" />
+        <text name="hg_label_name" text="Name:" />
+        <text name="hg_label_id" text="Genetic ID:" />
+        <text name="hg_label_generation" text="Generation:" />
+        <text name="hg_label_coat" text="Coat:" />
+        <text name="hg_label_age" text="Age:" />
+        <text name="hg_label_repro" text="Reproduction:" />
+        <text name="hg_label_puberty" text="Puberty:" />
+        <text name="hg_genetic_stats" text="GENETIC STATS" />
+        <text name="hg_stat_health" text="Health" />
+        <text name="hg_stat_stamina" text="Stamina" />
+        <text name="hg_stat_speed" text="Speed" />
+        <text name="hg_stat_average" text="Average" />
+        <text name="hg_stat" text="Stat" />
+        <text name="hg_sale_title" text="SALE VALUE MODIFIERS" />
+        <text name="hg_sale_base" text="Base multiplier:" />
+        <text name="hg_sale_bonus" text="Exceptional bonus:" />
+        <text name="hg_sale_traits" text="Exceptional traits:" />
+        <text name="hg_sale_total" text="Total Sale Modifier:" />
+        <text name="hg_none" text="None" />
+        <text name="hg_click_add_remove" text="CLICK TO ADD OR REMOVE A HORSE" />
+        <text name="hg_horse_n" text="HORSE %d" />
+        <text name="hg_horse1" text="HORSE 1" />
+        <text name="hg_horse2" text="HORSE 2" />
+        <text name="hg_average_stats" text="AVERAGE STATS" />
+        <text name="hg_predicted" text="PREDICTED OFFSPRING" />
+        <text name="hg_horse1_foal" text="HORSE 1 FOAL" />
+        <text name="hg_horse2_foal" text="HORSE 2 FOAL" />
+        <text name="hg_preview_offspring" text="Preview Offspring" />
+        <text name="hg_preview_note" text="Ranges shown until gestation finishes in a stable." />
+        <text name="hg_preview_note_alt" text="Ranges shown until they breed in a stable." />
+        <text name="hg_not_guaranteed" text="Not guaranteed" />
+        <text name="hg_breed_hint" text="Click a horse on the left to add or remove it. Foals are born after gestation." />
+        <text name="hg_breed_hint_list" text="Click a horse in the list to add or remove it. Foals are born in-stable." />
+        <text name="hg_all_horses" text="ALL HORSES" />
+        <text name="hg_all_recorded" text="All horses ever recorded: %d" />
+        <text name="hg_family_tree" text="FAMILY TREE" />
+        <text name="hg_tree_hint" text="Click a parent or foal to move through the tree." />
+        <text name="hg_parents" text="PARENTS" />
+        <text name="hg_selected" text="SELECTED" />
+        <text name="hg_offspring" text="OFFSPRING" />
+        <text name="hg_offspring_none" text="OFFSPRING  (None)" />
+        <text name="hg_offspring_n" text="OFFSPRING  (%d)" />
+        <text name="hg_offspring_scroll" text="OFFSPRING  (%d, Scroll here)" />
+        <text name="hg_settings" text="SETTINGS" />
+        <text name="hg_settings_hint" text="Host settings apply in multiplayer." />
+        <text name="hg_gestation_time" text="Gestation time" />
+        <text name="hg_gestation_help" text="Vanilla horses take 11 months. Foals are born after this many months." />
+        <text name="hg_sale_mods" text="Sale value modifiers" />
+        <text name="hg_sale_help" text="How strongly genetics change sale price. Off uses Vanilla prices." />
+        <text name="hg_months_vanilla" text="11 months (Vanilla)" />
+        <text name="hg_month_one" text="1 month" />
+        <text name="hg_months_n" text="%d months" />
+        <text name="hg_value_off" text="Off (Vanilla prices)" />
+        <text name="hg_value_default" text="100% (Default)" />
+        <text name="hg_field_name" text="Name: %s" />
+        <text name="hg_field_id" text="ID: %s" />
+        <text name="hg_field_age" text="Age: %s" />
+        <text name="hg_field_speed" text="Speed: %s" />
+        <text name="hg_field_stamina" text="Stamina: %s" />
+        <text name="hg_field_health" text="Health: %s" />
+        <text name="hg_field_average" text="Average: %s" />
+        <text name="hg_field_coat" text="Coat: %s" />
+        <text name="hg_field_sale" text="Sale Mod: %s" />
+        <text name="hg_field_speed_blank" text="Speed -" />
+        <text name="hg_field_stamina_blank" text="Stamina -" />
+        <text name="hg_field_health_blank" text="Health -" />
+        <text name="hg_dash" text="-" />
+        <text name="hg_unnamed" text="Unnamed" />
+        <text name="hg_unknown" text="Unknown" />
+        <text name="hg_unknown_parent" text="Unknown parent" />
+        <text name="hg_select_horse" text="Select a horse" />
+        <text name="hg_id_gen" text="ID: %s   Gen: %d" />
+        <text name="hg_sold" text="Sold: %s" />
+        <text name="hg_value_line" text="Value: %s" />
+        <text name="hg_age_ym" text="%dY %dM" />
+        <text name="hg_age_y" text="%dY" />
+        <text name="hg_age_m" text="%dM" />
+        <text name="hg_id_on_breed" text="ID: Assigned on breed" />
+        <text name="hg_name_at_birth" text="Name: Assigned at birth" />
+        <text name="hg_sale_depends" text="Depends on rolled stats" />
+        <text name="hg_coat_likely_one" text="%s (Likely), or Other (10%%)" />
+        <text name="hg_coat_likely_two" text="%s / %s (Likely), or Other (10%%)" />
+        <text name="hg_coat_bay" text="Bay" />
+        <text name="hg_coat_black" text="Black" />
+        <text name="hg_coat_chestnut" text="Chestnut" />
+        <text name="hg_coat_grey" text="Grey" />
+        <text name="hg_coat_palomino" text="Palomino" />
+        <text name="hg_coat_buckskin" text="Buckskin" />
+        <text name="hg_coat_pinto" text="Pinto" />
+        <text name="hg_coat_sealbrown" text="Seal Brown" />
+        <text name="hg_bonus_high" text="%s +5%%" />
+        <text name="hg_bonus_mid" text="%s +2.5%%" />
+        <text name="hg_warn_self" text="Cannot breed a horse with itself. Choose two different horses." />
+        <text name="hg_warn_need_two" text="Select two different horses to compare and breed." />
+        <text name="hg_status_removed" text="Removed %s from Horse %d. Click another horse to fill the slot." />
+        <text name="hg_status_selected" text="Selected %s. Click it again to remove it, or click another horse to replace Horse 1." />
+        <text name="hg_status_pick_first" text="Click a horse in the owned list first." />
+        <text name="hg_status_set" text="Horse %d set to %s." />
+        <text name="hg_status_need_pair" text="Select two horses before previewing." />
+        <text name="hg_status_different" text="Choose two different horses." />
+        <text name="hg_status_preview" text="Preview only. Put both mature horses in the same stable with 2 free slots; they each produce a foal on the monthly tick." />
+    </texts>
+</l10n>
