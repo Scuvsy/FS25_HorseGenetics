@@ -1164,6 +1164,32 @@ function HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
     return candidates[1]
 end
 
+function HorseGenetics.findCanonicalRecord(horseName, ownerFarmId)
+    if horseName == nil or horseName == "" then
+        return nil
+    end
+    local candidates = {}
+    for _, horse in pairs(HorseGenetics.horses or {}) do
+        if horse.name ~= nil and hgNamesMatch(horse.name, horseName) then
+            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
+                table.insert(candidates, horse)
+            end
+        end
+    end
+    if #candidates == 0 then
+        return nil
+    end
+    table.sort(candidates, function(a, b)
+        local aPed = HorseGenetics.recordHasPedigree(a)
+        local bPed = HorseGenetics.recordHasPedigree(b)
+        if aPed ~= bPed then
+            return aPed
+        end
+        return HorseGenetics.horseNumericId(a) < HorseGenetics.horseNumericId(b)
+    end)
+    return candidates[1]
+end
+
 function HorseGenetics.pruneDuplicateRecords()
     local bound = HorseGenetics.getBoundHorseIds()
     local boundNames = {}
@@ -1195,17 +1221,18 @@ function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         return nil
     end
 
+    local horseName = HorseGenetics.getClusterName(cluster)
+    local canonical = HorseGenetics.findCanonicalRecord(horseName, ownerFarmId)
     local horse = HorseGenetics.getHorseForCluster(cluster)
     if horse == nil and cluster.horseGeneticsId ~= nil then
         cluster.horseGeneticsId = nil
     end
+    if horse ~= nil and canonical ~= nil and horse.id ~= canonical.id
+        and HorseGenetics.isFoundationDuplicate(horse) then
+        horse = canonical
+        cluster.horseGeneticsId = canonical.id
+    end
     if horse ~= nil then
-        local canonical = HorseGenetics.findReusableRecord(horse.name or HorseGenetics.getClusterName(cluster), ownerFarmId)
-        if canonical ~= nil and canonical.id ~= horse.id and HorseGenetics.isFoundationDuplicate(horse)
-            and HorseGenetics.recordHasPedigree(canonical) then
-            horse = canonical
-            cluster.horseGeneticsId = canonical.id
-        end
         horse.soldPrice = nil
         if horse.farmId == nil and ownerFarmId ~= nil then
             horse.farmId = ownerFarmId
@@ -1213,19 +1240,17 @@ function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         return horse
     end
 
-    local horseName = HorseGenetics.getClusterName(cluster)
     if horseName == nil or horseName == "" then
         return nil
     end
 
-    local matchingHorse = HorseGenetics.findReusableRecord(horseName, ownerFarmId)
-    if matchingHorse ~= nil then
-        cluster.horseGeneticsId = matchingHorse.id
-        matchingHorse.soldPrice = nil
-        if matchingHorse.farmId == nil and ownerFarmId ~= nil then
-            matchingHorse.farmId = ownerFarmId
+    if canonical ~= nil then
+        cluster.horseGeneticsId = canonical.id
+        canonical.soldPrice = nil
+        if canonical.farmId == nil and ownerFarmId ~= nil then
+            canonical.farmId = ownerFarmId
         end
-        return matchingHorse
+        return canonical
     end
 
     if HorseGenetics.recordsReady ~= true or not HorseGenetics.isAuthoritative() then
@@ -1900,9 +1925,6 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
     end)
     cluster.setDirty = originalSetDirty
     cluster._hgReproSync = nil
-    if type(originalSetDirty) == "function" then
-        pcall(originalSetDirty, cluster)
-    end
 end
 
 function HorseGenetics.syncClusterReproduction(cluster)
