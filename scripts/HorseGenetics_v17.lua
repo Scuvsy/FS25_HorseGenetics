@@ -85,6 +85,7 @@ HorseGenetics.COAT_COLOURS = {
 }
 
 HorseGenetics.nextHorseId = 1
+HorseGenetics.recordsReady = false
 
 local function hgApplyHorseDataFile()
     local data = HorseGenetics.HORSE_DATA
@@ -115,6 +116,7 @@ HorseGenetics.xmlSchema:register(XMLValueType.FLOAT, "horseGenetics.horse(?)#hea
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#farmId", "Farm ID")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#soldPrice", "Sold price")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastKnownSellPrice", "Last shop sell price")
+HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastAgeMonths", "Last known age in months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#gestationMonths", "Gestation months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#valueModifierPercent", "Sale modifier strength")
 HorseGenetics.xmlSchema:register(XMLValueType.STRING, "horseGenetics.history(?)#parent1Id", "History parent 1")
@@ -482,6 +484,7 @@ function HorseGenetics:saveToXMLFile(xmlFile, key)
         xmlFile:setInt(horseKey .. "#farmId", horse.farmId or 0)
         xmlFile:setInt(horseKey .. "#soldPrice", horse.soldPrice or 0)
         xmlFile:setInt(horseKey .. "#lastKnownSellPrice", horse.lastKnownSellPrice or 0)
+        xmlFile:setInt(horseKey .. "#lastAgeMonths", horse.lastAgeMonths or -1)
 
         index = index + 1
     end
@@ -568,7 +571,8 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
             },
             farmId = xmlFile:getInt(horseKey .. "#farmId", 0),
             soldPrice = xmlFile:getInt(horseKey .. "#soldPrice", 0),
-            lastKnownSellPrice = xmlFile:getInt(horseKey .. "#lastKnownSellPrice", 0)
+            lastKnownSellPrice = xmlFile:getInt(horseKey .. "#lastKnownSellPrice", 0),
+            lastAgeMonths = xmlFile:getInt(horseKey .. "#lastAgeMonths", -1)
         }
 
         if horse.farmId == 0 then
@@ -579,6 +583,9 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
         end
         if horse.lastKnownSellPrice == 0 then
             horse.lastKnownSellPrice = nil
+        end
+        if horse.lastAgeMonths ~= nil and horse.lastAgeMonths < 0 then
+            horse.lastAgeMonths = nil
         end
 
         if horse.mareId == "" then
@@ -707,6 +714,7 @@ function HorseGenetics:loadFromSavegame()
 
     self:loadFromXMLFile(xmlFile, "horseGenetics")
     xmlFile:delete()
+    HorseGenetics.recordsReady = true
     HorseGenetics.pruneDuplicateRecords()
     if HorseGenetics.syncAllReproductionVisuals ~= nil then
         HorseGenetics.syncAllReproductionVisuals()
@@ -732,6 +740,7 @@ if Mission00 ~= nil and Mission00.onStartMission ~= nil then
             HorseGenetics.installNetworkHooks()
             if HorseGenetics.isAuthoritative() then
                 HorseGenetics:loadFromSavegame()
+                HorseGenetics.recordsReady = true
                 HorseGenetics.ensureLiveHorseRecords()
             else
                 HorseGenetics.requestSync()
@@ -744,53 +753,55 @@ if Mission00 ~= nil and Mission00.onStartMission ~= nil then
     )
 end
 
--- Register horseGeneticsId on animal clusters before save/load.
-if AnimalClusterSystem ~= nil
-    and AnimalClusterSystem.registerSavegameXMLPaths ~= nil
-    and not AnimalClusterSystem.horseGeneticsSchemaInstalled then
+function HorseGenetics.installClusterPersistence()
+    if AnimalClusterSystem ~= nil
+        and AnimalClusterSystem.registerSavegameXMLPaths ~= nil
+        and not AnimalClusterSystem.horseGeneticsSchemaInstalled then
 
-    local originalRegisterAnimalClusterPaths =
-        AnimalClusterSystem.registerSavegameXMLPaths
+        local originalRegisterAnimalClusterPaths =
+            AnimalClusterSystem.registerSavegameXMLPaths
 
-    AnimalClusterSystem.registerSavegameXMLPaths = function(schema, basePath, ...)
-        originalRegisterAnimalClusterPaths(schema, basePath, ...)
-        schema:register(
-            XMLValueType.STRING,
-            basePath .. ".animal(?)#horseGeneticsId",
-            "Horse Genetics persistent horse identifier"
-        )
-    end
-
-    AnimalClusterSystem.horseGeneticsSchemaInstalled = true
-end
-
--- Persist the genetics ID on stable and rideable horse clusters.
-if AnimalCluster ~= nil
-    and AnimalCluster.saveToXMLFile ~= nil
-    and AnimalCluster.loadFromXMLFile ~= nil
-    and not AnimalCluster.horseGeneticsPersistenceInstalled then
-
-    local originalAnimalClusterSave = AnimalCluster.saveToXMLFile
-    local originalAnimalClusterLoad = AnimalCluster.loadFromXMLFile
-
-    AnimalCluster.saveToXMLFile = function(self, xmlFile, key, usedModNames)
-        local result = originalAnimalClusterSave(self, xmlFile, key, usedModNames)
-
-        if self.horseGeneticsId ~= nil then
-            xmlFile:setValue(key .. "#horseGeneticsId", self.horseGeneticsId)
+        AnimalClusterSystem.registerSavegameXMLPaths = function(schema, basePath, ...)
+            originalRegisterAnimalClusterPaths(schema, basePath, ...)
+            schema:register(
+                XMLValueType.STRING,
+                basePath .. ".animal(?)#horseGeneticsId",
+                "Horse Genetics persistent horse identifier"
+            )
         end
 
-        return result
+        AnimalClusterSystem.horseGeneticsSchemaInstalled = true
     end
 
-    AnimalCluster.loadFromXMLFile = function(self, xmlFile, key, ...)
-        local result = originalAnimalClusterLoad(self, xmlFile, key, ...)
-        self.horseGeneticsId = xmlFile:getValue(key .. "#horseGeneticsId")
-        return result
+    local function installClassPersistence(classTable)
+        if classTable == nil
+            or classTable.saveToXMLFile == nil
+            or classTable.loadFromXMLFile == nil
+            or classTable.horseGeneticsPersistenceInstalled then
+            return
+        end
+        local originalSave = classTable.saveToXMLFile
+        local originalLoad = classTable.loadFromXMLFile
+        classTable.saveToXMLFile = function(self, xmlFile, key, usedModNames)
+            local result = originalSave(self, xmlFile, key, usedModNames)
+            if self.horseGeneticsId ~= nil then
+                xmlFile:setValue(key .. "#horseGeneticsId", self.horseGeneticsId)
+            end
+            return result
+        end
+        classTable.loadFromXMLFile = function(self, xmlFile, key, ...)
+            local result = originalLoad(self, xmlFile, key, ...)
+            self.horseGeneticsId = xmlFile:getValue(key .. "#horseGeneticsId")
+            return result
+        end
+        classTable.horseGeneticsPersistenceInstalled = true
     end
 
-    AnimalCluster.horseGeneticsPersistenceInstalled = true
+    installClassPersistence(AnimalCluster)
+    installClassPersistence(AnimalClusterHorse)
 end
+
+HorseGenetics.installClusterPersistence()
 
 -- Never wrap AnimalCluster readStream/writeStream. Extra bytes desync vanilla
 -- AnimalClusterUpdateEvent on dedicated join (nil:readStream) and can leave
@@ -979,6 +990,38 @@ function HorseGenetics.getHusbandryClusters(husbandry)
     return list
 end
 
+local function hgNamesMatch(a, b)
+    if a == nil or b == nil or a == "" or b == "" then
+        return false
+    end
+    return string.lower(tostring(a)) == string.lower(tostring(b))
+end
+
+function HorseGenetics.getClusterNumAnimals(cluster)
+    if cluster == nil then
+        return 0
+    end
+    local count = cluster.numAnimals
+    if type(count) ~= "number" and cluster.getNumAnimals ~= nil then
+        local ok, value = pcall(function()
+            return cluster:getNumAnimals()
+        end)
+        if ok then
+            count = value
+        end
+    end
+    if type(count) ~= "number" then
+        return 1
+    end
+    return count
+end
+
+function HorseGenetics.isLiveHorseCluster(cluster)
+    return cluster ~= nil
+        and HorseGenetics.isHorseCluster(cluster)
+        and HorseGenetics.getClusterNumAnimals(cluster) > 0
+end
+
 function HorseGenetics.getHorseForCluster(cluster)
     if cluster == nil then
         return nil
@@ -988,8 +1031,12 @@ function HorseGenetics.getHorseForCluster(cluster)
     if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
         local horse = HorseGenetics.horses[horseId]
         local name = HorseGenetics.getClusterName(cluster)
-        if name ~= nil then
-            horse.name = name
+        if name ~= nil and name ~= "" then
+            if horse.name == nil or horse.name == "" or hgNamesMatch(horse.name, name) then
+                horse.name = name
+            else
+                return nil
+            end
         end
         return horse
     end
@@ -1019,7 +1066,7 @@ function HorseGenetics.getBoundHorseIds()
     local bound = {}
     pcall(function()
         HorseGenetics.visitAnimalClusters(function(cluster)
-            if cluster ~= nil and cluster.horseGeneticsId ~= nil then
+            if HorseGenetics.isLiveHorseCluster(cluster) and cluster.horseGeneticsId ~= nil then
                 bound[cluster.horseGeneticsId] = true
             end
         end)
@@ -1035,15 +1082,34 @@ function HorseGenetics.getBoundHorseIds()
     return bound
 end
 
--- Reuse an unbound, unsold record with this name instead of rolling a new horse.
-function HorseGenetics.findReusableRecord(horseName, ownerFarmId)
+function HorseGenetics.recordHasPedigree(horse)
+    if horse == nil then
+        return false
+    end
+    if horse.mareId ~= nil and horse.mareId ~= "" then
+        return true
+    end
+    if horse.stallionId ~= nil and horse.stallionId ~= "" then
+        return true
+    end
+    return HorseGenetics.hasOffspring(horse.id)
+end
+
+function HorseGenetics.isFoundationDuplicate(horse)
+    return horse ~= nil
+        and (tonumber(horse.generation) or 1) <= 1
+        and not HorseGenetics.recordHasPedigree(horse)
+end
+
+-- Reuse the original record for this name instead of rolling a new horse.
+function HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
     if horseName == nil or horseName == "" then
         return nil
     end
-    local bound = HorseGenetics.getBoundHorseIds()
+    local bound = usedHorseIds or HorseGenetics.getBoundHorseIds()
     local candidates = {}
     for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse.name ~= nil and string.lower(tostring(horse.name)) == string.lower(tostring(horseName))
+        if horse.name ~= nil and hgNamesMatch(horse.name, horseName)
             and bound[horse.id] ~= true then
             if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
                 table.insert(candidates, horse)
@@ -1054,12 +1120,17 @@ function HorseGenetics.findReusableRecord(horseName, ownerFarmId)
         return nil
     end
     table.sort(candidates, function(a, b)
+        local aPed = HorseGenetics.recordHasPedigree(a)
+        local bPed = HorseGenetics.recordHasPedigree(b)
+        if aPed ~= bPed then
+            return aPed
+        end
         local aLive = a.soldPrice == nil
         local bLive = b.soldPrice == nil
         if aLive ~= bLive then
             return aLive
         end
-        return HorseGenetics.horseNumericId(a) > HorseGenetics.horseNumericId(b)
+        return HorseGenetics.horseNumericId(a) < HorseGenetics.horseNumericId(b)
     end)
     return candidates[1]
 end
@@ -1077,10 +1148,8 @@ function HorseGenetics.pruneDuplicateRecords()
     for id, horse in pairs(HorseGenetics.horses or {}) do
         if horse ~= nil
             and bound[id] ~= true
-            and horse.soldPrice == nil
-            and (horse.mareId == nil or horse.mareId == "")
-            and (horse.stallionId == nil or horse.stallionId == "")
-            and not HorseGenetics.hasOffspring(id)
+            and HorseGenetics.isFoundationDuplicate(horse)
+            and horse.name ~= nil
             and boundNames[horse.name] == true then
             HorseGenetics.horses[id] = nil
             removed = true
@@ -1093,12 +1162,21 @@ end
 
 -- Bind or create the genetics record for a live cluster. Clients never roll new stats.
 function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
-    if cluster == nil then
+    if not HorseGenetics.isLiveHorseCluster(cluster) then
         return nil
     end
 
     local horse = HorseGenetics.getHorseForCluster(cluster)
+    if horse == nil and cluster.horseGeneticsId ~= nil then
+        cluster.horseGeneticsId = nil
+    end
     if horse ~= nil then
+        local canonical = HorseGenetics.findReusableRecord(horse.name or HorseGenetics.getClusterName(cluster), ownerFarmId)
+        if canonical ~= nil and canonical.id ~= horse.id and HorseGenetics.isFoundationDuplicate(horse)
+            and HorseGenetics.recordHasPedigree(canonical) then
+            horse = canonical
+            cluster.horseGeneticsId = canonical.id
+        end
         horse.soldPrice = nil
         if horse.farmId == nil and ownerFarmId ~= nil then
             horse.farmId = ownerFarmId
@@ -1121,7 +1199,7 @@ function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         return matchingHorse
     end
 
-    if not HorseGenetics.isAuthoritative() then
+    if HorseGenetics.recordsReady ~= true or not HorseGenetics.isAuthoritative() then
         return nil
     end
 
@@ -2019,22 +2097,7 @@ function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseI
     if horseName == nil or horseName == "" then
         return nil
     end
-    local lname = string.lower(tostring(horseName))
-    local match, count = nil, 0
-    for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse ~= nil and horse.soldPrice == nil and horse.name ~= nil
-            and string.lower(tostring(horse.name)) == lname
-            and (usedHorseIds == nil or usedHorseIds[horse.id] ~= true) then
-            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
-                match = horse
-                count = count + 1
-            end
-        end
-    end
-    if count == 1 then
-        return match
-    end
-    return nil
+    return HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
 end
 
 function HorseGenetics.collectClusterBindings()
@@ -2509,6 +2572,7 @@ end
 
 -- Hook sale price, new clusters, and mounting a horse.
 function HorseGenetics:installCoreIntegrations()
+    HorseGenetics.installClusterPersistence()
     self:installSaleValueIntegration()
     hgHookHorseClusterAdd(PlaceableHusbandryAnimals, "addCluster")
     hgHookHorseClusterAdd(AnimalClusterSystem, "addCluster")
@@ -2742,6 +2806,7 @@ end
 function HorseGenetics:loadMap()
     HorseGenetics.registerEventClasses()
     HorseGenetics.installNetworkHooks()
+    HorseGenetics.installClusterPersistence()
     HorseGenetics.installHorseReproductionBlock()
     HorseGenetics:installCoreIntegrations()
 end
@@ -2750,6 +2815,7 @@ function HorseGenetics:update(dt)
     pcall(function()
         HorseGenetics.registerEventClasses()
         HorseGenetics.installNetworkHooks()
+        HorseGenetics.installClusterPersistence()
         HorseGenetics.installHorseReproductionBlock()
         HorseGenetics:installCoreIntegrations()
         dt = tonumber(dt) or 0
@@ -2980,6 +3046,7 @@ end
 function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregnancies, settings, clusterBindings)
     HorseGenetics.horses = horses or {}
     HorseGenetics.clientHasSync = true
+    HorseGenetics.recordsReady = true
     if type(nextHorseId) == "number" and nextHorseId > 0 then
         HorseGenetics.nextHorseId = nextHorseId
     end
