@@ -269,6 +269,9 @@ function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, pube
     for _, entry in ipairs(HorseGenetics.pregnancies or {}) do
         HorseGenetics.normalizePregnancy(entry)
     end
+    if HorseGenetics.applyPubertyToHorseSubtypes ~= nil then
+        HorseGenetics.applyPubertyToHorseSubtypes()
+    end
     if HorseGenetics.notifyUiDirty ~= nil then
         HorseGenetics.notifyUiDirty()
     end
@@ -1784,6 +1787,73 @@ function HorseGenetics.getMaturityMonths(cluster)
     return HorseGenetics.getPubertyMonths()
 end
 
+function HorseGenetics.forEachHorseSubType(visitor)
+    if type(visitor) ~= "function" then
+        return
+    end
+    local animalSystem = g_currentMission ~= nil and g_currentMission.animalSystem or g_animalSystem
+    if animalSystem == nil then
+        return
+    end
+    local seen = {}
+    local function consider(subType)
+        if type(subType) ~= "table" or seen[subType] == true then
+            return
+        end
+        seen[subType] = true
+        local label = string.upper(tostring(subType.name or "") .. " " .. tostring(subType.typeName or ""))
+        pcall(function()
+            if animalSystem.getTypeByIndex ~= nil and subType.typeIndex ~= nil then
+                local animalType = animalSystem:getTypeByIndex(subType.typeIndex)
+                if animalType ~= nil then
+                    label = label .. " " .. string.upper(tostring(animalType.name or animalType.typeName or ""))
+                end
+            end
+        end)
+        if string.find(label, "HORSE", 1, true) ~= nil then
+            visitor(subType)
+        end
+    end
+    local function considerList(list)
+        if type(list) ~= "table" then
+            return
+        end
+        for _, value in pairs(list) do
+            if type(value) == "table" then
+                if value.reproductionMinAgeMonth ~= nil or value.subTypeIndex ~= nil or value.name ~= nil then
+                    consider(value)
+                else
+                    considerList(value)
+                end
+            end
+        end
+    end
+    considerList(animalSystem.subTypes)
+    considerList(animalSystem.nameToSubType)
+    considerList(animalSystem.subTypeIndexToSubType)
+    considerList(animalSystem.types)
+    if animalSystem.getSubTypes ~= nil then
+        local ok, result = pcall(function()
+            return animalSystem:getSubTypes()
+        end)
+        if ok then
+            considerList(result)
+        end
+    end
+end
+
+function HorseGenetics.applyPubertyToHorseSubtypes()
+    local months = HorseGenetics.getPubertyMonths()
+    HorseGenetics.forEachHorseSubType(function(subType)
+        subType.reproductionMinAgeMonth = months
+        subType.minReproductionAgeMonth = months
+        if type(subType.reproduction) == "table" then
+            subType.reproduction.minAgeMonth = months
+        end
+    end)
+    HorseGenetics._appliedPubertyMonths = months
+end
+
 function HorseGenetics.isHorseMature(cluster)
     return HorseGenetics.getClusterAgeMonths(cluster) >= HorseGenetics.getMaturityMonths(cluster)
 end
@@ -1810,6 +1880,7 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
         cluster.reproductionDuration = duration
         cluster.reproductionToGo = remaining
         cluster.reproduction = percent
+        cluster.reproductionMinAgeMonth = HorseGenetics.getPubertyMonths()
         cluster.isInseminated = inseminated == true
         if cluster.setReproduction ~= nil then
             local ok = pcall(function()
@@ -1829,6 +1900,9 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
     end)
     cluster.setDirty = originalSetDirty
     cluster._hgReproSync = nil
+    if type(originalSetDirty) == "function" then
+        pcall(originalSetDirty, cluster)
+    end
 end
 
 function HorseGenetics.syncClusterReproduction(cluster)
@@ -1880,8 +1954,16 @@ end
 
 function HorseGenetics.syncAllReproductionVisuals()
     pcall(function()
-        HorseGenetics.visitAnimalClusters(function(cluster)
+        if HorseGenetics.applyPubertyToHorseSubtypes ~= nil then
+            HorseGenetics.applyPubertyToHorseSubtypes()
+        end
+        HorseGenetics.visitAnimalClusters(function(cluster, container)
             HorseGenetics.syncClusterReproduction(cluster)
+            if container ~= nil and container.raiseActive ~= nil then
+                pcall(function()
+                    container:raiseActive()
+                end)
+            end
         end)
     end)
 end
@@ -2696,7 +2778,20 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 if self._hgReproSync ~= true then
                     HorseGenetics.syncClusterReproduction(self)
                 end
-                return tonumber(self.reproduction) or 0
+                local horseId = self.horseGeneticsId
+                if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
+                    local record = HorseGenetics.getHorseForCluster(self)
+                    if record ~= nil then
+                        horseId = record.id
+                    end
+                end
+                if HorseGenetics.getPregnancyForHorseId(horseId) ~= nil then
+                    return HorseGenetics.getReproductionPercent(HorseGenetics.getPregnancyForHorseId(horseId))
+                end
+                if not HorseGenetics.isHorseMature(self) then
+                    return HorseGenetics.getPubertyPercent(self)
+                end
+                return 0
             end
             if methodName == "getReproductionDuration" then
                 if not HorseGenetics.isHorseMature(self) then
@@ -2737,9 +2832,6 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
 end
 
 function HorseGenetics.installHorseReproductionBlock()
-    if HorseGenetics.horseReproductionBlockInstalled then
-        return true
-    end
     local wrapped = 0
     local classes = {
         AnimalCluster, AnimalClusterHorse, AnimalItem, AnimalItemHorse,
@@ -2825,6 +2917,10 @@ function HorseGenetics:update(dt)
         HorseGenetics.installClusterPersistence()
         HorseGenetics.installHorseReproductionBlock()
         HorseGenetics:installCoreIntegrations()
+        if HorseGenetics._appliedPubertyMonths ~= HorseGenetics.getPubertyMonths() then
+            HorseGenetics.applyPubertyToHorseSubtypes()
+            HorseGenetics.syncAllReproductionVisuals()
+        end
         dt = tonumber(dt) or 0
         if HorseGenetics.isAuthoritative() then
             HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
