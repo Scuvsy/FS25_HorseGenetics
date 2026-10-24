@@ -1061,11 +1061,7 @@ function HorseGenetics.getHorseForCluster(cluster)
         local horse = HorseGenetics.horses[horseId]
         local name = HorseGenetics.getClusterName(cluster)
         if name ~= nil and name ~= "" then
-            if horse.name == nil or horse.name == "" or hgNamesMatch(horse.name, name) then
-                horse.name = name
-            else
-                return nil
-            end
+            horse.name = name
         end
         return horse
     end
@@ -1130,108 +1126,17 @@ function HorseGenetics.isFoundationDuplicate(horse)
         and not HorseGenetics.recordHasPedigree(horse)
 end
 
--- Reuse the original record for this name instead of rolling a new horse.
-function HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
-    if horseName == nil or horseName == "" then
-        return nil
-    end
-    local bound = usedHorseIds or HorseGenetics.getBoundHorseIds()
-    local candidates = {}
-    for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse.name ~= nil and hgNamesMatch(horse.name, horseName)
-            and bound[horse.id] ~= true then
-            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
-                table.insert(candidates, horse)
-            end
-        end
-    end
-    if #candidates == 0 then
-        return nil
-    end
-    table.sort(candidates, function(a, b)
-        local aPed = HorseGenetics.recordHasPedigree(a)
-        local bPed = HorseGenetics.recordHasPedigree(b)
-        if aPed ~= bPed then
-            return aPed
-        end
-        local aLive = a.soldPrice == nil
-        local bLive = b.soldPrice == nil
-        if aLive ~= bLive then
-            return aLive
-        end
-        return HorseGenetics.horseNumericId(a) < HorseGenetics.horseNumericId(b)
-    end)
-    return candidates[1]
-end
-
-function HorseGenetics.findCanonicalRecord(horseName, ownerFarmId)
-    if horseName == nil or horseName == "" then
-        return nil
-    end
-    local candidates = {}
-    for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse.name ~= nil and hgNamesMatch(horse.name, horseName) then
-            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
-                table.insert(candidates, horse)
-            end
-        end
-    end
-    if #candidates == 0 then
-        return nil
-    end
-    table.sort(candidates, function(a, b)
-        local aPed = HorseGenetics.recordHasPedigree(a)
-        local bPed = HorseGenetics.recordHasPedigree(b)
-        if aPed ~= bPed then
-            return aPed
-        end
-        return HorseGenetics.horseNumericId(a) < HorseGenetics.horseNumericId(b)
-    end)
-    return candidates[1]
-end
-
 function HorseGenetics.pruneDuplicateRecords()
-    local bound = HorseGenetics.getBoundHorseIds()
-    local boundNames = {}
-    for id, _ in pairs(bound) do
-        local horse = HorseGenetics.horses[id]
-        if horse ~= nil and horse.name ~= nil then
-            boundNames[horse.name] = true
-        end
-    end
-    local removed = false
-    for id, horse in pairs(HorseGenetics.horses or {}) do
-        if horse ~= nil
-            and bound[id] ~= true
-            and HorseGenetics.isFoundationDuplicate(horse)
-            and horse.name ~= nil
-            and boundNames[horse.name] == true then
-            HorseGenetics.horses[id] = nil
-            removed = true
-        end
-    end
-    if removed then
-        HorseGenetics:saveToSavegame()
-    end
 end
 
 -- Bind or create the genetics record for a live cluster. Clients never roll new stats.
+-- Identity is cluster.horseGeneticsId only. A rename updates the label on that ID.
 function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
     if not HorseGenetics.isLiveHorseCluster(cluster) then
         return nil
     end
 
-    local horseName = HorseGenetics.getClusterName(cluster)
-    local canonical = HorseGenetics.findCanonicalRecord(horseName, ownerFarmId)
     local horse = HorseGenetics.getHorseForCluster(cluster)
-    if horse == nil and cluster.horseGeneticsId ~= nil then
-        cluster.horseGeneticsId = nil
-    end
-    if horse ~= nil and canonical ~= nil and horse.id ~= canonical.id
-        and HorseGenetics.isFoundationDuplicate(horse) then
-        horse = canonical
-        cluster.horseGeneticsId = canonical.id
-    end
     if horse ~= nil then
         horse.soldPrice = nil
         if horse.farmId == nil and ownerFarmId ~= nil then
@@ -1240,21 +1145,35 @@ function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         return horse
     end
 
-    if horseName == nil or horseName == "" then
+    if HorseGenetics.recordsReady ~= true then
         return nil
     end
 
-    if canonical ~= nil then
-        cluster.horseGeneticsId = canonical.id
-        canonical.soldPrice = nil
-        if canonical.farmId == nil and ownerFarmId ~= nil then
-            canonical.farmId = ownerFarmId
+    local boundRecord = HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId)
+    if boundRecord ~= nil then
+        cluster.horseGeneticsId = boundRecord.id
+        boundRecord.soldPrice = nil
+        if boundRecord.farmId == nil and ownerFarmId ~= nil then
+            boundRecord.farmId = ownerFarmId
         end
-        return canonical
+        local name = HorseGenetics.getClusterName(cluster)
+        if name ~= nil and name ~= "" then
+            boundRecord.name = name
+        end
+        return boundRecord
     end
 
-    if HorseGenetics.recordsReady ~= true or not HorseGenetics.isAuthoritative() then
+    if cluster.horseGeneticsId ~= nil and cluster.horseGeneticsId ~= "" then
         return nil
+    end
+
+    if not HorseGenetics.isAuthoritative() then
+        return nil
+    end
+
+    local horseName = HorseGenetics.getClusterName(cluster)
+    if horseName == nil or horseName == "" then
+        horseName = hgT("hg_unnamed")
     end
 
     horse = HorseGenetics.createHorse(
@@ -2204,11 +2123,21 @@ function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseI
         and (usedHorseIds == nil or usedHorseIds[existingId] ~= true) then
         return HorseGenetics.horses[existingId]
     end
-    local horseName = HorseGenetics.getClusterName(cluster)
-    if horseName == nil or horseName == "" then
+    local clusterId = cluster.id ~= nil and tostring(cluster.id) or ""
+    if clusterId == "" then
         return nil
     end
-    return HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
+    for _, binding in ipairs(HorseGenetics.clusterBindings or {}) do
+        if binding.clusterId == clusterId and binding.horseId ~= nil
+            and HorseGenetics.horses[binding.horseId] ~= nil
+            and (usedHorseIds == nil or usedHorseIds[binding.horseId] ~= true) then
+            if ownerFarmId == nil or binding.farmId == nil or binding.farmId == 0
+                or tonumber(binding.farmId) == tonumber(ownerFarmId) then
+                return HorseGenetics.horses[binding.horseId]
+            end
+        end
+    end
+    return nil
 end
 
 function HorseGenetics.collectClusterBindings()
@@ -2469,30 +2398,6 @@ function HorseGenetics.collectHorseSellPrices()
             local horseId = cluster ~= nil and cluster.horseGeneticsId or nil
             if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
                 horse = HorseGenetics.horses[horseId]
-            else
-                local name = nil
-                if cluster ~= nil then
-                    if cluster.getName ~= nil then
-                        local ok, result = pcall(cluster.getName, cluster)
-                        if ok then
-                            name = result
-                        end
-                    else
-                        name = cluster.name
-                    end
-                end
-                if name ~= nil and name ~= "" then
-                    local match, count = nil, 0
-                    for _, record in pairs(HorseGenetics.horses or {}) do
-                        if record.name == name then
-                            match = record
-                            count = count + 1
-                        end
-                    end
-                    if count == 1 then
-                        horse = match
-                    end
-                end
             end
             if horse == nil then
                 return

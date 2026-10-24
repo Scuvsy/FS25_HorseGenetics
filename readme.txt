@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.18.0
+Version: 1.0.19.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -92,6 +92,7 @@ A pregnancy can start even if the stable is full. Birth still needs two empty
 stalls, because each parent produces one foal.
 
 Foal names come from the base game's random horse names, not from the parents.
+You can rename any horse afterwards. Stats stay on the genetic ID.
 
 Both foals use the same two parents for inheritance. Each foal still rolls its
 own stats, coat and variation independently, so the twins will not be clones.
@@ -263,7 +264,8 @@ FAMILY TREE AND SAVED DATA
 
 Each horse record stores:
 
-  - Genetic ID (for example HG-000004)
+  - Genetic ID (for example HG-000004). This ID is the identity for stats.
+    Renaming a horse in the animals menu only changes the label.
   - Name, generation, coat
   - Speed, Stamina, Health
   - Parent IDs when the horse was bred (shop horses have none)
