@@ -3561,30 +3561,11 @@ local HG_PORTRAIT_POS_STR = "255px -179px"
 local HG_PORTRAIT_SIZE_N = {260 / 1920, 200 / 1080}
 
 local function hgApplyPxSize(element, widthPx, heightPx)
-    if element == nil then
+    if element == nil or element.setSize == nil then
         return
     end
-    local sizeStr = string.format("%.1fpx %dpx", widthPx, heightPx)
-    local applied = false
-    if element.setSize ~= nil then
-        applied = hgSafeCall(function()
-            element:setSize(sizeStr)
-        end)
-        if not applied then
-            applied = hgSafeCall(function()
-                element:setSize(string.format("%.1fpx", widthPx), string.format("%dpx", heightPx))
-            end)
-        end
-        if not applied then
-            hgSafeCall(function()
-                element:setSize(widthPx / 1920, heightPx / 1080)
-            end)
-        end
-    end
+    element:setSize(string.format("%dpx %dpx", widthPx, heightPx))
     hgSafeCall(function()
-        if element.setAbsoluteSize ~= nil then
-            element:setAbsoluteSize(widthPx / 1920, heightPx / 1080)
-        end
         if element.overlay ~= nil then
             element.overlay.width = widthPx / 1920
             element.overlay.height = heightPx / 1080
@@ -3602,28 +3583,21 @@ local function hgApplyPxPosition(element, xPx, yPx)
     if element == nil or element.setPosition == nil then
         return
     end
-    local posStr = string.format("%.1fpx %dpx", xPx, yPx)
-    local applied = hgSafeCall(function()
-        element:setPosition(posStr)
-    end)
-    if not applied then
-        hgSafeCall(function()
-            element:setPosition(string.format("%.1fpx", xPx), string.format("%dpx", yPx))
-        end)
-    end
+    element:setPosition(string.format("%dpx %dpx", xPx, yPx))
 end
 
 local function hgReadAbsSize(element)
     if element == nil then
         return nil, nil
     end
-    if element.absSize ~= nil then
-        return tonumber(element.absSize[1]), tonumber(element.absSize[2])
+    local size = element.absSize
+    if type(size) ~= "table" then
+        size = element.size
     end
-    if element.size ~= nil then
-        return tonumber(element.size[1]), tonumber(element.size[2])
+    if type(size) ~= "table" then
+        return nil, nil
     end
-    return nil, nil
+    return tonumber(size[1]), tonumber(size[2])
 end
 
 local function hgSyncOverlaySize(element, wNorm, hNorm)
@@ -3689,36 +3663,9 @@ local function hgTrySetBarSize(element, name, value, widthPx, heightPx)
 
     local attempts = {
         {
-            name = "screenNorm",
-            apply = function()
-                element:setSize(screenW, screenH)
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
-            name = "parentNorm",
-            apply = function()
-                element:setSize(parentW, parentH)
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
             name = "pxString",
             apply = function()
                 element:setSize(string.format("%dpx %dpx", widthPx, heightPx))
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
-            name = "sizeTable",
-            apply = function()
-                element.size = {screenW, screenH}
-                if element.updateAbsolutePosition ~= nil then
-                    element:updateAbsolutePosition()
-                end
             end,
             overlayW = screenW,
             overlayH = screenH
@@ -3762,16 +3709,9 @@ local function hgTrySetBarSize(element, name, value, widthPx, heightPx)
         end
     end
 
-    -- Fallback if absSize did not change.
-    hgSafeCall(function()
-        element.size = {screenW, screenH}
-        if element.updateAbsolutePosition ~= nil then
-            element:updateAbsolutePosition()
-        end
-        hgSyncOverlaySize(element, screenW, screenH)
-    end)
+    hgSyncOverlaySize(element, screenW, screenH)
     local afterW = select(1, hgReadAbsSize(element))
-    return HG_BAR_SIZE_API or "fallback", afterW
+    return HG_BAR_SIZE_API or "pxString", afterW
 end
 
 local function hgSetBarFill(bar, value, name)
@@ -3791,16 +3731,9 @@ local function hgSetBarFill(bar, value, name)
         end
         -- Nested fills stay at 0,0 (left of the track). Do not re-center; shrinking the
         -- fill bitmap is what makes the bar read as a percentage.
-        hgSafeCall(function()
-            if bar.setPosition ~= nil then
-                local ok = hgSafeCall(function()
-                    bar:setPosition("0px 0px")
-                end)
-                if not ok then
-                    bar:setPosition(0, 0)
-                end
-            end
-        end)
+        if bar.setPosition ~= nil then
+            bar:setPosition("0px 0px")
+        end
         hgTrySetBarSize(bar, name, value, widthPx, HG_BAR_TRACK_HEIGHT)
     end)
 end
@@ -3809,25 +3742,10 @@ local function hgApplyPortraitLayout(element)
     if element == nil then
         return
     end
-    hgSafeCall(function()
-        if element.setSize ~= nil then
-            local ok = hgSafeCall(function()
-                element:setSize(HG_PORTRAIT_SIZE_STR)
-            end)
-            if not ok then
-                hgSafeCall(function()
-                    element:setSize(HG_PORTRAIT_SIZE_N[1], HG_PORTRAIT_SIZE_N[2])
-                end)
-            end
-        end
-        hgApplyPxSize(element, 260, 200)
-        hgApplyPxPosition(element, HG_PORTRAIT_POS_X, HG_PORTRAIT_POS_Y)
-        hgSafeCall(function()
-            if element.setPosition ~= nil then
-                element:setPosition(HG_PORTRAIT_POS_STR)
-            end
-        end)
-    end)
+    if element.setSize ~= nil then
+        element:setSize(HG_PORTRAIT_SIZE_STR)
+    end
+    hgApplyPxPosition(element, HG_PORTRAIT_POS_X, HG_PORTRAIT_POS_Y)
 end
 
 local function hgHideLeftoverScrollChrome(page)
@@ -3871,11 +3789,6 @@ local function hgBindStatBarTextures(page)
     end
     bind(page.hgHeaderIcon, "gui/icons/horse_genetics_menu_icon.dds")
     bind(page.hgHeaderBadge, "gui/decor/header_badge.dds")
-    hgSafeCall(function()
-        if page.hgHeaderIcon ~= nil and page.hgHeaderIcon.setImageUVs ~= nil and GuiUtils ~= nil then
-            page.hgHeaderIcon:setImageUVs(nil, unpack(GuiUtils.getUVs({0, 0, 256, 256}, 256)))
-        end
-    end)
     local function bindStatIcon(ids, relativePath)
         for i = 1, #ids do
             bind(page[ids[i]], relativePath)
@@ -4103,9 +4016,6 @@ local function hgStyleSectionTitle(element)
         return
     end
     hgSetColor(element, HG_COLOR_SELECTED)
-    if element.setTextSize ~= nil then
-        hgSafeCall(element.setTextSize, element, 30 / 1080)
-    end
     hgApplyBold(element)
     if element.setTextAlignment ~= nil and RenderText ~= nil and RenderText.ALIGN_LEFT ~= nil then
         hgSafeCall(element.setTextAlignment, element, RenderText.ALIGN_LEFT)
@@ -4117,9 +4027,6 @@ local function hgStyleColumnHeader(element)
         return
     end
     hgSetColor(element, HG_COLOR_SELECTED)
-    if element.setTextSize ~= nil then
-        hgSafeCall(element.setTextSize, element, 16 / 1080)
-    end
     hgApplyBold(element)
 end
 
@@ -4156,9 +4063,6 @@ function HorseGeneticsMenu:styleSectionTitles()
     hgSetColor(self.treeHint, HG_COLOR_MUTED)
     hgSetColor(self.breedPickerHint, {1, 1, 1, 1})
     hgApplyBold(self.breedPickerHint)
-    if self.breedPickerHint ~= nil and self.breedPickerHint.setTextSize ~= nil then
-        hgSafeCall(self.breedPickerHint.setTextSize, self.breedPickerHint, 16 / 1080)
-    end
     hgStyleColumnHeader(self.breedPickHeaderName)
     hgStyleColumnHeader(self.breedPickHeaderAge)
     hgStyleColumnHeader(self.breedPickHeaderSpeed)
@@ -5088,9 +4992,6 @@ function HorseGeneticsMenu:renderBreedPicker()
         local color = selected and HG_COLOR_SELECTED or HG_COLOR_TEXT
         local function styleCell(element)
             hgSetColor(element, color)
-            if element ~= nil and element.setTextSize ~= nil then
-                hgSafeCall(element.setTextSize, element, 16 / 1080)
-            end
         end
         hgSetText(self["breedPick" .. i .. "Name"], name)
         hgSetText(self["breedPick" .. i .. "Age"], age)
@@ -5568,13 +5469,14 @@ function HorseGeneticsMenu:mouseWheelEvent(delta, eventUsed)
 end
 
 function HorseGeneticsMenu:update(dt)
+    if g_inGameMenu == nil or g_inGameMenu.isOpen ~= true or g_inGameMenu.currentPage ~= self then
+        return
+    end
     local superClass = HorseGeneticsMenu:superClass()
     if superClass ~= nil and superClass.update ~= nil then
         superClass.update(self, dt)
     end
-    if self:hgIsMyHorsesScrollActive() then
-        self:hgPollScrollInput()
-    end
+    self:hgPollScrollInput()
 end
 
 local function hgInstallScrollInputHooks(page)
@@ -5829,6 +5731,11 @@ function HorseGenetics.installGeneticsMenu()
         HorseGenetics.geneticsMenuInstalled = true
         return true
     end
+    if g_inGameMenu ~= nil and g_inGameMenu.horseGeneticsMenu ~= nil then
+        HorseGenetics.hgMenuPage = g_inGameMenu.horseGeneticsMenu
+        HorseGenetics.geneticsMenuInstalled = true
+        return true
+    end
     if g_gui == nil or g_inGameMenu == nil or g_inGameMenu.pagingElement == nil then return false end
     if TabbedMenuFrameElement == nil or g_gui.loadGui == nil then return false end
     local page = HorseGeneticsMenu.new()
@@ -5849,29 +5756,25 @@ function HorseGenetics.installGeneticsMenu()
     g_inGameMenu:exposeControlsAsFields(pageName)
 
     local insertPosition = hgFindAnimalsTabInsertPosition()
+    HorseGenetics.hgMenuPage = page
+    HorseGenetics.geneticsMenuInstalled = true
     g_inGameMenu.pagingElement:addElement(page)
     hgMovePageInList(g_inGameMenu.pagingElement.elements, page, insertPosition)
     hgMovePageInList(g_inGameMenu.pagingElement.pages, page, insertPosition)
-    g_inGameMenu.pagingElement:updateAbsolutePosition()
     g_inGameMenu.pagingElement:updatePageMapping()
     g_inGameMenu:registerPage(page, insertPosition, function() return true end)
 
+    local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
     local tabOk = false
-    if GuiUtils ~= nil then
-        local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
+    if g_inGameMenu.addPageTab ~= nil then
         tabOk = hgSafeCall(function()
-            g_inGameMenu:addPageTab(page, iconPath, GuiUtils.getUVs({0, 0, 256, 256}, 256))
+            g_inGameMenu:addPageTab(page, iconPath)
         end)
         if not tabOk then
             tabOk = hgSafeCall(function()
-                g_inGameMenu:addPageTab(page, iconPath, GuiUtils.getUVs({0, 0, 1024, 1024}))
+                g_inGameMenu:addPageTab(page, iconPath, {0, 0, 1, 1})
             end)
         end
-    end
-    if not tabOk and g_iconsUIFilename ~= nil and GuiUtils ~= nil then
-        hgSafeCall(function()
-            g_inGameMenu:addPageTab(page, g_iconsUIFilename, GuiUtils.getUVs({0, 0, 64, 64}))
-        end)
     end
     hgMovePageInList(g_inGameMenu.pageFrames, page, insertPosition)
     if g_inGameMenu.rebuildTabList ~= nil then
@@ -5880,22 +5783,13 @@ function HorseGenetics.installGeneticsMenu()
     hgSafeCall(hgFixInGameMenuTabScroll)
     hgSafeCall(hgInstallTabScrollFix)
 
-    HorseGenetics.geneticsMenuInstalled = true
-
     -- Bind textures after the tab is registered.
-    hgSafeCall(hgBindStatBarTextures, page)
-    hgSafeCall(function()
-        if page.setTitle ~= nil then
-            page:setTitle(hgT("hg_title"))
-        end
-    end)
-    hgSafeCall(function()
-        if page.updateAbsolutePosition ~= nil then
-            page:updateAbsolutePosition()
-        end
-    end)
-    hgSafeCall(hgInstallScrollInputHooks, page)
-    hgSafeCall(hgHideLeftoverScrollChrome, page)
+    hgBindStatBarTextures(page)
+    if page.setTitle ~= nil then
+        page:setTitle(hgT("hg_title"))
+    end
+    hgInstallScrollInputHooks(page)
+    hgHideLeftoverScrollChrome(page)
 
     return true
 end
