@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.9.0
+Version: 1.0.15.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -83,8 +83,8 @@ When the month changes the mod looks at each horse husbandry:
   - When elapsed months reach the chosen gestation and two stalls are free,
     both foals are born.
   - If no pregnancy is running, a new one can start when there are at least
-    two horses that are 22 months old or older in the same building. The two
-    oldest eligible horses are paired.
+    two horses at or above the Settings puberty age in the same building. The
+    two oldest eligible horses are paired. Default puberty is 22 months.
 
 A pregnancy can start even if the stable is full. Birth still needs two empty
 stalls, because each parent produces one foal.
@@ -101,8 +101,9 @@ REPRODUCTION AND PUBERTY BARS
 
 The animals menu bar is driven by this mod.
 
-Foals (under 22 months)
-  A puberty bar fills with age until 22 months, the vanilla horse breeding age.
+Foals (under the Settings puberty age)
+  A puberty bar fills with age until that age. Default is 22 months, matching
+  vanilla horses. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 
 Adults
   The bar stays empty until a Horse Genetics pregnancy starts. During pregnancy
@@ -226,25 +227,31 @@ from exceptional individual stats.
       Exceptional bonus total = +7.5%
 
 3) Final multiplier
-  The two parts are added, then capped at the default 100% setting:
+  The two parts are added, then clamped for the default 100% setting:
 
       multiplier = baseMultiplier + exceptionalBonus
-      minimum 0.75x  (-25%)
-      maximum 1.60x  (+60%)
+      at 100%:  0.75x to 1.60x
 
-  Sale value modifiers in Settings scale how strong that effect is. 100% is
-  the default. Off (0%) uses the vanilla horse price. 200% doubles the
-  difference from 1.00x.
+  Sale value modifiers in Settings then scale the difference from 1.00x.
+  100% is the default. Off (0%) uses the vanilla horse price. 200% doubles
+  that difference, then clamps again.
 
-  Using the example above:
+  Using the example above at 100% strength:
 
       1.416 + 0.075 = 1.491x  ->  +49.1%
 
   That is the "Total sale modifier" shown in My Horses. The Value column is
   the live shop sell price after this multiplier is applied.
 
-Low-average horses without exceptional stats sit below 1.00x. A poor horse
-cannot fall below 0.75x. A superb horse cannot exceed 1.60x.
+  After the strength slider is applied, the game still clamps the result:
+
+      100% (default)  0.75x to 1.60x
+      200%            0.50x to 2.20x
+      Off             1.00x (vanilla)
+
+Low-average horses without exceptional stats sit below 1.00x. At the default
+100% setting a poor horse cannot fall below 0.75x and a superb horse cannot
+exceed 1.60x.
 
 
 ================================================================================
@@ -272,10 +279,6 @@ savegame.
 MULTIPLAYER COMPATIBILITY
 ================================================================================
 
-This mod is PC only. It is NOT compatible with consoles (Xbox or PlayStation).
-
-On PC it is multiplayer compatible.
-
 The host or dedicated server owns the genetics data:
 
   - Shop horses and foals get their stats on the server only. Clients receive
@@ -289,23 +292,13 @@ The host or dedicated server owns the genetics data:
     registry when they connect.
   - MY HORSES, BREEDING and GENETIC INFO show the local farm's horses. Other
     farms' bloodlines stay on that farm.
-  - Real births still happen on the monthly tick in a stable that belongs to
-    the server simulation. Two mature horses in the same building start a
-    pregnancy. Two free stalls are needed when the foals are born. Gestation
-    and sale-modifier settings are owned by the host.
-  - SETTINGS: gestation (default 11 months) and sale-value strength. Use Esc,
-    Horse Genetics, Settings.
+  - Real births still happen on the monthly tick. Gestation and sale-modifier
+    settings are owned by the host.
 
-Every player in the session needs the mod. Dedicated servers should keep it in
-the server mod folder.
-
-Farming Simulator 25 only loads zipped mods in multiplayer. For a multiplayer
-or dedicated-server session, pack the folder as FS25_HorseGenetics.zip. The
-unzipped folder is fine for single player while you are testing.
-
-Download the game zip from GitHub Releases (Assets: FS25_HorseGenetics.zip), not
-Code → Download ZIP. Code → Download ZIP nests files under FS25_HorseGenetics-main/,
-so Fragnet and other dedicated hosts report modDesc.xml not found.
+Every player in the session needs the same version of the mod, including the
+dedicated server. Farming Simulator 25 only loads this mod as a zip in
+multiplayer. Keep FS25_HorseGenetics.zip in the server mods folder, with
+modDesc.xml at the zip root (not inside a nested folder).
 
 
 ================================================================================
@@ -342,7 +335,7 @@ TIPS
 - Two free stalls are required at birth. One empty stall is not enough.
 - A pregnancy can start while the stable is full. Clear two stalls before the
   gestation finishes if you want the foals to appear on time.
-- Both parents must be at least 22 months old.
+- Both parents must be at least the Settings puberty age (default 22 months).
 - Watch the animals menu bar: empty adults are waiting to pair, filling adults
   are pregnant, filling foals are still in puberty.
 - Preview Horse 1 Foal and Horse 2 Foal are two independent rolls of the same

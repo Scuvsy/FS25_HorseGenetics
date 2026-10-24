@@ -6,3 +6,8 @@ desktop.ini
 .DS_Store
 *.log
 tools/
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.json
