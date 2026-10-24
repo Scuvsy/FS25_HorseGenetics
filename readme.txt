@@ -62,10 +62,11 @@ GENETIC INFO
   scroll offspring.
 
 SETTINGS
-  Gestation time (default 11 months, vanilla), puberty time (default 22 months,
-  vanilla), and sale-value modifier strength (default 100%). Both month settings
-  use 1, 3, 6, 8, 11, 14, 16, 18 or 22 months. In multiplayer the host's
-  settings apply.
+  Three rows: gestation time (default 11 months, vanilla), puberty time
+  (default 22 months, vanilla), and sale-value modifier strength (default
+  100%). Each row is minus, the current value in the middle, and plus. Month
+  steps are 1, 3, 6, 8, 11, 14, 16, 18 or 22. Opening MY HORSES reloads the
+  owned list. In multiplayer the host's settings apply.
 
 
 ================================================================================

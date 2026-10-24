@@ -19,7 +19,7 @@ Open Horse Genetics from the Esc menu (next to Animals). Four pages:
 MY HORSES: owned horses, age, stats, sale modifier, live shop value, and a profile with reproduction or puberty.
 BREEDING: pair two owned horses to preview likely foal ranges. This page does not spawn foals.
 GENETIC INFO: every recorded horse, including sold horses, plus a family tree of parents and offspring.
-SETTINGS: gestation length, puberty age, and how strongly genetics change sale price. Host settings apply in multiplayer.
+SETTINGS: gestation length, puberty age, and how strongly genetics change sale price. Each row is minus, the current value, and plus. Host settings apply in multiplayer.
 
 Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses at or above your Settings puberty age in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months and default puberty is 22 months, matching vanilla horses. Settings offers 1, 3, 6, 8, 11, 14, 16, 18 or 22 months for both. When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names. You can rename any horse; Speed, Stamina and Health stay on the genetic ID (HG-000001), not the name.
 
@@ -67,7 +67,7 @@ Horse Genetics öffnet ihr über das Esc-Menü (neben Animals). Vier Seiten:
 MEINE PFERDE: eigene Pferde, Alter, Werte, Verkaufsmodifikator, aktueller Shop-Wert und ein Profil mit Trächtigkeit oder Pubertät.
 ZUCHT: zwei eigene Pferde paaren und wahrscheinliche Fohlenbereiche sehen. Diese Seite erzeugt keine Fohlen.
 GENETIK: jedes erfasste Pferd, auch verkaufte, plus Stammbaum mit Eltern und Nachkommen.
-EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis ändert. Im Mehrspieler gelten die Host-Einstellungen.
+EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis ändert. Jede Zeile hat Minus, den aktuellen Wert und Plus. Im Mehrspieler gelten die Host-Einstellungen.
 
 Shop-Pferde werden zu Gründungstieren (jeder Wert 35-75). Echte Geburten finden im Stall statt. Zwei Pferde ab dem Pubertätsalter aus den Einstellungen im selben Gebäude starten zum Monatswechsel eine Trächtigkeit. Standard-Tragzeit ist 11 Monate und Standard-Pubertät 22 Monate wie bei Vanilla-Pferden. Einstellungen für beides: 1, 3, 6, 8, 11, 14, 16, 18 oder 22 Monate. Sind nach der Tragzeit zwei Boxen frei, bekommt jedes Elterntier ein Fohlen. Namen kommen aus dem Basisspiel. Ihr könnt jedes Pferd umbenennen; Tempo, Ausdauer und Gesundheit bleiben an der Genetik-ID (HG-000001), nicht am Namen.
 
@@ -115,7 +115,7 @@ Ouvrez Horse Genetics depuis le menu Échap (à côté d'Animals). Quatre pages 
 MES CHEVAUX : chevaux possédés, âge, stats, modificateur de vente, valeur boutique actuelle, et un profil avec reproduction ou puberté.
 ÉLEVAGE : associez deux chevaux possédés pour prévisualiser les fourchettes probables des poulains. Cette page ne fait pas naître de poulains.
 INFOS GÉNÉTIQUES : chaque cheval enregistré, y compris les chevaux vendus, plus un arbre généalogique des parents et descendants.
-PARAMÈTRES : durée de gestation, âge de puberté, et à quel point la génétique change le prix de vente. Les paramètres de l'hôte s'appliquent en multijoueur.
+PARAMÈTRES : durée de gestation, âge de puberté, et à quel point la génétique change le prix de vente. Chaque ligne a moins, la valeur actuelle et plus. Les paramètres de l'hôte s'appliquent en multijoueur.
 
 Les chevaux du magasin deviennent le cheptel fondateur (chaque stat 35-75). Les vraies naissances ont lieu à l'écurie. Placez deux chevaux à l'âge de puberté des Paramètres ou plus dans le même bâtiment. Une gestation démarre au changement de mois. Gestation par défaut : 11 mois. Puberté par défaut : 22 mois, comme les chevaux vanilla. Les Paramètres proposent 1, 3, 6, 8, 11, 14, 16, 18 ou 22 mois pour les deux. Quand la gestation est terminée et que deux boxes sont libres, chaque parent produit un poulain. Les noms viennent du jeu de base. Vous pouvez renommer n'importe quel cheval ; Vitesse, Endurance et Santé restent liées à l'ID génétique (HG-000001), pas au nom.
 
