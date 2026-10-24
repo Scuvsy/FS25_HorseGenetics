@@ -5568,13 +5568,13 @@ function HorseGeneticsMenu:mouseWheelEvent(delta, eventUsed)
 end
 
 function HorseGeneticsMenu:update(dt)
-    hgSafeCall(function()
-        local superClass = HorseGeneticsMenu:superClass()
-        if superClass ~= nil and superClass.update ~= nil then
-            superClass.update(self, dt)
-        end
-    end)
-    hgSafeCall(HorseGeneticsMenu.hgPollScrollInput, self)
+    local superClass = HorseGeneticsMenu:superClass()
+    if superClass ~= nil and superClass.update ~= nil then
+        superClass.update(self, dt)
+    end
+    if self:hgIsMyHorsesScrollActive() then
+        self:hgPollScrollInput()
+    end
 end
 
 local function hgInstallScrollInputHooks(page)
