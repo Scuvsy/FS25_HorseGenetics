@@ -181,9 +181,7 @@
                     <Text id="horse13Sale" profile="fs25_textDefault" position="536px 0px" size="104px 32px" text="" />
                     <Text id="horse13Value" profile="fs25_textDefault" position="640px 0px" size="128px 32px" text="" />
                 </GuiElement>
-                <Text id="moreRecordsText" profile="fs25_textDefault" position="120px -647px" size="500px 28px" text="" />
-                <Text id="btnRefreshLabel" profile="fs25_textDefault" position="24px -647px" size="90px 28px" text="$l10n_hg_refresh" />
-                <Button id="btnRefresh" position="24px -647px" size="90px 28px" text="" onClick="onRefreshClick" />
+                <Text id="moreRecordsText" profile="fs25_textDefault" position="24px -647px" size="600px 28px" text="" />
             </GuiElement>
 
             <GuiElement profile="fs25_statisticsHeaderBox" id="boxHorseProfile" position="410px -80px" size="700px 300px">

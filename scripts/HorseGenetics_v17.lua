@@ -4668,21 +4668,6 @@ function HorseGeneticsMenu:onSelectHorse11() self:selectRecord(11) end
 function HorseGeneticsMenu:onSelectHorse12() self:selectRecord(12) end
 function HorseGeneticsMenu:onSelectHorse13() self:selectRecord(13) end
 
-function HorseGeneticsMenu:onRefreshClick()
-    if HorseGenetics.requestSync ~= nil then
-        HorseGenetics.requestSync()
-    end
-    if HorseGenetics.ensureLiveHorseRecords ~= nil then
-        HorseGenetics.ensureLiveHorseRecords()
-    end
-    self:refreshRecords()
-    if self.currentTab == "breeding" then
-        self:renderBreedingPage()
-    elseif self.currentTab == "info" then
-        self:renderGeneticInfoPage()
-    end
-end
-
 function HorseGeneticsMenu:bindCoatPortrait(element, coatColour)
     if element == nil then
         return
