@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="114">
     <author>Scuvsy</author>
-    <version>1.0.19.0</version>
+    <version>1.0.20.0</version>
 
     <title>
         <en>Horse Genetics</en>
@@ -21,7 +21,7 @@ SETTINGS: gestation length, puberty age, and how strongly genetics change sale p
 
 Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses at or above your Settings puberty age in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months and default puberty is 22 months, matching vanilla horses. Settings offers 1, 3, 6, 8, 11, 14, 16, 18 or 22 months for both. When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names. You can rename any horse; Speed, Stamina and Health stay on the genetic ID (HG-000001), not the name.
 
-The animals menu reproduction bar fills during pregnancy using your Settings gestation. Foals show a puberty bar until they reach the Settings puberty age. Vanilla automatic horse births are turned off so this mod owns horse breeding.
+The animals menu reproduction bar starts filling as soon as a Horse Genetics pregnancy begins, using your Settings gestation. After a birth, Last birth is recorded on the parents. Foals show a puberty bar until they reach the Settings puberty age. Vanilla automatic horse births are turned off so this mod owns horse breeding.
 
 Foals inherit the average of both parents, plus variation (-8 to +8), a possible high-quality bonus, and a coat colour from the parents or a 10% chance of another colour.
 
@@ -43,7 +43,7 @@ EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis �
 
 Shop-Pferde werden zu Gründungstieren (jeder Wert 35-75). Echte Geburten finden im Stall statt. Zwei Pferde ab dem Pubertätsalter aus den Einstellungen im selben Gebäude starten zum Monatswechsel eine Trächtigkeit. Standard-Tragzeit ist 11 Monate und Standard-Pubertät 22 Monate wie bei Vanilla-Pferden. Einstellungen für beides: 1, 3, 6, 8, 11, 14, 16, 18 oder 22 Monate. Sind nach der Tragzeit zwei Boxen frei, bekommt jedes Elterntier ein Fohlen. Namen kommen aus dem Basisspiel. Ihr könnt jedes Pferd umbenennen; Tempo, Ausdauer und Gesundheit bleiben an der Genetik-ID (HG-000001), nicht am Namen.
 
-Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Trächtigkeit nach eurer Tragzeit. Fohlen zeigen einen Pubertätsbalken bis zum eingestellten Pubertätsalter. Die Vanilla-Pferdegeburten sind aus, damit dieser Mod die Zucht steuert.
+Der Fortpflanzungsbalken im Tiere-Menü füllt sich sofort, sobald eine Horse-Genetics-Trächtigkeit beginnt, nach eurer Tragzeit. Nach der Geburt wird die letzte Geburt bei den Eltern gespeichert. Fohlen zeigen einen Pubertätsbalken bis zum eingestellten Pubertätsalter. Die Vanilla-Pferdegeburten sind aus, damit dieser Mod die Zucht steuert.
 
 Fohlen erben den Mittelwert beider Eltern plus Streuung (-8 bis +8), einen möglichen Qualitätsbonus und eine Fellfarbe der Eltern oder mit 10% eine andere Farbe.
 

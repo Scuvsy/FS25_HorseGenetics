@@ -1051,15 +1051,48 @@ function HorseGenetics.isLiveHorseCluster(cluster)
         and HorseGenetics.getClusterNumAnimals(cluster) > 0
 end
 
+function HorseGenetics.getLiveHorseCluster(object)
+    if object == nil then
+        return nil
+    end
+    local nested = object.cluster
+    if type(nested) ~= "table" and type(object.getCluster) == "function" then
+        pcall(function()
+            nested = object:getCluster()
+        end)
+    end
+    if type(nested) == "table" and nested ~= object then
+        if nested.horseGeneticsId ~= nil or HorseGenetics.isHorseCluster(nested) then
+            return nested
+        end
+    end
+    return object
+end
+
+function HorseGenetics.getHorseGeneticsId(object)
+    if object == nil then
+        return nil
+    end
+    local live = HorseGenetics.getLiveHorseCluster(object)
+    local horseId = live ~= nil and live.horseGeneticsId or nil
+    if (horseId == nil or horseId == "") and object.horseGeneticsId ~= nil then
+        horseId = object.horseGeneticsId
+    end
+    if horseId ~= nil and horseId ~= "" then
+        return horseId
+    end
+    return nil
+end
+
 function HorseGenetics.getHorseForCluster(cluster)
     if cluster == nil then
         return nil
     end
-
-    local horseId = cluster.horseGeneticsId
+    local live = HorseGenetics.getLiveHorseCluster(cluster)
+    local horseId = live ~= nil and live.horseGeneticsId or cluster.horseGeneticsId
     if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
         local horse = HorseGenetics.horses[horseId]
-        local name = HorseGenetics.getClusterName(cluster)
+        local name = HorseGenetics.getClusterName(live) or HorseGenetics.getClusterName(cluster)
         if name ~= nil and name ~= "" then
             horse.name = name
         end
@@ -1523,8 +1556,8 @@ function HorseGenetics.findClusterByHorseId(husbandry, horseId)
     end
     local nameMatch = nil
     for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(husbandry)) do
-        if cluster.horseGeneticsId == horseId then
-            return cluster
+        if HorseGenetics.getHorseGeneticsId(cluster) == horseId then
+            return HorseGenetics.getLiveHorseCluster(cluster) or cluster
         end
         if wantedName ~= nil and nameMatch == nil then
             local clusterName = HorseGenetics.getClusterName(cluster)
@@ -1569,6 +1602,8 @@ function HorseGenetics.completePregnancy(husbandry, pregnancy)
     end
     local foal2 = HorseGenetics.createFoalInHusbandry(husbandry, parent2Cluster, parent1, parent2)
     if foal2 == nil then
+        HorseGenetics.markClusterBirth(parent1Cluster)
+        HorseGenetics.markClusterBirth(parent2Cluster)
         HorseGenetics:saveToSavegame()
         return true
     end
@@ -1581,7 +1616,24 @@ function HorseGenetics.completePregnancy(husbandry, pregnancy)
         foal2Id = foal2.id, foal2Name = foal2.name, foal2Coat = foal2.coatColour,
         foal2Speed = foal2.stats.speed, foal2Stamina = foal2.stats.stamina, foal2Health = foal2.stats.health
     })
+    HorseGenetics.markClusterBirth(parent1Cluster)
+    HorseGenetics.markClusterBirth(parent2Cluster)
     return true
+end
+
+function HorseGenetics.markClusterBirth(cluster)
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    if live == nil then
+        return
+    end
+    pcall(function()
+        live.hadABirth = true
+        live.monthsSinceLastBirth = 0
+        if cluster ~= nil and cluster ~= live then
+            cluster.hadABirth = true
+            cluster.monthsSinceLastBirth = 0
+        end
+    end)
 end
 
 function HorseGenetics.normalizePregnancy(entry)
@@ -1701,9 +1753,12 @@ function HorseGenetics.getReproductionPercent(pregnancy)
     end
     local elapsed = tonumber(pregnancy and pregnancy.monthsElapsed) or 0
     local remaining = tonumber(pregnancy and pregnancy.monthsRemaining) or math.max(0, duration - elapsed)
-    local percent = math.max(0, math.min(100, math.floor(elapsed / duration * 100 + 0.5)))
+    local percent = math.max(0, math.min(100, math.floor((elapsed + 1) / duration * 100 + 0.5)))
     if remaining > 0 and percent >= 100 then
         percent = 99
+    end
+    if remaining <= 0 then
+        percent = 100
     end
     return percent
 end
@@ -1712,13 +1767,25 @@ function HorseGenetics.getClusterAgeMonths(cluster)
     if cluster == nil then
         return 0
     end
-    local age = cluster.age
-    if type(age) ~= "number" and cluster.getAge ~= nil then
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    local age = live.age
+    if type(age) ~= "number" and live.getAge ~= nil then
         local ok, value = pcall(function()
-            return cluster:getAge()
+            return live:getAge()
         end)
         if ok then
             age = value
+        end
+    end
+    if type(age) ~= "number" and cluster ~= live then
+        age = cluster.age
+        if type(age) ~= "number" and cluster.getAge ~= nil then
+            local ok, value = pcall(function()
+                return cluster:getAge()
+            end)
+            if ok then
+                age = value
+            end
         end
     end
     if type(age) ~= "number" then
@@ -1826,6 +1893,12 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
         cluster.reproduction = percent
         cluster.reproductionMinAgeMonth = HorseGenetics.getPubertyMonths()
         cluster.isInseminated = inseminated == true
+        if HorseGenetics.hasOffspring(HorseGenetics.getHorseGeneticsId(cluster)) then
+            cluster.hadABirth = true
+            if type(cluster.monthsSinceLastBirth) ~= "number" then
+                cluster.monthsSinceLastBirth = 0
+            end
+        end
         if cluster.setReproduction ~= nil then
             local ok = pcall(function()
                 cluster:setReproduction(percent)
@@ -1847,41 +1920,52 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
 end
 
 function HorseGenetics.syncClusterReproduction(cluster)
-    if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
+    if cluster == nil then
+        return
+    end
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    if not HorseGenetics.isHorseCluster(live) and not HorseGenetics.isHorseCluster(cluster) then
         return
     end
     local duration = HorseGenetics.getGestationMonths()
-    local horseId = cluster.horseGeneticsId
+    local horseId = HorseGenetics.getHorseGeneticsId(live) or HorseGenetics.getHorseGeneticsId(cluster)
     if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-        local record = HorseGenetics.getHorseForCluster(cluster)
+        local record = HorseGenetics.getHorseForCluster(live) or HorseGenetics.getHorseForCluster(cluster)
         if record ~= nil then
             horseId = record.id
         end
     end
+    if horseId ~= nil and horseId ~= "" then
+        live.horseGeneticsId = horseId
+        if cluster ~= live then
+            cluster.horseGeneticsId = horseId
+        end
+    end
     local pregnancy = HorseGenetics.getPregnancyForHorseId(horseId)
+    local percent, remaining, inseminated
     if pregnancy ~= nil then
-        HorseGenetics.setClusterReproduction(
-            cluster,
-            HorseGenetics.getReproductionPercent(pregnancy),
-            duration,
-            pregnancy.monthsRemaining,
-            true
-        )
-        return
+        percent = HorseGenetics.getReproductionPercent(pregnancy)
+        remaining = pregnancy.monthsRemaining
+        inseminated = true
+        duration = HorseGenetics.getGestationMonths()
+    else
+        local maturity = HorseGenetics.getMaturityMonths(live)
+        local age = HorseGenetics.getClusterAgeMonths(live)
+        if age < maturity then
+            percent = HorseGenetics.getPubertyPercent(live)
+            remaining = math.max(0, maturity - age)
+            inseminated = false
+            duration = maturity
+        else
+            percent = 0
+            remaining = duration
+            inseminated = false
+        end
     end
-    local maturity = HorseGenetics.getMaturityMonths(cluster)
-    local age = HorseGenetics.getClusterAgeMonths(cluster)
-    if age < maturity then
-        HorseGenetics.setClusterReproduction(
-            cluster,
-            HorseGenetics.getPubertyPercent(cluster),
-            maturity,
-            math.max(0, maturity - age),
-            false
-        )
-        return
+    HorseGenetics.setClusterReproduction(live, percent, duration, remaining, inseminated)
+    if cluster ~= live then
+        HorseGenetics.setClusterReproduction(cluster, percent, duration, remaining, inseminated)
     end
-    HorseGenetics.setClusterReproduction(cluster, 0, duration, duration, false)
 end
 
 function HorseGenetics.syncHusbandryReproduction(husbandry)
@@ -1994,9 +2078,25 @@ function HorseGenetics.tryStartPregnancy(husbandry)
     return true
 end
 
+function HorseGenetics.advanceLastBirthMonths(husbandry)
+    if husbandry == nil then
+        return
+    end
+    for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(husbandry)) do
+        local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+        if HorseGenetics.isHorseCluster(live) and live.hadABirth == true then
+            local horseId = HorseGenetics.getHorseGeneticsId(live)
+            if HorseGenetics.getPregnancyForHorseId(horseId) == nil then
+                live.monthsSinceLastBirth = (tonumber(live.monthsSinceLastBirth) or 0) + 1
+            end
+        end
+    end
+end
+
 function HorseGenetics.onHusbandryMonth(husbandry)
     HorseGenetics.advancePregnancies(husbandry)
     HorseGenetics.tryStartPregnancy(husbandry)
+    HorseGenetics.advanceLastBirthMonths(husbandry)
     HorseGenetics.syncHusbandryReproduction(husbandry)
     HorseGenetics:saveToSavegame()
 end
@@ -2625,6 +2725,14 @@ function HorseGenetics.isHorseCluster(cluster)
             isHorse = true
         elseif AnimalItemHorse ~= nil and cluster.isa ~= nil and cluster:isa(AnimalItemHorse) then
             isHorse = true
+        elseif AnimalItemStock ~= nil and cluster.isa ~= nil and cluster:isa(AnimalItemStock) then
+            local nested = cluster.cluster
+            if nested == nil and cluster.getCluster ~= nil then
+                nested = cluster:getCluster()
+            end
+            if nested ~= nil and nested ~= cluster and AnimalClusterHorse ~= nil and nested.isa ~= nil and nested:isa(AnimalClusterHorse) then
+                isHorse = true
+            end
         end
     end)
     if isHorse then
@@ -2705,15 +2813,10 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 if self._hgReproSync ~= true then
                     HorseGenetics.syncClusterReproduction(self)
                 end
-                local horseId = self.horseGeneticsId
-                if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-                    local record = HorseGenetics.getHorseForCluster(self)
-                    if record ~= nil then
-                        horseId = record.id
-                    end
-                end
-                if HorseGenetics.getPregnancyForHorseId(horseId) ~= nil then
-                    return HorseGenetics.getReproductionPercent(HorseGenetics.getPregnancyForHorseId(horseId))
+                local horseId = HorseGenetics.getHorseGeneticsId(self)
+                local pregnancy = HorseGenetics.getPregnancyForHorseId(horseId)
+                if pregnancy ~= nil then
+                    return HorseGenetics.getReproductionPercent(pregnancy)
                 end
                 if not HorseGenetics.isHorseMature(self) then
                     return HorseGenetics.getPubertyPercent(self)
@@ -2728,14 +2831,14 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
             end
             if methodName == "getCanReproduce" then
                 HorseGenetics.syncClusterReproduction(self)
-                local horseId = self.horseGeneticsId
-                if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-                    local record = HorseGenetics.getHorseForCluster(self)
-                    if record ~= nil then
-                        horseId = record.id
-                    end
+                return HorseGenetics.getPregnancyForHorseId(HorseGenetics.getHorseGeneticsId(self)) ~= nil
+            end
+            if methodName == "getHadABirth" then
+                local live = HorseGenetics.getLiveHorseCluster(self)
+                if live ~= nil and live.hadABirth == true then
+                    return true
                 end
-                return HorseGenetics.getPregnancyForHorseId(horseId) ~= nil
+                return HorseGenetics.hasOffspring(HorseGenetics.getHorseGeneticsId(self))
             end
             if methodName == "getCanStartReproduction" or methodName == "reproduce" then
                 return false
@@ -2761,13 +2864,13 @@ end
 function HorseGenetics.installHorseReproductionBlock()
     local wrapped = 0
     local classes = {
-        AnimalCluster, AnimalClusterHorse, AnimalItem, AnimalItemHorse,
+        AnimalCluster, AnimalClusterHorse, AnimalItem, AnimalItemHorse, AnimalItemStock,
         AnimalClusterHusbandry, PlaceableHusbandryAnimals
     }
     local methods = {
         "updateReproduction", "changeReproduction", "reproduce",
         "addReproduction", "getCanReproduce", "getSupportsReproduction",
-        "getCanStartReproduction", "getReproduction", "getReproductionDuration"
+        "getCanStartReproduction", "getReproduction", "getReproductionDuration", "getHadABirth"
     }
     for i = 1, #classes do
         for j = 1, #methods do

@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.19.0
+Version: 1.0.20.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -81,7 +81,8 @@ Horse Genetics, Settings. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 When the month changes the mod looks at each horse husbandry:
 
   - If a pregnancy is already running, one month is counted and the animals
-    menu reproduction bar is updated from elapsed months / gestation months.
+    menu reproduction bar is updated. The bar already shows the first slice
+    when the pregnancy starts, not 0% until the next month.
   - When elapsed months reach the chosen gestation and two stalls are free,
     both foals are born.
   - If no pregnancy is running, a new one can start when there are at least
@@ -109,9 +110,10 @@ Foals (under the Settings puberty age)
   vanilla horses. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 
 Adults
-  The bar stays empty until a Horse Genetics pregnancy starts. During pregnancy
-  it fills using your Settings gestation. Example: 3-month gestation is about
-  33% after one month, 67% after two, then birth.
+  The bar stays empty until a Horse Genetics pregnancy starts. As soon as it
+  starts, the bar shows the first slice using your Settings gestation. Example:
+  3-month gestation is about 33% when pregnancy begins, 67% after the next
+  month, then birth. Last birth on the parents is set when the foals appear.
 
 Settings
   Changing gestation while a pregnancy is running rescales the remaining time
