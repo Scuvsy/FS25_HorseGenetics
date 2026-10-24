@@ -3983,6 +3983,7 @@ function HorseGeneticsMenu:refreshRecords()
     if self.selectedRecord == nil and #self.records > 0 then
         self.selectedRecord = self.records[1]
     end
+    self:syncBreedParentsToOwned()
 
     local maxOffset = math.max(0, #self.records - HorseGeneticsMenu.LIST_ROWS)
     if self.listOffset > maxOffset then
@@ -4885,6 +4886,24 @@ function HorseGeneticsMenu:renderBreedPicker()
     end
 end
 
+function HorseGeneticsMenu:resolveOwnedBreedRecord(parent)
+    if parent == nil or parent.id == nil then
+        return nil
+    end
+    for _, record in ipairs(self.records or {}) do
+        if record.id == parent.id then
+            return record
+        end
+    end
+    return nil
+end
+
+function HorseGeneticsMenu:syncBreedParentsToOwned()
+    self.breedParent1 = self:resolveOwnedBreedRecord(self.breedParent1)
+    self.breedParent2 = self:resolveOwnedBreedRecord(self.breedParent2)
+    self.breedPickerSelected = self:resolveOwnedBreedRecord(self.breedPickerSelected)
+end
+
 function HorseGeneticsMenu:clearBreedParent(slot)
     local removed = nil
     if slot == 1 then
@@ -4923,8 +4942,7 @@ function HorseGeneticsMenu:onClickBreedPick(index)
         self:assignBreedParent(2)
         return
     end
-    hgSetText(self.breedStatusText, hgT("hg_status_selected", tostring(record.name)))
-    self:renderBreedingPage()
+    self:assignBreedParent(1)
 end
 
 function HorseGeneticsMenu:onClickBreedPick1() self:onClickBreedPick(1) end

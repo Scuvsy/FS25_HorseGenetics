@@ -114,7 +114,7 @@
         <text name="hg_warn_self" text="Cannot breed a horse with itself. Choose two different horses." />
         <text name="hg_warn_need_two" text="Select two different horses to compare and breed." />
         <text name="hg_status_removed" text="Removed %s from Horse %d. Click another horse to fill the slot." />
-        <text name="hg_status_selected" text="Selected %s. Click a selected horse to remove it, then pick another." />
+        <text name="hg_status_selected" text="Selected %s. Click it again to remove it, or click another horse to replace Horse 1." />
         <text name="hg_status_pick_first" text="Click a horse in the owned list first." />
         <text name="hg_status_set" text="Horse %d set to %s." />
         <text name="hg_status_need_pair" text="Select two horses before previewing." />

@@ -114,7 +114,7 @@
         <text name="hg_warn_self" text="Ein Pferd kann nicht mit sich selbst gepaart werden. Zwei verschiedene Pferde wählen." />
         <text name="hg_warn_need_two" text="Zwei verschiedene Pferde zum Vergleichen und Züchten wählen." />
         <text name="hg_status_removed" text="%s von Pferd %d entfernt. Anderes Pferd wählen." />
-        <text name="hg_status_selected" text="%s gewählt. Gewähltes Pferd erneut klicken zum Entfernen." />
+        <text name="hg_status_selected" text="%s gewählt. Erneut klicken zum Entfernen, oder ein anderes Pferd klicken, um Pferd 1 zu ersetzen." />
         <text name="hg_status_pick_first" text="Zuerst ein Pferd in der Besitzliste wählen." />
         <text name="hg_status_set" text="Pferd %d ist jetzt %s." />
         <text name="hg_status_need_pair" text="Vor der Vorschau zwei Pferde wählen." />
