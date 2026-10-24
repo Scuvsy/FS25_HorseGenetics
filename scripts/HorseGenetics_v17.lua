@@ -1555,14 +1555,6 @@ function HorseGenetics.formatAgeYM(age)
     return string.format("%dM", rest)
 end
 
-function HorseGenetics.formatAgeShort(age)
-    return HorseGenetics.formatAgeYM(age)
-end
-
-function HorseGenetics.formatAgeLong(age)
-    return HorseGenetics.formatAgeYM(age)
-end
-
 function HorseGenetics.getRecordLifeState(record)
     if record == nil then
         return "Reproduction:", "-"
@@ -1966,10 +1958,6 @@ function HorseGenetics.visitAnimalClusters(visitor)
     visitList(mission.ownedItems)
 end
 
-local function hgVisitAnimalClusters(visitor)
-    HorseGenetics.visitAnimalClusters(visitor)
-end
-
 function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
     if cluster == nil then
         return nil
@@ -2254,7 +2242,7 @@ function HorseGenetics.collectHorseSellPrices()
     local sampleBase = nil
     HorseGenetics.quietSalePrice = true
     pcall(function()
-        hgVisitAnimalClusters(function(cluster)
+        HorseGenetics.visitAnimalClusters(function(cluster)
             local horse = nil
             local horseId = cluster ~= nil and cluster.horseGeneticsId or nil
             if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
@@ -3967,7 +3955,7 @@ function HorseGeneticsMenu:renderOverview()
             local stats = record.stats or {}
             local breakdown = record._hgUiBreakdown or HorseGenetics.getSaleValueBreakdown(record)
             name = tostring(record.name or record.id or "Unnamed")
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
@@ -4126,7 +4114,7 @@ function HorseGeneticsMenu:hgPollScrollInput()
     end
 end
 
--- Shop portraits: use dataS store horse DDS, never local coat photos.
+-- Shop portraits: prefer dataS store horse DDS, then local coat fallbacks.
 local HG_HORSE_STORE_ICON_DIR = "$dataS/character/animals/domesticated/horse/"
 local HG_HORSE_STORE_ICON_STEMS = {
     bay = "store_horseBay",
@@ -4613,7 +4601,7 @@ function HorseGeneticsMenu:renderProfile()
     hgSetText(self.profileGeneration, r.generation or 1)
     hgSetText(self.profileCoat, r.coatColour or "Unknown")
     hgSetText(self.profileAgeLabel, "Age:")
-    hgSetText(self.profileAge, HorseGenetics.formatAgeLong(HorseGenetics.getRecordAgeMonths(r)))
+    hgSetText(self.profileAge, HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(r)))
     local reproLabel, reproValue = HorseGenetics.getRecordLifeState(r)
     hgSetText(self.profileReproLabel, reproLabel)
     hgSetText(self.profileRepro, reproValue)
@@ -4743,7 +4731,7 @@ function HorseGeneticsMenu:renderParentPanel(prefix, record)
     local average = HorseGenetics.calculateAverage(stats)
     hgSetText(self["breed" .. prefix .. "Name"], "Name: " .. tostring(record.name or "Unnamed"))
     hgSetText(self["breed" .. prefix .. "Id"], "ID: " .. tostring(record.id or "-"))
-    hgSetText(self["breed" .. prefix .. "Age"], "Age: " .. HorseGenetics.formatAgeLong(HorseGenetics.getRecordAgeMonths(record)))
+    hgSetText(self["breed" .. prefix .. "Age"], "Age: " .. HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record)))
     hgSetText(self["breed" .. prefix .. "Speed"], string.format("Speed: %d", tonumber(stats.speed) or 0))
     hgSetText(self["breed" .. prefix .. "Stamina"], string.format("Stamina: %d", tonumber(stats.stamina) or 0))
     hgSetText(self["breed" .. prefix .. "Health"], string.format("Health: %d", tonumber(stats.health) or 0))
@@ -4814,7 +4802,7 @@ function HorseGeneticsMenu:renderBreedPicker()
             if self.breedParent2 ~= nil and record.id == self.breedParent2.id then
                 name = name .. "  [H2]"
             end
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
@@ -5060,7 +5048,7 @@ function HorseGeneticsMenu:renderHistoryList()
         if record ~= nil then
             local stats = record.stats or {}
             name = tostring(record.name or record.id or "Unnamed")
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
