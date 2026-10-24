@@ -711,27 +711,27 @@
                 <Bitmap id="accentSettings" position="24px 58px" size="150px 4px" imageSliceId="noSlice" />
                 <Text id="settingsHint" profile="fs25_textDefault" position="24px 8px" size="900px 28px" text="$l10n_hg_settings_hint" />
 
-                <GuiElement position="24px -42px" size="540px 32px">
+                <GuiElement position="24px -42px" size="520px 32px">
                     <Text profile="fs25_textDefault" position="0px 0px" size="240px 28px" text="$l10n_hg_gestation_time" />
                     <Button id="btnGestationDown" position="248px 0px" size="32px 32px" text="-" onClick="onClickGestationDown" />
-                    <Text id="gestationValue" profile="fs25_textDefault" position="286px 0px" size="200px 32px" text="$l10n_hg_months_vanilla" />
-                    <Button id="btnGestationUp" position="492px 0px" size="32px 32px" text="+" onClick="onClickGestationUp" />
+                    <Text id="gestationValue" profile="fs25_textDefault" position="284px 0px" size="190px 32px" text="$l10n_hg_months_vanilla" textAlignment="center" />
+                    <Button id="btnGestationUp" position="478px 0px" size="32px 32px" text="+" onClick="onClickGestationUp" />
                 </GuiElement>
                 <Text id="gestationHelp" profile="fs25_textDefault" position="24px -77px" size="900px 24px" text="$l10n_hg_gestation_help" />
 
-                <GuiElement position="24px -132px" size="540px 32px">
+                <GuiElement position="24px -132px" size="520px 32px">
                     <Text profile="fs25_textDefault" position="0px 0px" size="240px 28px" text="$l10n_hg_puberty_time" />
                     <Button id="btnPubertyDown" position="248px 0px" size="32px 32px" text="-" onClick="onClickPubertyDown" />
-                    <Text id="pubertyValue" profile="fs25_textDefault" position="286px 0px" size="200px 32px" text="$l10n_hg_puberty_vanilla" />
-                    <Button id="btnPubertyUp" position="492px 0px" size="32px 32px" text="+" onClick="onClickPubertyUp" />
+                    <Text id="pubertyValue" profile="fs25_textDefault" position="284px 0px" size="190px 32px" text="$l10n_hg_puberty_vanilla" textAlignment="center" />
+                    <Button id="btnPubertyUp" position="478px 0px" size="32px 32px" text="+" onClick="onClickPubertyUp" />
                 </GuiElement>
                 <Text id="pubertyHelp" profile="fs25_textDefault" position="24px -167px" size="900px 24px" text="$l10n_hg_puberty_help" />
 
-                <GuiElement position="24px -222px" size="540px 32px">
+                <GuiElement position="24px -222px" size="520px 32px">
                     <Text profile="fs25_textDefault" position="0px 0px" size="240px 28px" text="$l10n_hg_sale_mods" />
                     <Button id="btnValueDown" position="248px 0px" size="32px 32px" text="-" onClick="onClickValueDown" />
-                    <Text id="valueModifierValue" profile="fs25_textDefault" position="286px 0px" size="200px 32px" text="$l10n_hg_value_default" />
-                    <Button id="btnValueUp" position="492px 0px" size="32px 32px" text="+" onClick="onClickValueUp" />
+                    <Text id="valueModifierValue" profile="fs25_textDefault" position="284px 0px" size="190px 32px" text="$l10n_hg_value_default" textAlignment="center" />
+                    <Button id="btnValueUp" position="478px 0px" size="32px 32px" text="+" onClick="onClickValueUp" />
                 </GuiElement>
                 <Text id="valueModifierHelp" profile="fs25_textDefault" position="24px -257px" size="900px 24px" text="$l10n_hg_sale_help" />
             </GuiElement>
