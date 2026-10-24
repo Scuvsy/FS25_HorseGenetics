@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<modDesc descVersion="114">
+<modDesc descVersion="115">
     <author>Scuvsy</author>
-    <version>1.0.19.0</version>
+    <version>1.0.30.0</version>
 
     <title>
         <en>Horse Genetics</en>
+        <de>Pferdegenetik</de>
+        <fr>Génétique Chevaline</fr>
     </title>
 
     <description>
@@ -17,11 +19,11 @@ Open Horse Genetics from the Esc menu (next to Animals). Four pages:
 MY HORSES: owned horses, age, stats, sale modifier, live shop value, and a profile with reproduction or puberty.
 BREEDING: pair two owned horses to preview likely foal ranges. This page does not spawn foals.
 GENETIC INFO: every recorded horse, including sold horses, plus a family tree of parents and offspring.
-SETTINGS: gestation length, puberty age, and how strongly genetics change sale price. Host settings apply in multiplayer.
+SETTINGS: gestation length, puberty age, and how strongly genetics change sale price. Each row is minus, the current value, and plus. Host settings apply in multiplayer.
 
 Shop horses become foundation stock (each stat 35-75). Real births happen in the stable. Put two horses at or above your Settings puberty age in the same building. They start a pregnancy on the monthly tick. Default gestation is 11 months and default puberty is 22 months, matching vanilla horses. Settings offers 1, 3, 6, 8, 11, 14, 16, 18 or 22 months for both. When gestation finishes and two stalls are free, each parent produces one foal. Foals use the base game's random names. You can rename any horse; Speed, Stamina and Health stay on the genetic ID (HG-000001), not the name.
 
-The animals menu reproduction bar fills during pregnancy using your Settings gestation. Foals show a puberty bar until they reach the Settings puberty age. Vanilla automatic horse births are turned off so this mod owns horse breeding.
+The animals menu reproduction bar starts filling as soon as a Horse Genetics pregnancy begins, using your Settings gestation. After a birth, Last birth is recorded on the parents. Foals show a puberty bar until they reach the Settings puberty age. Vanilla automatic horse births are turned off so this mod owns horse breeding.
 
 Foals inherit the average of both parents, plus variation (-8 to +8), a possible high-quality bonus, and a coat colour from the parents or a 10% chance of another colour.
 
@@ -29,7 +31,34 @@ Sale price uses the vanilla horse price, then a genetics multiplier. At the defa
 
 Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breeding, gestation, genetics, names and sale values stay on Horse Genetics. Other animals stay on Enhanced Animal System. When both mods are loaded, Horse Genetics portraits use foal-age horse visuals.
 
-Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.]]></en>
+Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.
+
+CHANGELOG
+1.0.30.0
+- Settings values are centred between minus and plus.
+- Stat-bar textures are 512x32 so the log does not warn about non-power-of-two sizes.
+1.0.29.0
+- Settings minus and plus sit next to the value instead of across the row.
+1.0.28.0
+- Removed the Refresh control on MY HORSES; the list updates when you open the page.
+1.0.27.0
+- Left Esc tab uses the horse icon UVs; genetic stat bars fill from the track width.
+1.0.26.0
+- Horse Genetics page uses the Animals menu size so the layout sits in the Esc content area.
+1.0.25.0
+- GUI sizes stay numbers at runtime so the Esc menu no longer throws after load.
+1.0.24.0
+- Stopped a GuiUtils layout error from running every frame after the menu was added.
+1.0.23.0
+- Fixed a GUI layout error that spammed the log and stalled the game.
+1.0.22.0
+- Reduced hitching from Horse Genetics scanning animals every frame.
+1.0.21.0
+- Animals menu reproduction bar fills during Horse Genetics pregnancy and Last birth is set on the parents.
+- German and French titles; French listing text.
+- Testers: descVersion 115, 512x512 DXT1 mod icon.
+1.0.20.0
+- Horse stats stay on the genetic ID so renaming does not reroll them.]]></en>
         <de><![CDATA[Nur PC. Nicht kompatibel mit Xbox oder PlayStation.
 Mehrspieler auf dem PC möglich.
 
@@ -39,11 +68,11 @@ Horse Genetics öffnet ihr über das Esc-Menü (neben Animals). Vier Seiten:
 MEINE PFERDE: eigene Pferde, Alter, Werte, Verkaufsmodifikator, aktueller Shop-Wert und ein Profil mit Trächtigkeit oder Pubertät.
 ZUCHT: zwei eigene Pferde paaren und wahrscheinliche Fohlenbereiche sehen. Diese Seite erzeugt keine Fohlen.
 GENETIK: jedes erfasste Pferd, auch verkaufte, plus Stammbaum mit Eltern und Nachkommen.
-EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis ändert. Im Mehrspieler gelten die Host-Einstellungen.
+EINSTELLUNGEN: Tragzeit, Pubertät und wie stark die Genetik den Verkaufspreis ändert. Jede Zeile hat Minus, den aktuellen Wert und Plus. Im Mehrspieler gelten die Host-Einstellungen.
 
 Shop-Pferde werden zu Gründungstieren (jeder Wert 35-75). Echte Geburten finden im Stall statt. Zwei Pferde ab dem Pubertätsalter aus den Einstellungen im selben Gebäude starten zum Monatswechsel eine Trächtigkeit. Standard-Tragzeit ist 11 Monate und Standard-Pubertät 22 Monate wie bei Vanilla-Pferden. Einstellungen für beides: 1, 3, 6, 8, 11, 14, 16, 18 oder 22 Monate. Sind nach der Tragzeit zwei Boxen frei, bekommt jedes Elterntier ein Fohlen. Namen kommen aus dem Basisspiel. Ihr könnt jedes Pferd umbenennen; Tempo, Ausdauer und Gesundheit bleiben an der Genetik-ID (HG-000001), nicht am Namen.
 
-Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Trächtigkeit nach eurer Tragzeit. Fohlen zeigen einen Pubertätsbalken bis zum eingestellten Pubertätsalter. Die Vanilla-Pferdegeburten sind aus, damit dieser Mod die Zucht steuert.
+Der Fortpflanzungsbalken im Tiere-Menü füllt sich sofort, sobald eine Horse-Genetics-Trächtigkeit beginnt, nach eurer Tragzeit. Nach der Geburt wird die letzte Geburt bei den Eltern gespeichert. Fohlen zeigen einen Pubertätsbalken bis zum eingestellten Pubertätsalter. Die Vanilla-Pferdegeburten sind aus, damit dieser Mod die Zucht steuert.
 
 Fohlen erben den Mittelwert beider Eltern plus Streuung (-8 bis +8), einen möglichen Qualitätsbonus und eine Fellfarbe der Eltern oder mit 10% eine andere Farbe.
 
@@ -51,10 +80,86 @@ Der Verkaufspreis startet beim Vanilla-Preis, dann kommt ein Genetik-Multiplikat
 
 Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, Tragzeit, Genetik, Namen und Verkaufswerte bleiben bei Horse Genetics. Andere Tiere bleiben beim Enhanced Animal System. Sind beide Mods geladen, nutzen die Porträts Fohlen-Grafiken.
 
-Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.]]></de>
+Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.
+
+CHANGELOG
+1.0.30.0
+- Einstellungswerte stehen mittig zwischen Minus und Plus.
+- Genetik-Balken-Texturen sind 512x32, damit das Log nicht vor Nicht-Zweierpotenz warnt.
+1.0.29.0
+- Minus und Plus in den Einstellungen sitzen neben dem Wert, nicht über die ganze Zeile.
+1.0.28.0
+- Aktualisieren auf MEINE PFERDE entfernt; die Liste aktualisiert sich beim Öffnen der Seite.
+1.0.27.0
+- Linker Esc-Reiter nutzt die Pferde-Icon-UVs; Genetik-Balken füllen sich nach der Track-Breite.
+1.0.26.0
+- Horse-Genetics-Seite nutzt die Animals-Menügröße, damit das Layout im Esc-Inhaltsbereich sitzt.
+1.0.25.0
+- GUI-Größen bleiben Zahlen zur Laufzeit, damit das Esc-Menü nach dem Laden nicht mehr wirft.
+1.0.24.0
+- GuiUtils-Fehler gestoppt, der nach dem Menüaufbau jede Frame auslöste.
+1.0.23.0
+- GUI-Fehler behoben, der das Log vollspamte und das Spiel ausbremste.
+1.0.22.0
+- Ruckeln durch ständiges Scannen der Tiere reduziert.
+1.0.21.0
+- Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Horse-Genetics-Trächtigkeit. Die letzte Geburt wird bei den Eltern gesetzt.
+- Deutsche und französische Titel; französischer Listing-Text.
+- Testers: descVersion 115, Mod-Icon 512x512 DXT1.
+1.0.20.0
+- Werte bleiben an der Genetik-ID, Umbenennen würfelt nicht neu.]]></de>
+        <fr><![CDATA[PC uniquement. Non compatible avec Xbox ou PlayStation.
+Multijoueur compatible sur PC.
+
+Chaque cheval reçoit des gènes uniques de Vitesse, Endurance et Santé (0-100). La moyenne est celle de ces trois valeurs. Les stats modifient le prix de vente et sont héritées par les poulains.
+
+Ouvrez Horse Genetics depuis le menu Échap (à côté d'Animals). Quatre pages :
+MES CHEVAUX : chevaux possédés, âge, stats, modificateur de vente, valeur boutique actuelle, et un profil avec reproduction ou puberté.
+ÉLEVAGE : associez deux chevaux possédés pour prévisualiser les fourchettes probables des poulains. Cette page ne fait pas naître de poulains.
+INFOS GÉNÉTIQUES : chaque cheval enregistré, y compris les chevaux vendus, plus un arbre généalogique des parents et descendants.
+PARAMÈTRES : durée de gestation, âge de puberté, et à quel point la génétique change le prix de vente. Chaque ligne a moins, la valeur actuelle et plus. Les paramètres de l'hôte s'appliquent en multijoueur.
+
+Les chevaux du magasin deviennent le cheptel fondateur (chaque stat 35-75). Les vraies naissances ont lieu à l'écurie. Placez deux chevaux à l'âge de puberté des Paramètres ou plus dans le même bâtiment. Une gestation démarre au changement de mois. Gestation par défaut : 11 mois. Puberté par défaut : 22 mois, comme les chevaux vanilla. Les Paramètres proposent 1, 3, 6, 8, 11, 14, 16, 18 ou 22 mois pour les deux. Quand la gestation est terminée et que deux boxes sont libres, chaque parent produit un poulain. Les noms viennent du jeu de base. Vous pouvez renommer n'importe quel cheval ; Vitesse, Endurance et Santé restent liées à l'ID génétique (HG-000001), pas au nom.
+
+La barre de reproduction du menu animaux se remplit dès qu'une gestation Horse Genetics commence, selon la gestation des Paramètres. Après une naissance, la dernière naissance est enregistrée sur les parents. Les poulains montrent une barre de puberté jusqu'à l'âge défini. Les naissances automatiques vanilla des chevaux sont désactivées pour que ce mod gère l'élevage.
+
+Les poulains héritent de la moyenne des deux parents, plus une variation (-8 à +8), un possible bonus de qualité, et une robe des parents ou 10 % de chance d'une autre couleur.
+
+Le prix de vente part du prix vanilla, puis un multiplicateur génétique. À 100 % par défaut, il va de 0,75x à 1,60x. Désactivé conserve les prix vanilla. À 200 %, il peut aller de 0,50x à 2,20x.
+
+Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, gestation, génétique, noms et valeurs de vente des chevaux restent sur Horse Genetics. Les autres animaux restent sur Enhanced Animal System. Si les deux mods sont chargés, les portraits Horse Genetics utilisent les visuels de poulain.
+
+Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.
+
+CHANGELOG
+1.0.30.0
+- Les valeurs des Paramètres sont centrées entre moins et plus.
+- Textures des barres 512x32 pour éviter l'avertissement non power-of-two dans le log.
+1.0.29.0
+- Les boutons moins et plus des Paramètres restent à côté de la valeur.
+1.0.28.0
+- Contrôle Actualiser retiré de MES CHEVAUX ; la liste se met à jour à l'ouverture de la page.
+1.0.27.0
+- L'onglet Échap gauche utilise les UV de l'icône cheval ; les barres de stats se remplissent selon la piste.
+1.0.26.0
+- La page Horse Genetics utilise la taille du menu Animals pour tenir dans la zone de contenu Échap.
+1.0.25.0
+- Les tailles d'interface restent des nombres à l'exécution pour que le menu Échap ne plante plus après le chargement.
+1.0.24.0
+- Correction d'une erreur GuiUtils déclenchée à chaque image après l'ajout du menu.
+1.0.23.0
+- Correction d'une erreur d'interface qui remplissait le log et ralentissait le jeu.
+1.0.22.0
+- Moins de saccades : Horse Genetics ne parcourt plus les animaux à chaque image.
+1.0.21.0
+- La barre de reproduction du menu animaux se remplit pendant la gestation Horse Genetics. La dernière naissance est enregistrée sur les parents.
+- Titres allemand et français ; texte de listing français.
+- Testers : descVersion 115, icône 512x512 DXT1.
+1.0.20.0
+- Les stats restent sur l'ID génétique ; renommer ne relance pas les valeurs.]]></fr>
     </description>
 
-    <iconFilename>icon.dds</iconFilename>
+    <iconFilename>icon_horseGenetics.dds</iconFilename>
     <multiplayer supported="true" />
     <l10n filenamePrefix="translations/l10n" />
 

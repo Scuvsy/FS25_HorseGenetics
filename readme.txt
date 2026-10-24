@@ -1,6 +1,6 @@
 Horse Genetics for Farming Simulator 25
 Author: Scuvsy
-Version: 1.0.19.0
+Version: 1.0.30.0
 Platform: PC only — NOT console compatible (Xbox / PlayStation)
 Multiplayer: Compatible on PC
 
@@ -62,10 +62,11 @@ GENETIC INFO
   scroll offspring.
 
 SETTINGS
-  Gestation time (default 11 months, vanilla), puberty time (default 22 months,
-  vanilla), and sale-value modifier strength (default 100%). Both month settings
-  use 1, 3, 6, 8, 11, 14, 16, 18 or 22 months. In multiplayer the host's
-  settings apply.
+  Three rows: gestation time (default 11 months, vanilla), puberty time
+  (default 22 months, vanilla), and sale-value modifier strength (default
+  100%). Each row is minus, the current value in the middle, and plus. Month
+  steps are 1, 3, 6, 8, 11, 14, 16, 18 or 22. Opening MY HORSES reloads the
+  owned list. In multiplayer the host's settings apply.
 
 
 ================================================================================
@@ -81,7 +82,8 @@ Horse Genetics, Settings. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 When the month changes the mod looks at each horse husbandry:
 
   - If a pregnancy is already running, one month is counted and the animals
-    menu reproduction bar is updated from elapsed months / gestation months.
+    menu reproduction bar is updated. The bar already shows the first slice
+    when the pregnancy starts, not 0% until the next month.
   - When elapsed months reach the chosen gestation and two stalls are free,
     both foals are born.
   - If no pregnancy is running, a new one can start when there are at least
@@ -109,9 +111,10 @@ Foals (under the Settings puberty age)
   vanilla horses. Options are 1, 3, 6, 8, 11, 14, 16, 18 and 22 months.
 
 Adults
-  The bar stays empty until a Horse Genetics pregnancy starts. During pregnancy
-  it fills using your Settings gestation. Example: 3-month gestation is about
-  33% after one month, 67% after two, then birth.
+  The bar stays empty until a Horse Genetics pregnancy starts. As soon as it
+  starts, the bar shows the first slice using your Settings gestation. Example:
+  3-month gestation is about 33% when pregnancy begins, 67% after the next
+  month, then birth. Last birth on the parents is set when the foals appear.
 
 Settings
   Changing gestation while a pregnancy is running rescales the remaining time
@@ -290,7 +293,7 @@ The host or dedicated server owns the genetics data:
     those records; they do not roll their own Speed, Stamina or Health.
   - Dedicated servers scan horse pastures and stables for live horses even
     though they have no GUI. Bought horses are registered there and synced
-    to the owning farm. Refresh on MY HORSES asks the server for a new list.
+    to the owning farm. Opening MY HORSES reloads the current list.
   - Horse Genetics IDs travel with the live animal, so sale prices match for
     every player.
   - Saves are written on the server. Joining players are sent the current

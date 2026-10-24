@@ -9,7 +9,6 @@
         <text name="hg_owned_horses" text="OWNED HORSES" />
         <text name="hg_horses_owned" text="Horses owned: %d" />
         <text name="hg_showing_scroll" text="Showing %d-%d of %d  (Scroll)" />
-        <text name="hg_refresh" text="Refresh" />
         <text name="hg_col_name" text="NAME" />
         <text name="hg_col_age" text="AGE" />
         <text name="hg_col_speed" text="SPEED" />

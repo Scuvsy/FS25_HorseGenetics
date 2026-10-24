@@ -7,13 +7,18 @@ HorseGenetics.modDirectory = g_currentModDirectory
 
 HorseGenetics.horses = {}
 
+local function hgSafeCall(fn, ...)
+    if type(fn) ~= "function" then
+        return false
+    end
+    return true, fn(...)
+end
+
 local function hgT(key, ...)
     local text = tostring(key or "")
     if g_i18n ~= nil and g_i18n.getText ~= nil then
-        local ok, result = pcall(function()
-            return g_i18n:getText(key)
-        end)
-        if ok and type(result) == "string" and result ~= "" then
+        local result = g_i18n:getText(key)
+        if type(result) == "string" and result ~= "" then
             text = result
         end
     end
@@ -54,7 +59,7 @@ local function hgGetOwnerFarmId(object)
         return nil
     end
     if object.getOwnerFarmId ~= nil then
-        local ok, farmId = pcall(function()
+        local ok, farmId = hgSafeCall(function()
             return object:getOwnerFarmId()
         end)
         if ok and type(farmId) == "number" and farmId > 0 then
@@ -71,6 +76,24 @@ HorseGenetics.STAT_NAMES = {
     "speed",
     "stamina",
     "health"
+}
+
+HorseGenetics.COAT_TEXTURES = {
+    "gui/coats/bay.dds",
+    "gui/coats/black.dds",
+    "gui/coats/buckskin.dds",
+    "gui/coats/chestnut.dds",
+    "gui/coats/grey.dds",
+    "gui/coats/palomino.dds",
+    "gui/coats/pinto.dds",
+    "gui/coats/hg_ui_portrait_bay.dds",
+    "gui/coats/hg_ui_portrait_black.dds",
+    "gui/coats/hg_ui_portrait_chestnut.dds",
+    "gui/coats/hg_ui_portrait_dun.dds",
+    "gui/coats/hg_ui_portrait_grey.dds",
+    "gui/coats/hg_ui_portrait_palomino.dds",
+    "gui/coats/hg_ui_portrait_pinto.dds",
+    "gui/coats/hg_ui_portrait_sealbrown.dds"
 }
 
 HorseGenetics.COAT_COLOURS = {
@@ -882,7 +905,7 @@ function HorseGenetics.getClusterName(cluster)
         return nil
     end
     if cluster.getName ~= nil then
-        local ok, name = pcall(function()
+        local ok, name = hgSafeCall(function()
             return cluster:getName()
         end)
         if ok and type(name) == "string" and name ~= "" then
@@ -901,7 +924,7 @@ local function hgInvoke(object, methodName)
     end
     local method = object[methodName]
     if type(method) == "function" then
-        local ok, result = pcall(method, object)
+        local ok, result = hgSafeCall(method, object)
         if ok then
             return result
         end
@@ -918,7 +941,7 @@ function HorseGenetics.isLikelyAnimalCluster(object)
         return true
     end
     local okIsa = false
-    pcall(function()
+    hgSafeCall(function()
         if object.isa ~= nil then
             if AnimalClusterHorse ~= nil and object:isa(AnimalClusterHorse) then
                 okIsa = true
@@ -1011,11 +1034,11 @@ function HorseGenetics.getHusbandryClusters(husbandry)
         end
         HorseGenetics.addClustersFromTable(list, seen, hgInvoke(object, "getCluster") or object.cluster)
     end
-    pcall(addFrom, husbandry)
-    pcall(addFrom, husbandry.placeable)
-    pcall(addFrom, husbandry.owner)
-    pcall(addFrom, hgInvoke(husbandry, "getPlaceable"))
-    pcall(addFrom, hgInvoke(husbandry, "getOwner"))
+    hgSafeCall(addFrom, husbandry)
+    hgSafeCall(addFrom, husbandry.placeable)
+    hgSafeCall(addFrom, husbandry.owner)
+    hgSafeCall(addFrom, hgInvoke(husbandry, "getPlaceable"))
+    hgSafeCall(addFrom, hgInvoke(husbandry, "getOwner"))
     return list
 end
 
@@ -1032,7 +1055,7 @@ function HorseGenetics.getClusterNumAnimals(cluster)
     end
     local count = cluster.numAnimals
     if type(count) ~= "number" and cluster.getNumAnimals ~= nil then
-        local ok, value = pcall(function()
+        local ok, value = hgSafeCall(function()
             return cluster:getNumAnimals()
         end)
         if ok then
@@ -1051,15 +1074,48 @@ function HorseGenetics.isLiveHorseCluster(cluster)
         and HorseGenetics.getClusterNumAnimals(cluster) > 0
 end
 
+function HorseGenetics.getLiveHorseCluster(object)
+    if object == nil then
+        return nil
+    end
+    local nested = object.cluster
+    if type(nested) ~= "table" and type(object.getCluster) == "function" then
+        hgSafeCall(function()
+            nested = object:getCluster()
+        end)
+    end
+    if type(nested) == "table" and nested ~= object then
+        if nested.horseGeneticsId ~= nil or HorseGenetics.isHorseCluster(nested) then
+            return nested
+        end
+    end
+    return object
+end
+
+function HorseGenetics.getHorseGeneticsId(object)
+    if object == nil then
+        return nil
+    end
+    local live = HorseGenetics.getLiveHorseCluster(object)
+    local horseId = live ~= nil and live.horseGeneticsId or nil
+    if (horseId == nil or horseId == "") and object.horseGeneticsId ~= nil then
+        horseId = object.horseGeneticsId
+    end
+    if horseId ~= nil and horseId ~= "" then
+        return horseId
+    end
+    return nil
+end
+
 function HorseGenetics.getHorseForCluster(cluster)
     if cluster == nil then
         return nil
     end
-
-    local horseId = cluster.horseGeneticsId
+    local live = HorseGenetics.getLiveHorseCluster(cluster)
+    local horseId = live ~= nil and live.horseGeneticsId or cluster.horseGeneticsId
     if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
         local horse = HorseGenetics.horses[horseId]
-        local name = HorseGenetics.getClusterName(cluster)
+        local name = HorseGenetics.getClusterName(live) or HorseGenetics.getClusterName(cluster)
         if name ~= nil and name ~= "" then
             horse.name = name
         end
@@ -1089,7 +1145,7 @@ end
 
 function HorseGenetics.getBoundHorseIds()
     local bound = {}
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.visitAnimalClusters(function(cluster)
             if HorseGenetics.isLiveHorseCluster(cluster) and cluster.horseGeneticsId ~= nil then
                 bound[cluster.horseGeneticsId] = true
@@ -1277,7 +1333,7 @@ function HorseGenetics.getSubTypeIndexForCoat(coatColour, fallbackIndex)
     if name ~= nil and animalSystem ~= nil then
         local subType = nil
         if animalSystem.getSubTypeByName ~= nil then
-            local ok, result = pcall(function()
+            local ok, result = hgSafeCall(function()
                 return animalSystem:getSubTypeByName(name)
             end)
             if ok then
@@ -1298,7 +1354,7 @@ function HorseGenetics.applyThirdPartyClusterCompat(cluster)
     if cluster == nil then
         return
     end
-    pcall(function()
+    hgSafeCall(function()
         if cluster.changeHealth ~= nil then
             cluster:changeHealth(100)
         elseif type(cluster.health) ~= "number" then
@@ -1324,7 +1380,7 @@ function HorseGenetics.pickFoalSubTypeIndex(parentCluster, coatColour)
         return index
     end
     local subType = nil
-    pcall(function()
+    hgSafeCall(function()
         subType = animalSystem:getSubTypeByIndex(index)
     end)
     if type(subType) ~= "table" or subType.malePart == nil or animalSystem.getSubTypeByName == nil then
@@ -1334,7 +1390,7 @@ function HorseGenetics.pickFoalSubTypeIndex(parentCluster, coatColour)
         return index
     end
     local male = nil
-    pcall(function()
+    hgSafeCall(function()
         male = animalSystem:getSubTypeByName(subType.malePart)
     end)
     if type(male) == "table" then
@@ -1372,7 +1428,7 @@ function HorseGenetics.pickVanillaHorseName(husbandry, cluster)
     local existing = nil
     if cluster ~= nil then
         if cluster.getName ~= nil then
-            local ok, name = pcall(function()
+            local ok, name = hgSafeCall(function()
                 return cluster:getName()
             end)
             if ok then
@@ -1405,7 +1461,7 @@ function HorseGenetics.pickVanillaHorseName(husbandry, cluster)
         local manager = managers[i]
         if manager ~= nil and manager.getRandomName ~= nil then
             for _ = 1, 16 do
-                local ok, name = pcall(function()
+                local ok, name = hgSafeCall(function()
                     return manager:getRandomName()
                 end)
                 if ok and validName(name) and not HorseGenetics.nameTakenInHusbandry(husbandry, name) then
@@ -1426,7 +1482,7 @@ function HorseGenetics.applyHorseName(cluster, name)
         return
     end
     if cluster.setName ~= nil then
-        pcall(function()
+        hgSafeCall(function()
             cluster:setName(name)
         end)
     else
@@ -1436,11 +1492,8 @@ end
 
 function HorseGenetics.createFoalInHusbandry(husbandry, parentCluster, parent1Record, parent2Record)
     HorseGenetics.allowModHorseBirth = true
-    local ok, record, result, err = pcall(HorseGenetics.createFoalInHusbandryInner, husbandry, parentCluster, parent1Record, parent2Record)
+    local record, result, err = HorseGenetics.createFoalInHusbandryInner(husbandry, parentCluster, parent1Record, parent2Record)
     HorseGenetics.allowModHorseBirth = false
-    if not ok then
-        return nil, nil, record
-    end
     if record ~= nil then
         HorseGenetics.modBirthClusters = HorseGenetics.modBirthClusters or {}
         HorseGenetics.modBirthClusters[record.id] = true
@@ -1478,7 +1531,7 @@ function HorseGenetics.createFoalInHusbandryInner(husbandry, parentCluster, pare
         end
     end
     if foalName == nil then
-        local ok, name = pcall(function()
+        local ok, name = hgSafeCall(function()
             return foalCluster.getName ~= nil and foalCluster:getName() or foalCluster.name
         end)
         if ok and type(name) == "string" and name ~= "" then
@@ -1523,8 +1576,8 @@ function HorseGenetics.findClusterByHorseId(husbandry, horseId)
     end
     local nameMatch = nil
     for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(husbandry)) do
-        if cluster.horseGeneticsId == horseId then
-            return cluster
+        if HorseGenetics.getHorseGeneticsId(cluster) == horseId then
+            return HorseGenetics.getLiveHorseCluster(cluster) or cluster
         end
         if wantedName ~= nil and nameMatch == nil then
             local clusterName = HorseGenetics.getClusterName(cluster)
@@ -1569,6 +1622,8 @@ function HorseGenetics.completePregnancy(husbandry, pregnancy)
     end
     local foal2 = HorseGenetics.createFoalInHusbandry(husbandry, parent2Cluster, parent1, parent2)
     if foal2 == nil then
+        HorseGenetics.markClusterBirth(parent1Cluster)
+        HorseGenetics.markClusterBirth(parent2Cluster)
         HorseGenetics:saveToSavegame()
         return true
     end
@@ -1581,7 +1636,24 @@ function HorseGenetics.completePregnancy(husbandry, pregnancy)
         foal2Id = foal2.id, foal2Name = foal2.name, foal2Coat = foal2.coatColour,
         foal2Speed = foal2.stats.speed, foal2Stamina = foal2.stats.stamina, foal2Health = foal2.stats.health
     })
+    HorseGenetics.markClusterBirth(parent1Cluster)
+    HorseGenetics.markClusterBirth(parent2Cluster)
     return true
+end
+
+function HorseGenetics.markClusterBirth(cluster)
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    if live == nil then
+        return
+    end
+    hgSafeCall(function()
+        live.hadABirth = true
+        live.monthsSinceLastBirth = 0
+        if cluster ~= nil and cluster ~= live then
+            cluster.hadABirth = true
+            cluster.monthsSinceLastBirth = 0
+        end
+    end)
 end
 
 function HorseGenetics.normalizePregnancy(entry)
@@ -1621,7 +1693,7 @@ function HorseGenetics.getRecordAgeMonths(record)
     if cluster ~= nil then
         local age = cluster.age
         if type(age) ~= "number" and cluster.getAge ~= nil then
-            local ok, value = pcall(function()
+            local ok, value = hgSafeCall(function()
                 return cluster:getAge()
             end)
             if ok then
@@ -1701,9 +1773,12 @@ function HorseGenetics.getReproductionPercent(pregnancy)
     end
     local elapsed = tonumber(pregnancy and pregnancy.monthsElapsed) or 0
     local remaining = tonumber(pregnancy and pregnancy.monthsRemaining) or math.max(0, duration - elapsed)
-    local percent = math.max(0, math.min(100, math.floor(elapsed / duration * 100 + 0.5)))
+    local percent = math.max(0, math.min(100, math.floor((elapsed + 1) / duration * 100 + 0.5)))
     if remaining > 0 and percent >= 100 then
         percent = 99
+    end
+    if remaining <= 0 then
+        percent = 100
     end
     return percent
 end
@@ -1712,13 +1787,25 @@ function HorseGenetics.getClusterAgeMonths(cluster)
     if cluster == nil then
         return 0
     end
-    local age = cluster.age
-    if type(age) ~= "number" and cluster.getAge ~= nil then
-        local ok, value = pcall(function()
-            return cluster:getAge()
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    local age = live.age
+    if type(age) ~= "number" and live.getAge ~= nil then
+        local ok, value = hgSafeCall(function()
+            return live:getAge()
         end)
         if ok then
             age = value
+        end
+    end
+    if type(age) ~= "number" and cluster ~= live then
+        age = cluster.age
+        if type(age) ~= "number" and cluster.getAge ~= nil then
+            local ok, value = hgSafeCall(function()
+                return cluster:getAge()
+            end)
+            if ok then
+                age = value
+            end
         end
     end
     if type(age) ~= "number" then
@@ -1746,7 +1833,7 @@ function HorseGenetics.forEachHorseSubType(visitor)
         end
         seen[subType] = true
         local label = string.upper(tostring(subType.name or "") .. " " .. tostring(subType.typeName or ""))
-        pcall(function()
+        hgSafeCall(function()
             if animalSystem.getTypeByIndex ~= nil and subType.typeIndex ~= nil then
                 local animalType = animalSystem:getTypeByIndex(subType.typeIndex)
                 if animalType ~= nil then
@@ -1777,7 +1864,7 @@ function HorseGenetics.forEachHorseSubType(visitor)
     considerList(animalSystem.subTypeIndexToSubType)
     considerList(animalSystem.types)
     if animalSystem.getSubTypes ~= nil then
-        local ok, result = pcall(function()
+        local ok, result = hgSafeCall(function()
             return animalSystem:getSubTypes()
         end)
         if ok then
@@ -1820,24 +1907,24 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
     if type(originalSetDirty) == "function" then
         cluster.setDirty = function() end
     end
-    pcall(function()
+    hgSafeCall(function()
         cluster.reproductionDuration = duration
         cluster.reproductionToGo = remaining
         cluster.reproduction = percent
         cluster.reproductionMinAgeMonth = HorseGenetics.getPubertyMonths()
         cluster.isInseminated = inseminated == true
         if cluster.setReproduction ~= nil then
-            local ok = pcall(function()
+            local ok = hgSafeCall(function()
                 cluster:setReproduction(percent)
             end)
             if not ok then
-                pcall(function()
+                hgSafeCall(function()
                     cluster:setReproduction(percent / 100)
                 end)
             end
         end
         if cluster.setReproductionDuration ~= nil then
-            pcall(function()
+            hgSafeCall(function()
                 cluster:setReproductionDuration(duration)
             end)
         end
@@ -1847,41 +1934,52 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
 end
 
 function HorseGenetics.syncClusterReproduction(cluster)
-    if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
+    if cluster == nil then
+        return
+    end
+    local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+    if not HorseGenetics.isHorseCluster(live) and not HorseGenetics.isHorseCluster(cluster) then
         return
     end
     local duration = HorseGenetics.getGestationMonths()
-    local horseId = cluster.horseGeneticsId
+    local horseId = HorseGenetics.getHorseGeneticsId(live) or HorseGenetics.getHorseGeneticsId(cluster)
     if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-        local record = HorseGenetics.getHorseForCluster(cluster)
+        local record = HorseGenetics.getHorseForCluster(live) or HorseGenetics.getHorseForCluster(cluster)
         if record ~= nil then
             horseId = record.id
         end
     end
+    if horseId ~= nil and horseId ~= "" then
+        live.horseGeneticsId = horseId
+        if cluster ~= live then
+            cluster.horseGeneticsId = horseId
+        end
+    end
     local pregnancy = HorseGenetics.getPregnancyForHorseId(horseId)
+    local percent, remaining, inseminated
     if pregnancy ~= nil then
-        HorseGenetics.setClusterReproduction(
-            cluster,
-            HorseGenetics.getReproductionPercent(pregnancy),
-            duration,
-            pregnancy.monthsRemaining,
-            true
-        )
-        return
+        percent = HorseGenetics.getReproductionPercent(pregnancy)
+        remaining = pregnancy.monthsRemaining
+        inseminated = true
+        duration = HorseGenetics.getGestationMonths()
+    else
+        local maturity = HorseGenetics.getMaturityMonths(live)
+        local age = HorseGenetics.getClusterAgeMonths(live)
+        if age < maturity then
+            percent = HorseGenetics.getPubertyPercent(live)
+            remaining = math.max(0, maturity - age)
+            inseminated = false
+            duration = maturity
+        else
+            percent = 0
+            remaining = duration
+            inseminated = false
+        end
     end
-    local maturity = HorseGenetics.getMaturityMonths(cluster)
-    local age = HorseGenetics.getClusterAgeMonths(cluster)
-    if age < maturity then
-        HorseGenetics.setClusterReproduction(
-            cluster,
-            HorseGenetics.getPubertyPercent(cluster),
-            maturity,
-            math.max(0, maturity - age),
-            false
-        )
-        return
+    HorseGenetics.setClusterReproduction(live, percent, duration, remaining, inseminated)
+    if cluster ~= live then
+        HorseGenetics.setClusterReproduction(cluster, percent, duration, remaining, inseminated)
     end
-    HorseGenetics.setClusterReproduction(cluster, 0, duration, duration, false)
 end
 
 function HorseGenetics.syncHusbandryReproduction(husbandry)
@@ -1894,14 +1992,14 @@ function HorseGenetics.syncHusbandryReproduction(husbandry)
 end
 
 function HorseGenetics.syncAllReproductionVisuals()
-    pcall(function()
+    hgSafeCall(function()
         if HorseGenetics.applyPubertyToHorseSubtypes ~= nil then
             HorseGenetics.applyPubertyToHorseSubtypes()
         end
         HorseGenetics.visitAnimalClusters(function(cluster, container)
             HorseGenetics.syncClusterReproduction(cluster)
             if container ~= nil and container.raiseActive ~= nil then
-                pcall(function()
+                hgSafeCall(function()
                     container:raiseActive()
                 end)
             end
@@ -1994,9 +2092,25 @@ function HorseGenetics.tryStartPregnancy(husbandry)
     return true
 end
 
+function HorseGenetics.advanceLastBirthMonths(husbandry)
+    if husbandry == nil then
+        return
+    end
+    for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(husbandry)) do
+        local live = HorseGenetics.getLiveHorseCluster(cluster) or cluster
+        if HorseGenetics.isHorseCluster(live) and live.hadABirth == true then
+            local horseId = HorseGenetics.getHorseGeneticsId(live)
+            if HorseGenetics.getPregnancyForHorseId(horseId) == nil then
+                live.monthsSinceLastBirth = (tonumber(live.monthsSinceLastBirth) or 0) + 1
+            end
+        end
+    end
+end
+
 function HorseGenetics.onHusbandryMonth(husbandry)
     HorseGenetics.advancePregnancies(husbandry)
     HorseGenetics.tryStartPregnancy(husbandry)
+    HorseGenetics.advanceLastBirthMonths(husbandry)
     HorseGenetics.syncHusbandryReproduction(husbandry)
     HorseGenetics:saveToSavegame()
 end
@@ -2015,7 +2129,7 @@ local function hgReadClusterSellPrice(cluster)
     end
     local price = nil
     if cluster.getSellPrice ~= nil then
-        local ok, result = pcall(function()
+        local ok, result = hgSafeCall(function()
             return cluster:getSellPrice()
         end)
         if ok and type(result) == "number" then
@@ -2023,7 +2137,7 @@ local function hgReadClusterSellPrice(cluster)
         end
     end
     if price == nil and cluster.getValue ~= nil then
-        local ok, result = pcall(function()
+        local ok, result = hgSafeCall(function()
             return cluster:getValue()
         end)
         if ok and type(result) == "number" then
@@ -2034,6 +2148,17 @@ local function hgReadClusterSellPrice(cluster)
         return math.floor(price + 0.5)
     end
     return nil
+end
+
+local function hgIsAnimalHolder(container)
+    return container ~= nil and (
+        container.spec_husbandryAnimals ~= nil
+        or container.spec_husbandryMeadow ~= nil
+        or container.spec_pasture ~= nil
+        or container.spec_rideable ~= nil
+        or container.spec_livestockTrailer ~= nil
+        or container.clusterSystem ~= nil
+    )
 end
 
 function HorseGenetics.visitAnimalClusters(visitor)
@@ -2047,23 +2172,15 @@ function HorseGenetics.visitAnimalClusters(visitor)
             return
         end
         seenContainers[container] = true
+        if not hgIsAnimalHolder(container) then
+            return
+        end
         for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(container)) do
-            pcall(visitor, cluster, container)
+            visitor(cluster, container)
         end
         local cluster = hgInvoke(container, "getCluster") or container.cluster
         if cluster ~= nil then
-            pcall(visitor, cluster, container)
-        end
-        if type(container) == "table" then
-            visitContainer(container.placeable)
-            visitContainer(container.owner)
-            visitContainer(hgInvoke(container, "getPlaceable"))
-            visitContainer(hgInvoke(container, "getOwner"))
-            if type(container.items) == "table" then
-                for _, item in pairs(container.items) do
-                    visitContainer(item)
-                end
-            end
+            visitor(cluster, container)
         end
     end
     local function visitList(list)
@@ -2103,15 +2220,11 @@ function HorseGenetics.visitAnimalClusters(visitor)
         visitList(ps.placeablesByUniqueId)
         visitMaybe(ps, "getPlaceables")
     end
-    visitList(mission.placeables)
     visitList(mission.husbandries)
     local vs = mission.vehicleSystem
     if vs ~= nil then
         visitList(vs.vehicles)
-        visitMaybe(vs, "getVehicles")
     end
-    visitList(mission.vehicles)
-    visitList(mission.ownedItems)
 end
 
 function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
@@ -2143,7 +2256,7 @@ end
 function HorseGenetics.collectClusterBindings()
     local bindings = {}
     local usedHorseIds = {}
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.visitAnimalClusters(function(cluster, container)
             if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
                 return
@@ -2212,7 +2325,7 @@ function HorseGenetics.rebindLiveClusters()
         local record = HorseGenetics.horses[horseId]
         local age = cluster.age
         if type(age) ~= "number" and cluster.getAge ~= nil then
-            local ok, value = pcall(function()
+            local ok, value = hgSafeCall(function()
                 return cluster:getAge()
             end)
             if ok and type(value) == "number" then
@@ -2225,7 +2338,7 @@ function HorseGenetics.rebindLiveClusters()
         return true
     end
 
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.visitAnimalClusters(function(cluster, container)
             if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
                 return
@@ -2255,7 +2368,7 @@ function HorseGenetics.ensureLiveHorseRecords()
         return 0
     end
     local created = 0
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.visitAnimalClusters(function(cluster, container)
             if cluster == nil or not HorseGenetics.isHorseCluster(cluster) then
                 return
@@ -2268,7 +2381,7 @@ function HorseGenetics.ensureLiveHorseRecords()
             end
         end)
     end)
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.finalizeSoldPrices()
     end)
     if created > 0 then
@@ -2353,7 +2466,7 @@ function HorseGenetics.collectOwnedHorseIds()
             usedHorseIds[record.id] = true
             local age = cluster.age
             if type(age) ~= "number" and cluster.getAge ~= nil then
-                local ok, value = pcall(function()
+                local ok, value = hgSafeCall(function()
                     return cluster:getAge()
                 end)
                 if ok then
@@ -2392,7 +2505,7 @@ function HorseGenetics.collectHorseSellPrices()
     local pricesByName = {}
     local sampleBase = nil
     HorseGenetics.quietSalePrice = true
-    pcall(function()
+    hgSafeCall(function()
         HorseGenetics.visitAnimalClusters(function(cluster)
             local horse = nil
             local horseId = cluster ~= nil and cluster.horseGeneticsId or nil
@@ -2498,13 +2611,13 @@ function HorseGenetics.formatHorseMoney(amount)
     end
     amount = math.floor(amount + 0.5)
     if g_i18n ~= nil and g_i18n.formatMoney ~= nil then
-        local ok, text = pcall(function()
+        local ok, text = hgSafeCall(function()
             return g_i18n:formatMoney(amount, 0, true, true)
         end)
         if ok and type(text) == "string" and text ~= "" then
             return text
         end
-        ok, text = pcall(function()
+        ok, text = hgSafeCall(function()
             return g_i18n:formatMoney(amount)
         end)
         if ok and type(text) == "string" and text ~= "" then
@@ -2619,46 +2732,34 @@ function HorseGenetics.isHorseCluster(cluster)
     if cluster == nil then
         return false
     end
-    local isHorse = false
-    pcall(function()
-        if AnimalClusterHorse ~= nil and cluster.isa ~= nil and cluster:isa(AnimalClusterHorse) then
-            isHorse = true
-        elseif AnimalItemHorse ~= nil and cluster.isa ~= nil and cluster:isa(AnimalItemHorse) then
-            isHorse = true
-        end
-    end)
-    if isHorse then
+    if cluster._hgIsHorse == true then
         return true
     end
-    local function hasHorseToken(value)
-        return type(value) == "string" and string.find(string.upper(value), "HORSE", 1, true) ~= nil
-    end
-    if hasHorseToken(cluster.typeName) or hasHorseToken(cluster.animalType) then
-        return true
-    end
-    if g_currentMission == nil or g_currentMission.animalSystem == nil then
+    if cluster._hgIsHorse == false then
         return false
     end
-    local ok, label = pcall(function()
-        local index = nil
-        if cluster.getSubTypeIndex ~= nil then
-            index = cluster:getSubTypeIndex()
-        else
-            index = cluster.subTypeIndex
+    local isHorse = false
+    if type(cluster.isa) == "function" then
+        if AnimalClusterHorse ~= nil and cluster:isa(AnimalClusterHorse) then
+            isHorse = true
+        elseif AnimalItemHorse ~= nil and cluster:isa(AnimalItemHorse) then
+            isHorse = true
         end
-        if index == nil then
-            return ""
+    end
+    if not isHorse then
+        local nested = cluster.cluster
+        if type(nested) == "table" and nested ~= cluster and HorseGenetics.isHorseCluster(nested) then
+            isHorse = true
         end
-        local subtype = g_currentMission.animalSystem:getSubTypeByIndex(index)
-        if subtype == nil then
-            return ""
+    end
+    if not isHorse then
+        local token = tostring(cluster.typeName or "") .. " " .. tostring(cluster.animalType or "")
+        if string.find(string.upper(token), "HORSE", 1, true) ~= nil then
+            isHorse = true
         end
-        local animalType = subtype.typeIndex ~= nil
-            and g_currentMission.animalSystem:getTypeByIndex(subtype.typeIndex) or nil
-        return string.upper(tostring(subtype.name or subtype.title or "") .. " "
-            .. tostring(animalType ~= nil and (animalType.name or animalType.title) or ""))
-    end)
-    return ok and string.find(label, "HORSE", 1, true) ~= nil
+    end
+    cluster._hgIsHorse = isHorse
+    return isHorse
 end
 
 local function hgClearHorseReproduction(cluster)
@@ -2669,7 +2770,7 @@ local function hgEnsureHorseClusterNumbers(cluster)
     if cluster == nil then
         return
     end
-    pcall(function()
+    hgSafeCall(function()
         local age = cluster.age
         if type(age) ~= "number" and cluster.getAge ~= nil then
             age = cluster:getAge()
@@ -2702,18 +2803,10 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 return true
             end
             if methodName == "getReproduction" then
-                if self._hgReproSync ~= true then
-                    HorseGenetics.syncClusterReproduction(self)
-                end
-                local horseId = self.horseGeneticsId
-                if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-                    local record = HorseGenetics.getHorseForCluster(self)
-                    if record ~= nil then
-                        horseId = record.id
-                    end
-                end
-                if HorseGenetics.getPregnancyForHorseId(horseId) ~= nil then
-                    return HorseGenetics.getReproductionPercent(HorseGenetics.getPregnancyForHorseId(horseId))
+                local horseId = HorseGenetics.getHorseGeneticsId(self)
+                local pregnancy = HorseGenetics.getPregnancyForHorseId(horseId)
+                if pregnancy ~= nil then
+                    return HorseGenetics.getReproductionPercent(pregnancy)
                 end
                 if not HorseGenetics.isHorseMature(self) then
                     return HorseGenetics.getPubertyPercent(self)
@@ -2727,28 +2820,22 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 return HorseGenetics.getGestationMonths()
             end
             if methodName == "getCanReproduce" then
-                HorseGenetics.syncClusterReproduction(self)
-                local horseId = self.horseGeneticsId
-                if (horseId == nil or horseId == "") and HorseGenetics.getHorseForCluster ~= nil then
-                    local record = HorseGenetics.getHorseForCluster(self)
-                    if record ~= nil then
-                        horseId = record.id
-                    end
-                end
-                return HorseGenetics.getPregnancyForHorseId(horseId) ~= nil
+                return HorseGenetics.getPregnancyForHorseId(HorseGenetics.getHorseGeneticsId(self)) ~= nil
+            end
+            if methodName == "getHadABirth" then
+                local live = HorseGenetics.getLiveHorseCluster(self)
+                return live ~= nil and live.hadABirth == true
             end
             if methodName == "getCanStartReproduction" or methodName == "reproduce" then
                 return false
             end
             if methodName == "updateReproduction" then
-                HorseGenetics.syncClusterReproduction(self)
                 return 0
             end
             if methodName == "changeReproduction" or methodName == "addReproduction" then
                 if self._hgReproSync == true then
                     return original(self, ...)
                 end
-                HorseGenetics.syncClusterReproduction(self)
                 return
             end
         end
@@ -2761,13 +2848,13 @@ end
 function HorseGenetics.installHorseReproductionBlock()
     local wrapped = 0
     local classes = {
-        AnimalCluster, AnimalClusterHorse, AnimalItem, AnimalItemHorse,
+        AnimalCluster, AnimalClusterHorse, AnimalItem, AnimalItemHorse, AnimalItemStock,
         AnimalClusterHusbandry, PlaceableHusbandryAnimals
     }
     local methods = {
         "updateReproduction", "changeReproduction", "reproduce",
         "addReproduction", "getCanReproduce", "getSupportsReproduction",
-        "getCanStartReproduction", "getReproduction", "getReproductionDuration"
+        "getCanStartReproduction", "getReproduction", "getReproductionDuration", "getHadABirth"
     }
     for i = 1, #classes do
         for j = 1, #methods do
@@ -2788,7 +2875,7 @@ function HorseGenetics.installHorseReproductionBlock()
                     hgEnsureHorseClusterNumbers(cluster)
                 end
             end
-            local ok, result = pcall(originalOnPeriodChanged, husbandry, ...)
+            local ok, result = hgSafeCall(originalOnPeriodChanged, husbandry, ...)
             if not ok then
                 result = nil
             end
@@ -2799,7 +2886,7 @@ function HorseGenetics.installHorseReproductionBlock()
                             and HorseGenetics.modBirthClusters ~= nil
                             and HorseGenetics.modBirthClusters[cluster.horseGeneticsId]
                         if not tracked then
-                            pcall(function()
+                            hgSafeCall(function()
                                 if husbandry.removeCluster ~= nil and cluster.id ~= nil then
                                     husbandry:removeCluster(cluster.id)
                                 elseif cluster.setNumAnimals ~= nil then
@@ -2814,8 +2901,8 @@ function HorseGenetics.installHorseReproductionBlock()
                     end
                 end
             end
-            pcall(HorseGenetics.onHusbandryMonth, husbandry)
-            pcall(HorseGenetics.syncHusbandryReproduction, husbandry)
+            hgSafeCall(HorseGenetics.onHusbandryMonth, husbandry)
+            hgSafeCall(HorseGenetics.syncHusbandryReproduction, husbandry)
             return result
         end
         PlaceableHusbandryAnimals.horseGeneticsBlockPeriod = true
@@ -2838,31 +2925,34 @@ function HorseGenetics:loadMap()
 end
 
 function HorseGenetics:update(dt)
-    pcall(function()
+    if HorseGenetics._hooksReady ~= true then
         HorseGenetics.registerEventClasses()
         HorseGenetics.installNetworkHooks()
         HorseGenetics.installClusterPersistence()
         HorseGenetics.installHorseReproductionBlock()
         HorseGenetics:installCoreIntegrations()
-        if HorseGenetics._appliedPubertyMonths ~= HorseGenetics.getPubertyMonths() then
-            HorseGenetics.applyPubertyToHorseSubtypes()
-            HorseGenetics.syncAllReproductionVisuals()
+        if HorseGenetics.networkHooksInstalled and HorseGenetics.horseReproductionBlockInstalled then
+            HorseGenetics._hooksReady = true
         end
-        dt = tonumber(dt) or 0
-        if HorseGenetics.isAuthoritative() then
-            HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
-            if HorseGenetics._liveScanAcc >= 2000 then
-                HorseGenetics._liveScanAcc = 0
-                HorseGenetics.ensureLiveHorseRecords()
-            end
-        elseif HorseGenetics.clientHasSync ~= true then
-            HorseGenetics._clientSyncAcc = (HorseGenetics._clientSyncAcc or 0) + dt
-            if HorseGenetics._clientSyncAcc >= 2500 then
-                HorseGenetics._clientSyncAcc = 0
-                HorseGenetics.requestSync()
-            end
+    end
+    if HorseGenetics._appliedPubertyMonths ~= HorseGenetics.getPubertyMonths() then
+        HorseGenetics.applyPubertyToHorseSubtypes()
+        HorseGenetics.syncAllReproductionVisuals()
+    end
+    dt = tonumber(dt) or 0
+    if HorseGenetics.isAuthoritative() then
+        HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
+        if HorseGenetics._liveScanAcc >= 5000 then
+            HorseGenetics._liveScanAcc = 0
+            HorseGenetics.ensureLiveHorseRecords()
         end
-    end)
+    elseif HorseGenetics.clientHasSync ~= true then
+        HorseGenetics._clientSyncAcc = (HorseGenetics._clientSyncAcc or 0) + dt
+        if HorseGenetics._clientSyncAcc >= 5000 then
+            HorseGenetics._clientSyncAcc = 0
+            HorseGenetics.requestSync()
+        end
+    end
 end
 
 addModEventListener(HorseGenetics)
@@ -2873,7 +2963,7 @@ function HorseGenetics.canRunHostCommand()
     if g_currentMission == nil then return false end
     if g_currentMission.isServer == true then return true end
     if g_currentMission.getIsServer ~= nil then
-        local ok, isServer = pcall(function()
+        local ok, isServer = hgSafeCall(function()
             return g_currentMission:getIsServer()
         end)
         if ok and isServer == true then return true end
@@ -2932,7 +3022,7 @@ function HorseGenetics.getLocalFarmId()
             end
         end
         if g_currentMission.getFarmId ~= nil then
-            local ok, farmId = pcall(function()
+            local ok, farmId = hgSafeCall(function()
                 return g_currentMission:getFarmId()
             end)
             if ok then
@@ -2968,7 +3058,7 @@ function HorseGenetics.notifyUiDirty()
     if page == nil then
         return
     end
-    pcall(function()
+    hgSafeCall(function()
         if page.refreshRecords ~= nil then
             page:refreshRecords()
         end
@@ -3461,283 +3551,60 @@ local function hgSetColor(element, color)
     end
 end
 
-local HG_BAR_TRACK_WIDTH = 240
-local HG_BAR_TRACK_HEIGHT = 14
-local HG_BAR_SIZE_API = nil
-local HG_PORTRAIT_SIZE_STR = "260px 200px"
-local HG_PORTRAIT_POS_X = 255
-local HG_PORTRAIT_POS_Y = -179
-local HG_PORTRAIT_POS_STR = "255px -179px"
-local HG_PORTRAIT_SIZE_N = {260 / 1920, 200 / 1080}
-
-local function hgApplyPxSize(element, widthPx, heightPx)
-    if element == nil then
-        return
-    end
-    local sizeStr = string.format("%.1fpx %dpx", widthPx, heightPx)
-    local applied = false
-    if element.setSize ~= nil then
-        applied = pcall(function()
-            element:setSize(sizeStr)
-        end)
-        if not applied then
-            applied = pcall(function()
-                element:setSize(string.format("%.1fpx", widthPx), string.format("%dpx", heightPx))
-            end)
-        end
-        if not applied then
-            pcall(function()
-                element:setSize(widthPx / 1920, heightPx / 1080)
-            end)
-        end
-    end
-    pcall(function()
-        if element.setAbsoluteSize ~= nil then
-            element:setAbsoluteSize(widthPx / 1920, heightPx / 1080)
-        end
-        if element.overlay ~= nil then
-            element.overlay.width = widthPx / 1920
-            element.overlay.height = heightPx / 1080
-        end
-        if element.updateAbsoluteSize ~= nil then
-            element:updateAbsoluteSize()
-        end
-        if element.updateAbsolutePosition ~= nil then
-            element:updateAbsolutePosition()
-        end
-    end)
-end
-
-local function hgApplyPxPosition(element, xPx, yPx)
-    if element == nil or element.setPosition == nil then
-        return
-    end
-    local posStr = string.format("%.1fpx %dpx", xPx, yPx)
-    local applied = pcall(function()
-        element:setPosition(posStr)
-    end)
-    if not applied then
-        pcall(function()
-            element:setPosition(string.format("%.1fpx", xPx), string.format("%dpx", yPx))
-        end)
-    end
-end
-
-local function hgReadAbsSize(element)
-    if element == nil then
+local function hgAbsSize(element)
+    if element == nil or type(element.absSize) ~= "table" then
         return nil, nil
     end
-    if element.absSize ~= nil then
-        return tonumber(element.absSize[1]), tonumber(element.absSize[2])
-    end
-    if element.size ~= nil then
-        return tonumber(element.size[1]), tonumber(element.size[2])
-    end
-    return nil, nil
+    return tonumber(element.absSize[1]), tonumber(element.absSize[2])
 end
 
-local function hgSyncOverlaySize(element, wNorm, hNorm)
-    if element == nil or element.overlay == nil then
+local function hgSetOverlayDimension(overlay, w, h)
+    if overlay == nil or w == nil or h == nil then
         return
     end
-    pcall(function()
-        if element.overlay.setDimension ~= nil then
-            element.overlay:setDimension(wNorm, hNorm)
-        else
-            element.overlay.width = wNorm
-            element.overlay.height = hNorm
-        end
-    end)
-end
-
-local function hgSizeChanged(beforeW, beforeH, afterW, afterH)
-    if afterW == nil then
-        return false
-    end
-    if beforeW == nil then
-        return true
-    end
-    return math.abs(afterW - beforeW) > 1e-6 or math.abs((afterH or 0) - (beforeH or 0)) > 1e-6
-end
-
-local function hgBarWidthPlausible(afterW, trackAbsW, screenW)
-    if afterW == nil or afterW < 0 then
-        return false
-    end
-    local maxW = screenW
-    if trackAbsW ~= nil and trackAbsW > 0 then
-        maxW = math.max(trackAbsW * 1.08, screenW)
-    end
-    return afterW <= maxW + 1e-4
-end
-
-local function hgTrySetBarSize(element, name, value, widthPx, heightPx)
-    local screenW = widthPx / 1920
-    local screenH = heightPx / 1080
-    local parentW = 1
-    local parentH = 1
-    local trackAbsW, trackAbsH = nil, nil
-    if element.parent ~= nil then
-        trackAbsW, trackAbsH = hgReadAbsSize(element.parent)
-        if trackAbsW ~= nil and trackAbsW > 1e-6 then
-            parentW = (widthPx / 1920) / trackAbsW
-        else
-            parentW = value / 100
-        end
-        if trackAbsH ~= nil and trackAbsH > 1e-6 then
-            parentH = (heightPx / 1080) / trackAbsH
-        else
-            parentH = 1
-        end
+    if overlay.setDimension ~= nil then
+        overlay:setDimension(w, h)
     else
-        parentW = value / 100
-        parentH = 1
+        overlay.width = w
+        overlay.height = h
     end
-    if parentW < 0 then
-        parentW = 0
-    end
-
-    local attempts = {
-        {
-            name = "screenNorm",
-            apply = function()
-                element:setSize(screenW, screenH)
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
-            name = "parentNorm",
-            apply = function()
-                element:setSize(parentW, parentH)
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
-            name = "pxString",
-            apply = function()
-                element:setSize(string.format("%dpx %dpx", widthPx, heightPx))
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        },
-        {
-            name = "sizeTable",
-            apply = function()
-                element.size = {screenW, screenH}
-                if element.updateAbsolutePosition ~= nil then
-                    element:updateAbsolutePosition()
-                end
-            end,
-            overlayW = screenW,
-            overlayH = screenH
-        }
-    }
-
-    local function runAttempt(attempt)
-        local beforeW, beforeH = hgReadAbsSize(element)
-        local ok = pcall(attempt.apply)
-        if not ok then
-            return false, beforeW, beforeH, nil, nil
-        end
-        if element.updateAbsolutePosition ~= nil then
-            pcall(element.updateAbsolutePosition, element)
-        end
-        hgSyncOverlaySize(element, attempt.overlayW, attempt.overlayH)
-        local afterW, afterH = hgReadAbsSize(element)
-        local plausible = hgBarWidthPlausible(afterW, trackAbsW, screenW)
-        local changed = hgSizeChanged(beforeW, beforeH, afterW, afterH)
-        return plausible and (changed or HG_BAR_SIZE_API == attempt.name), beforeW, beforeH, afterW, afterH
-    end
-
-    if HG_BAR_SIZE_API ~= nil then
-        for i = 1, #attempts do
-            if attempts[i].name == HG_BAR_SIZE_API then
-                local ok, _, _, afterW = runAttempt(attempts[i])
-                if ok then
-                    return attempts[i].name, afterW
-                end
-                HG_BAR_SIZE_API = nil
-                break
-            end
-        end
-    end
-
-    for i = 1, #attempts do
-        local ok, _, _, afterW = runAttempt(attempts[i])
-        if ok then
-            HG_BAR_SIZE_API = attempts[i].name
-            return attempts[i].name, afterW
-        end
-    end
-
-    -- Fallback if absSize did not change.
-    pcall(function()
-        element.size = {screenW, screenH}
-        if element.updateAbsolutePosition ~= nil then
-            element:updateAbsolutePosition()
-        end
-        hgSyncOverlaySize(element, screenW, screenH)
-    end)
-    local afterW = select(1, hgReadAbsSize(element))
-    return HG_BAR_SIZE_API or "fallback", afterW
 end
 
+-- Fill width is screen-normalized numbers from the track absSize, then the overlay.
 local function hgSetBarFill(bar, value, name)
-    pcall(function()
-        if bar == nil then
-            return
-        end
-        value = math.max(0, math.min(100, tonumber(value) or 0))
-        local widthPx = HG_BAR_TRACK_WIDTH * value / 100
-        if widthPx < 1 then
-            widthPx = 1
-            if bar.setVisible ~= nil then
-                bar:setVisible(false)
-            end
-        elseif bar.setVisible ~= nil then
-            bar:setVisible(true)
-        end
-        -- Nested fills stay at 0,0 (left of the track). Do not re-center; shrinking the
-        -- fill bitmap is what makes the bar read as a percentage.
-        pcall(function()
-            if bar.setPosition ~= nil then
-                local ok = pcall(function()
-                    bar:setPosition("0px 0px")
-                end)
-                if not ok then
-                    bar:setPosition(0, 0)
-                end
-            end
-        end)
-        hgTrySetBarSize(bar, name, value, widthPx, HG_BAR_TRACK_HEIGHT)
-    end)
-end
-
-local function hgApplyPortraitLayout(element)
-    if element == nil then
+    if bar == nil then
         return
     end
-    pcall(function()
-        if element.setSize ~= nil then
-            local ok = pcall(function()
-                element:setSize(HG_PORTRAIT_SIZE_STR)
-            end)
-            if not ok then
-                pcall(function()
-                    element:setSize(HG_PORTRAIT_SIZE_N[1], HG_PORTRAIT_SIZE_N[2])
-                end)
-            end
+    value = math.max(0, math.min(100, tonumber(value) or 0))
+    local fraction = value / 100
+    if fraction < 0.004 then
+        fraction = 0.004
+        if bar.setVisible ~= nil then
+            bar:setVisible(false)
         end
-        hgApplyPxSize(element, 260, 200)
-        hgApplyPxPosition(element, HG_PORTRAIT_POS_X, HG_PORTRAIT_POS_Y)
-        pcall(function()
-            if element.setPosition ~= nil then
-                element:setPosition(HG_PORTRAIT_POS_STR)
-            end
-        end)
-    end)
+    elseif bar.setVisible ~= nil then
+        bar:setVisible(true)
+    end
+    local trackW, trackH = hgAbsSize(bar.parent)
+    if trackW == nil or trackW < 1e-5 then
+        trackW = 240 / 1920
+        trackH = 14 / 1080
+    end
+    local w = trackW * fraction
+    local h = trackH or (14 / 1080)
+    if type(bar.position) == "table" then
+        bar.position[1] = 0
+        bar.position[2] = 0
+    end
+    if type(bar.size) == "table" then
+        bar.size[1] = w
+        bar.size[2] = h
+    end
+    if type(bar.absSize) == "table" then
+        bar.absSize[1] = w
+        bar.absSize[2] = h
+    end
+    hgSetOverlayDimension(bar.overlay, w, h)
 end
 
 local function hgHideLeftoverScrollChrome(page)
@@ -3747,7 +3614,7 @@ local function hgHideLeftoverScrollChrome(page)
     for _, id in ipairs({ "horseScrollBar", "horseScrollOutline", "horseScrollTrack", "horseScrollThumb" }) do
         local element = page[id]
         if element ~= nil and element.setVisible ~= nil then
-            pcall(element.setVisible, element, false)
+            hgSafeCall(element.setVisible, element, false)
         end
     end
 end
@@ -3765,7 +3632,7 @@ local function hgBindStatBarTextures(page)
     end
     local function bind(element, relativePath)
         if element ~= nil and element.setImageFilename ~= nil then
-            pcall(element.setImageFilename, element, directory .. relativePath)
+            hgSafeCall(element.setImageFilename, element, directory .. relativePath)
         end
     end
     bind(page.speedTrack, "gui/bars/track.dds")
@@ -3777,15 +3644,10 @@ local function hgBindStatBarTextures(page)
     bind(page.healthBar, "gui/bars/health.dds")
     bind(page.averageBar, "gui/bars/speed.dds")
     if page.averageBar ~= nil and page.averageBar.setImageColor ~= nil then
-        pcall(page.averageBar.setImageColor, page.averageBar, nil, 0.82, 0.82, 0.82, 1)
+        hgSafeCall(page.averageBar.setImageColor, page.averageBar, nil, 0.82, 0.82, 0.82, 1)
     end
     bind(page.hgHeaderIcon, "gui/icons/horse_genetics_menu_icon.dds")
     bind(page.hgHeaderBadge, "gui/decor/header_badge.dds")
-    pcall(function()
-        if page.hgHeaderIcon ~= nil and page.hgHeaderIcon.setImageUVs ~= nil and GuiUtils ~= nil then
-            page.hgHeaderIcon:setImageUVs(nil, unpack(GuiUtils.getUVs({0, 0, 256, 256}, 256)))
-        end
-    end)
     local function bindStatIcon(ids, relativePath)
         for i = 1, #ids do
             bind(page[ids[i]], relativePath)
@@ -3832,7 +3694,7 @@ end
 
 local function hgReadMouseWheelDelta(page)
     local delta = 0
-    pcall(function()
+    hgSafeCall(function()
         if g_inputBinding ~= nil then
             if g_inputBinding.getMouseWheelValue ~= nil then
                 delta = tonumber(g_inputBinding:getMouseWheelValue()) or 0
@@ -3998,10 +3860,10 @@ local function hgApplyBold(element)
         return
     end
     if element.setBold ~= nil then
-        pcall(element.setBold, element, true)
+        hgSafeCall(element.setBold, element, true)
     end
     if element.setTextBold ~= nil then
-        pcall(element.setTextBold, element, true)
+        hgSafeCall(element.setTextBold, element, true)
     end
     if element.textBold ~= nil then
         element.textBold = true
@@ -4013,12 +3875,9 @@ local function hgStyleSectionTitle(element)
         return
     end
     hgSetColor(element, HG_COLOR_SELECTED)
-    if element.setTextSize ~= nil then
-        pcall(element.setTextSize, element, 30 / 1080)
-    end
     hgApplyBold(element)
     if element.setTextAlignment ~= nil and RenderText ~= nil and RenderText.ALIGN_LEFT ~= nil then
-        pcall(element.setTextAlignment, element, RenderText.ALIGN_LEFT)
+        hgSafeCall(element.setTextAlignment, element, RenderText.ALIGN_LEFT)
     end
 end
 
@@ -4027,9 +3886,6 @@ local function hgStyleColumnHeader(element)
         return
     end
     hgSetColor(element, HG_COLOR_SELECTED)
-    if element.setTextSize ~= nil then
-        pcall(element.setTextSize, element, 16 / 1080)
-    end
     hgApplyBold(element)
 end
 
@@ -4066,9 +3922,6 @@ function HorseGeneticsMenu:styleSectionTitles()
     hgSetColor(self.treeHint, HG_COLOR_MUTED)
     hgSetColor(self.breedPickerHint, {1, 1, 1, 1})
     hgApplyBold(self.breedPickerHint)
-    if self.breedPickerHint ~= nil and self.breedPickerHint.setTextSize ~= nil then
-        pcall(self.breedPickerHint.setTextSize, self.breedPickerHint, 16 / 1080)
-    end
     hgStyleColumnHeader(self.breedPickHeaderName)
     hgStyleColumnHeader(self.breedPickHeaderAge)
     hgStyleColumnHeader(self.breedPickHeaderSpeed)
@@ -4170,7 +4023,7 @@ function HorseGeneticsMenu:renderOverview()
                 button:setDisabled(record == nil)
             end
             if button.setSelected ~= nil then
-                pcall(button.setSelected, button, selected)
+                hgSafeCall(button.setSelected, button, selected)
             end
         end
     end
@@ -4200,7 +4053,7 @@ function HorseGeneticsMenu:setListOffset(offset, skipRender)
 end
 
 function HorseGeneticsMenu:hgIsMyHorsesScrollActive()
-    local ok, active = pcall(function()
+    local ok, active = hgSafeCall(function()
         if self.currentTab ~= nil and self.currentTab ~= "horses" and self.currentTab ~= "info" then
             return false
         end
@@ -4272,7 +4125,7 @@ function HorseGeneticsMenu:hgHandleScrollMouse(posX, posY, isDown, isUp, button)
     end
     local wheelUp = false
     local wheelDown = false
-    pcall(function()
+    hgSafeCall(function()
         if Input ~= nil then
             wheelUp = button == Input.MOUSE_BUTTON_WHEEL_UP or button == Input.MOUSE_WHEEL_UP
             wheelDown = button == Input.MOUSE_BUTTON_WHEEL_DOWN or button == Input.MOUSE_WHEEL_DOWN
@@ -4466,7 +4319,7 @@ local function hgGetSubTypeImageForAge(subType, age)
     local index = subType.subTypeIndex or subType.index
     if animalSystem ~= nil and animalSystem.getVisualByAge ~= nil and index ~= nil then
         local visual = nil
-        pcall(function()
+        hgSafeCall(function()
             visual = animalSystem:getVisualByAge(index, age)
         end)
         local image = hgExtractVisualStoreImage(visual)
@@ -4537,7 +4390,7 @@ local function hgGetSubTypeByName(name)
         return nil
     end
     local subType = nil
-    pcall(function()
+    hgSafeCall(function()
         if animalSystem.getSubTypeByName ~= nil then
             subType = animalSystem:getSubTypeByName(name)
         end
@@ -4613,7 +4466,6 @@ local function hgAddLocalCoatPortraitPaths(list, seen, key)
     end
     for i = 1, #stems do
         local stem = stems[i]
-        hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_portrait_" .. stem .. "_v26.dds")
         hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/hg_ui_portrait_" .. stem .. ".dds")
         hgAddPortraitPathVariants(list, seen, directory .. "gui/coats/" .. stem .. ".dds")
     end
@@ -4624,7 +4476,7 @@ local function hgCollectHorseStoreIconPaths(coatColour)
     local list, seen = {}, {}
     local useFoalVisual = HorseGenetics.isEnhancedAnimalSystemActive()
     local age = useFoalVisual and 0 or HorseGenetics.VANILLA_MATURITY_MONTHS
-    pcall(function()
+    hgSafeCall(function()
         local subType = hgGetSubTypeByName(HG_HORSE_STORE_SUBTYPES[key])
         if useFoalVisual then
             hgAddPortraitPathVariants(list, seen, hgGetSubTypeImageForAge(hgFindFoalSubTypeForCoat(key), 0))
@@ -4642,7 +4494,7 @@ end
 
 local function hgCreatePortraitOverlay(path)
     local overlayId = nil
-    local ok = pcall(function()
+    local ok = hgSafeCall(function()
         overlayId = createImageOverlay(path)
     end)
     if ok and overlayId ~= nil and overlayId ~= 0 then
@@ -4659,17 +4511,17 @@ local function hgBindHorsePortraitPath(element, path)
     if probeId == nil then
         return false
     end
-    pcall(delete, probeId)
+    hgSafeCall(delete, probeId)
 
     local bound = false
-    pcall(function()
+    hgSafeCall(function()
         if element.setImageFilename ~= nil then
             element:setImageFilename(path)
             bound = true
         end
     end)
     if not bound then
-        pcall(function()
+        hgSafeCall(function()
             element:setImageFilename("overlay", path)
             bound = true
         end)
@@ -4682,11 +4534,8 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
     if element == nil or element.setImageFilename == nil then
         return
     end
-    pcall(hgApplyPortraitLayout, element)
-    pcall(hgApplyPortraitLayout, self.portraitPlaceholder)
-
     local paths, key = nil, hgNormalizeCoatKey(coatColour)
-    pcall(function()
+    hgSafeCall(function()
         paths, key = hgCollectHorseStoreIconPaths(coatColour)
     end)
     if type(paths) ~= "table" or paths[1] == nil then
@@ -4694,7 +4543,7 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
     end
 
     local overlayFile = nil
-    pcall(function()
+    hgSafeCall(function()
         overlayFile = element.overlay ~= nil and element.overlay.filename or nil
     end)
     if self.hgPortraitBoundPath ~= nil
@@ -4714,7 +4563,7 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
     local boundPath = nil
     for i = 1, #paths do
         local okBind = false
-        pcall(function()
+        hgSafeCall(function()
             okBind = hgBindHorsePortraitPath(element, paths[i])
         end)
         if okBind then
@@ -4729,20 +4578,18 @@ function HorseGeneticsMenu:updateHorsePortrait(coatColour)
         self.hgPortraitBindFailedCoat = nil
         hgSetText(self.portraitPlaceholder, "")
         if element.setVisible ~= nil then
-            pcall(element.setVisible, element, true)
+            hgSafeCall(element.setVisible, element, true)
         end
     else
         self.hgPortraitBoundCoat = nil
         self.hgPortraitBindFailedCoat = key
         hgSetText(self.portraitPlaceholder, string.upper(tostring(key or "BAY")))
     end
-    pcall(hgApplyPortraitLayout, element)
-    pcall(hgApplyPortraitLayout, self.portraitPlaceholder)
 end
 
 function HorseGeneticsMenu:renderProfile()
     local r = self.selectedRecord
-    pcall(HorseGeneticsMenu.updateHorsePortrait, self, r ~= nil and r.coatColour or "Bay")
+    hgSafeCall(HorseGeneticsMenu.updateHorsePortrait, self, r ~= nil and r.coatColour or "Bay")
     local stats = r ~= nil and (r.stats or {}) or {}
     local speed = tonumber(stats.speed) or 0
     local stamina = tonumber(stats.stamina) or 0
@@ -4755,11 +4602,11 @@ function HorseGeneticsMenu:renderProfile()
     hgSetText(self.healthValue, string.format("%d / 100", health))
     hgSetText(self.averageText, string.format("%.1f / 100", average))
     -- Bind once (texture bind can reset bitmap size). Always set fill width AFTER bind.
-    pcall(hgBindStatBarTextures, self)
-    pcall(hgSetBarFill, self.healthBar, health, "healthBar")
-    pcall(hgSetBarFill, self.staminaBar, stamina, "staminaBar")
-    pcall(hgSetBarFill, self.speedBar, speed, "speedBar")
-    pcall(hgSetBarFill, self.averageBar, average, "averageBar")
+    hgSafeCall(hgBindStatBarTextures, self)
+    hgSafeCall(hgSetBarFill, self.healthBar, health, "healthBar")
+    hgSafeCall(hgSetBarFill, self.staminaBar, stamina, "staminaBar")
+    hgSafeCall(hgSetBarFill, self.speedBar, speed, "speedBar")
+    hgSafeCall(hgSetBarFill, self.averageBar, average, "averageBar")
 
     if r == nil then
         hgSetText(self.profileName, hgT("hg_dash"))
@@ -4821,38 +4668,12 @@ function HorseGeneticsMenu:onSelectHorse11() self:selectRecord(11) end
 function HorseGeneticsMenu:onSelectHorse12() self:selectRecord(12) end
 function HorseGeneticsMenu:onSelectHorse13() self:selectRecord(13) end
 
-function HorseGeneticsMenu:onRefreshClick()
-    if HorseGenetics.requestSync ~= nil then
-        HorseGenetics.requestSync()
-    end
-    if HorseGenetics.ensureLiveHorseRecords ~= nil then
-        HorseGenetics.ensureLiveHorseRecords()
-    end
-    self:refreshRecords()
-    if self.currentTab == "breeding" then
-        self:renderBreedingPage()
-    elseif self.currentTab == "info" then
-        self:renderGeneticInfoPage()
-    end
-end
-
-local HG_COAT_PORTRAIT_LAYOUT = {
-    breedP1Portrait = {190, -40, 110, 95},
-    breedP2Portrait = {190, -40, 110, 95},
-    breedF1Portrait = {80, -230, 160, 140},
-    breedF2Portrait = {80, -230, 160, 140},
-    treeC1Portrait = {4, 0, 36, 36},
-    treeC2Portrait = {4, 0, 36, 36},
-    treeC3Portrait = {4, 0, 36, 36},
-    treeC4Portrait = {4, 0, 36, 36}
-}
-
 function HorseGeneticsMenu:bindCoatPortrait(element, coatColour)
     if element == nil then
         return
     end
     local paths, key = nil, hgNormalizeCoatKey(coatColour)
-    pcall(function()
+    hgSafeCall(function()
         paths, key = hgCollectHorseStoreIconPaths(coatColour)
     end)
     if type(paths) ~= "table" or paths[1] == nil then
@@ -4860,43 +4681,21 @@ function HorseGeneticsMenu:bindCoatPortrait(element, coatColour)
     end
     for i = 1, #paths do
         local ok = false
-        pcall(function()
+        hgSafeCall(function()
             ok = hgBindHorsePortraitPath(element, paths[i])
         end)
         if ok then
             break
         end
     end
-    local layout = nil
-    if element.id ~= nil then
-        layout = HG_COAT_PORTRAIT_LAYOUT[element.id]
-    end
-    if layout == nil then
-        for id, box in pairs(HG_COAT_PORTRAIT_LAYOUT) do
-            if self[id] == element then
-                layout = box
-                break
-            end
-        end
-    end
-    if layout ~= nil then
-        pcall(function()
-            if element.setPosition ~= nil then
-                element:setPosition(string.format("%dpx %dpx", layout[1], layout[2]))
-            end
-            if element.setSize ~= nil then
-                element:setSize(string.format("%dpx %dpx", layout[3], layout[4]))
-            end
-        end)
-    end
     if element.setVisible ~= nil then
-        pcall(element.setVisible, element, true)
+        hgSafeCall(element.setVisible, element, true)
     end
 end
 
 local function hgSetPortraitVisible(element, visible)
     if element ~= nil and element.setVisible ~= nil then
-        pcall(element.setVisible, element, visible == true)
+        hgSafeCall(element.setVisible, element, visible == true)
     end
 end
 
@@ -4999,9 +4798,6 @@ function HorseGeneticsMenu:renderBreedPicker()
         local color = selected and HG_COLOR_SELECTED or HG_COLOR_TEXT
         local function styleCell(element)
             hgSetColor(element, color)
-            if element ~= nil and element.setTextSize ~= nil then
-                pcall(element.setTextSize, element, 16 / 1080)
-            end
         end
         hgSetText(self["breedPick" .. i .. "Name"], name)
         hgSetText(self["breedPick" .. i .. "Age"], age)
@@ -5438,7 +5234,7 @@ function HorseGeneticsMenu:onClickTreeC4() self:onClickTreeC(4) end
 
 function HorseGeneticsMenu:mouseEvent(posX, posY, isDown, isUp, button, eventUsed)
     self.hgLastMouseX = posX
-    local okSuper, superUsed = pcall(function()
+    local okSuper, superUsed = hgSafeCall(function()
         local superClass = HorseGeneticsMenu:superClass()
         if superClass ~= nil and superClass.mouseEvent ~= nil then
             return superClass.mouseEvent(self, posX, posY, isDown, isUp, button, eventUsed) or eventUsed
@@ -5448,7 +5244,7 @@ function HorseGeneticsMenu:mouseEvent(posX, posY, isDown, isUp, button, eventUse
     if okSuper then
         eventUsed = superUsed or eventUsed
     end
-    local ok, used = pcall(HorseGeneticsMenu.hgHandleScrollMouse, self, posX, posY, isDown, isUp, button)
+    local ok, used = hgSafeCall(HorseGeneticsMenu.hgHandleScrollMouse, self, posX, posY, isDown, isUp, button)
     if ok and used then
         eventUsed = true
     end
@@ -5456,7 +5252,7 @@ function HorseGeneticsMenu:mouseEvent(posX, posY, isDown, isUp, button, eventUse
 end
 
 function HorseGeneticsMenu:mouseWheelEvent(delta, eventUsed)
-    local ok, used = pcall(function()
+    local ok, used = hgSafeCall(function()
         if self:hgIsMyHorsesScrollActive() then
             return self:hgApplyWheelDelta(delta)
         end
@@ -5465,7 +5261,7 @@ function HorseGeneticsMenu:mouseWheelEvent(delta, eventUsed)
     if ok and used then
         return true
     end
-    local okSuper, superUsed = pcall(function()
+    local okSuper, superUsed = hgSafeCall(function()
         local superClass = HorseGeneticsMenu:superClass()
         if superClass ~= nil and superClass.mouseWheelEvent ~= nil then
             return superClass.mouseWheelEvent(self, delta, eventUsed)
@@ -5479,13 +5275,14 @@ function HorseGeneticsMenu:mouseWheelEvent(delta, eventUsed)
 end
 
 function HorseGeneticsMenu:update(dt)
-    pcall(function()
-        local superClass = HorseGeneticsMenu:superClass()
-        if superClass ~= nil and superClass.update ~= nil then
-            superClass.update(self, dt)
-        end
-    end)
-    pcall(HorseGeneticsMenu.hgPollScrollInput, self)
+    if g_inGameMenu == nil or g_inGameMenu.isOpen ~= true or g_inGameMenu.currentPage ~= self then
+        return
+    end
+    local superClass = HorseGeneticsMenu:superClass()
+    if superClass ~= nil and superClass.update ~= nil then
+        superClass.update(self, dt)
+    end
+    self:hgPollScrollInput()
 end
 
 local function hgInstallScrollInputHooks(page)
@@ -5496,7 +5293,7 @@ local function hgInstallScrollInputHooks(page)
     HorseGenetics.hgScrollHooksInstalled = true
     if InGameMenu ~= nil and InGameMenu.mouseEvent ~= nil then
         InGameMenu.mouseEvent = Utils.appendedFunction(InGameMenu.mouseEvent, function(menu, posX, posY, isDown, isUp, button, eventUsed)
-            pcall(function()
+            hgSafeCall(function()
                 local hgPage = HorseGenetics.hgMenuPage
                 if hgPage == nil or menu == nil then
                     return
@@ -5513,7 +5310,7 @@ local function hgInstallScrollInputHooks(page)
     end
     if InGameMenu ~= nil and InGameMenu.mouseWheelEvent ~= nil then
         InGameMenu.mouseWheelEvent = Utils.appendedFunction(InGameMenu.mouseWheelEvent, function(menu, delta, eventUsed)
-            pcall(function()
+            hgSafeCall(function()
                 local hgPage = HorseGenetics.hgMenuPage
                 if hgPage ~= nil and hgPage:hgIsMyHorsesScrollActive() then
                     hgPage:hgApplyWheelDelta(delta)
@@ -5524,7 +5321,7 @@ local function hgInstallScrollInputHooks(page)
                     return
                 end
                 local mouseX, mouseY = nil, nil
-                pcall(function()
+                hgSafeCall(function()
                     if g_inputBinding ~= nil and g_inputBinding.getMousePosition ~= nil then
                         mouseX, mouseY = g_inputBinding:getMousePosition()
                     elseif g_inputBinding ~= nil then
@@ -5591,73 +5388,44 @@ local function hgFixInGameMenuTabScroll()
         alignStart = ListElement.ALIGN_START
     end
     tabList.listItemAlignment = alignStart
+    if tabList.firstVisibleItem == nil then
+        tabList.firstVisibleItem = 1
+    end
 
     if tabList.setIsScrollAllowed ~= nil then
-        pcall(tabList.setIsScrollAllowed, tabList, true)
+        hgSafeCall(tabList.setIsScrollAllowed, tabList, true)
     else
         tabList.isScrollAllowed = true
     end
     if tabList.supportsMouseScrolling ~= nil then
         tabList.supportsMouseScrolling = true
     end
-
-    if tabList.updateAbsolutePosition ~= nil then
-        tabList:updateAbsolutePosition()
-    end
-    if tabList.reloadData ~= nil then
-        tabList:reloadData()
-    end
-    if tabList.updateView ~= nil then
-        tabList:updateView(true)
-    end
-    if tabList.updateItemPositions ~= nil then
-        tabList:updateItemPositions()
-    end
-
-    local idx = menu.currentPageListIndex
-    if idx == nil and tabList.selectedIndex ~= nil then
-        idx = tabList.selectedIndex
-    end
-    if idx ~= nil then
-        if tabList.setSelectedIndex ~= nil then
-            pcall(tabList.setSelectedIndex, tabList, idx)
-        end
-        if tabList.makeCellVisible ~= nil then
-            pcall(tabList.makeCellVisible, tabList, idx)
-        elseif tabList.scrollTo ~= nil then
-            pcall(tabList.scrollTo, tabList, idx)
-        elseif tabList.setFirstVisibleItem ~= nil then
-            local visible = tabList.maxNumVisibleItems or tabList.visibleItems or 7
-            local first = math.max(1, idx - math.max(0, visible - 1))
-            pcall(tabList.setFirstVisibleItem, tabList, first)
-        end
-    end
 end
 
 local function hgInstallTabScrollFix()
     if HorseGenetics.hgTabScrollFixInstalled or Utils == nil then
-        pcall(hgFixInGameMenuTabScroll)
+        hgSafeCall(hgFixInGameMenuTabScroll)
         return
     end
     HorseGenetics.hgTabScrollFixInstalled = true
     if InGameMenu ~= nil then
         if InGameMenu.updatePages ~= nil then
             InGameMenu.updatePages = Utils.appendedFunction(InGameMenu.updatePages, function()
-                pcall(hgFixInGameMenuTabScroll)
+                hgSafeCall(hgFixInGameMenuTabScroll)
             end)
         end
         if InGameMenu.onOpen ~= nil then
             InGameMenu.onOpen = Utils.appendedFunction(InGameMenu.onOpen, function()
-                pcall(hgFixInGameMenuTabScroll)
+                hgSafeCall(hgFixInGameMenuTabScroll)
             end)
         end
         if InGameMenu.rebuildTabList ~= nil then
             InGameMenu.rebuildTabList = Utils.appendedFunction(InGameMenu.rebuildTabList, function()
-                pcall(hgFixInGameMenuTabScroll)
+                hgSafeCall(hgFixInGameMenuTabScroll)
             end)
         end
     end
-    pcall(hgFixInGameMenuTabScroll)
+    hgSafeCall(hgFixInGameMenuTabScroll)
 end
 
 local function hgPageListEntryMatches(entry, page)
@@ -5678,6 +5446,52 @@ local function hgMovePageInList(list, page, position)
             table.insert(list, insertAt, entry)
             return
         end
+    end
+end
+
+local function hgCopyNumericVec(dst, src)
+    if type(src) ~= "table" or type(src[1]) ~= "number" or type(src[2]) ~= "number" then
+        return dst
+    end
+    if type(dst) ~= "table" then
+        return { src[1], src[2] }
+    end
+    dst[1] = src[1]
+    dst[2] = src[2]
+    return dst
+end
+
+-- loadGui frames default to full screen. Copy the Animals page rect so this
+-- page sits in the Esc content area instead of covering the left tab rail.
+local function hgFitPageIntoInGameMenu(page)
+    local menu = g_inGameMenu
+    if menu == nil or page == nil then
+        return
+    end
+    local template = menu.pageAnimals or menu.pageCalendar or menu.pageMapOverview or menu.pageSettings
+    if template ~= nil then
+        page.size = hgCopyNumericVec(page.size, template.size)
+        page.position = hgCopyNumericVec(page.position, template.position)
+        page.absSize = hgCopyNumericVec(page.absSize, template.absSize)
+        page.absPosition = hgCopyNumericVec(page.absPosition, template.absPosition)
+        if template.anchorLeft ~= nil then
+            page.anchorLeft = template.anchorLeft
+            page.anchorRight = template.anchorRight
+            page.anchorTop = template.anchorTop
+            page.anchorBottom = template.anchorBottom
+        end
+        if template.screenAlign ~= nil then
+            page.screenAlign = template.screenAlign
+        end
+    end
+    if menu.pagingElement ~= nil and menu.pagingElement.updateAbsolutePosition ~= nil then
+        menu.pagingElement:updateAbsolutePosition()
+    end
+    if page.applyScreenAlignment ~= nil then
+        page:applyScreenAlignment()
+    end
+    if page.updateAbsolutePosition ~= nil then
+        page:updateAbsolutePosition()
     end
 end
 
@@ -5740,6 +5554,11 @@ function HorseGenetics.installGeneticsMenu()
         HorseGenetics.geneticsMenuInstalled = true
         return true
     end
+    if g_inGameMenu ~= nil and g_inGameMenu.horseGeneticsMenu ~= nil then
+        HorseGenetics.hgMenuPage = g_inGameMenu.horseGeneticsMenu
+        HorseGenetics.geneticsMenuInstalled = true
+        return true
+    end
     if g_gui == nil or g_inGameMenu == nil or g_inGameMenu.pagingElement == nil then return false end
     if TabbedMenuFrameElement == nil or g_gui.loadGui == nil then return false end
     local page = HorseGeneticsMenu.new()
@@ -5760,53 +5579,40 @@ function HorseGenetics.installGeneticsMenu()
     g_inGameMenu:exposeControlsAsFields(pageName)
 
     local insertPosition = hgFindAnimalsTabInsertPosition()
+    HorseGenetics.hgMenuPage = page
+    HorseGenetics.geneticsMenuInstalled = true
     g_inGameMenu.pagingElement:addElement(page)
     hgMovePageInList(g_inGameMenu.pagingElement.elements, page, insertPosition)
     hgMovePageInList(g_inGameMenu.pagingElement.pages, page, insertPosition)
-    g_inGameMenu.pagingElement:updateAbsolutePosition()
+    hgFitPageIntoInGameMenu(page)
     g_inGameMenu.pagingElement:updatePageMapping()
     g_inGameMenu:registerPage(page, insertPosition, function() return true end)
 
-    local tabOk = false
-    if GuiUtils ~= nil then
-        local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
-        tabOk = pcall(function()
-            g_inGameMenu:addPageTab(page, iconPath, GuiUtils.getUVs({0, 0, 256, 256}, 256))
-        end)
-        if not tabOk then
-            tabOk = pcall(function()
-                g_inGameMenu:addPageTab(page, iconPath, GuiUtils.getUVs({0, 0, 1024, 1024}))
-            end)
+    local iconPath = Utils.getFilename("gui/icons/horse_genetics_menu_icon.dds", modDirectory)
+    local iconUVs = {0, 1, 1, 1, 0, 0, 1, 0}
+    if GuiUtils ~= nil and GuiUtils.getUVs ~= nil then
+        local parsed = GuiUtils.getUVs("0px 0px 256px 256px", {256, 256})
+        if type(parsed) == "table" then
+            iconUVs = parsed
         end
     end
-    if not tabOk and g_iconsUIFilename ~= nil and GuiUtils ~= nil then
-        pcall(function()
-            g_inGameMenu:addPageTab(page, g_iconsUIFilename, GuiUtils.getUVs({0, 0, 64, 64}))
-        end)
+    if g_inGameMenu.addPageTab ~= nil then
+        g_inGameMenu:addPageTab(page, iconPath, iconUVs)
     end
     hgMovePageInList(g_inGameMenu.pageFrames, page, insertPosition)
     if g_inGameMenu.rebuildTabList ~= nil then
         g_inGameMenu:rebuildTabList()
     end
-    pcall(hgFixInGameMenuTabScroll)
-    pcall(hgInstallTabScrollFix)
-
-    HorseGenetics.geneticsMenuInstalled = true
+    hgSafeCall(hgFixInGameMenuTabScroll)
+    hgSafeCall(hgInstallTabScrollFix)
 
     -- Bind textures after the tab is registered.
-    pcall(hgBindStatBarTextures, page)
-    pcall(function()
-        if page.setTitle ~= nil then
-            page:setTitle(hgT("hg_title"))
-        end
-    end)
-    pcall(function()
-        if page.updateAbsolutePosition ~= nil then
-            page:updateAbsolutePosition()
-        end
-    end)
-    pcall(hgInstallScrollInputHooks, page)
-    pcall(hgHideLeftoverScrollChrome, page)
+    hgBindStatBarTextures(page)
+    if page.setTitle ~= nil then
+        page:setTitle(hgT("hg_title"))
+    end
+    hgInstallScrollInputHooks(page)
+    hgHideLeftoverScrollChrome(page)
 
     return true
 end
@@ -5824,7 +5630,7 @@ local function horseGeneticsTryInstallMenu()
         return false
     end
 
-    local ok, result = pcall(HorseGenetics.installGeneticsMenu)
+    local ok, result = hgSafeCall(HorseGenetics.installGeneticsMenu)
     if not ok then
         HorseGenetics.geneticsMenuInstallFailed = true
         return false
@@ -5844,7 +5650,7 @@ end
 if FSBaseMission ~= nil and FSBaseMission.update ~= nil and Utils ~= nil then
     FSBaseMission.update = Utils.appendedFunction(FSBaseMission.update, function(mission, dt)
         if not HorseGenetics.horseReproductionBlockInstalled then
-            pcall(HorseGenetics.installHorseReproductionBlock)
+            hgSafeCall(HorseGenetics.installHorseReproductionBlock)
         end
         if not HorseGenetics.geneticsMenuInstalled and not HorseGenetics.geneticsMenuInstallFailed then
             HorseGenetics.geneticsMenuInstallAttempts = (HorseGenetics.geneticsMenuInstallAttempts or 0) + 1
@@ -5853,7 +5659,7 @@ if FSBaseMission ~= nil and FSBaseMission.update ~= nil and Utils ~= nil then
                 HorseGenetics.geneticsMenuInstallFailed = true
             end
         end
-        pcall(function()
+        hgSafeCall(function()
             local page = HorseGenetics.hgMenuPage
             if page ~= nil and page.hgPollScrollInput ~= nil then
                 page:hgPollScrollInput()

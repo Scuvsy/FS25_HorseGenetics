@@ -9,7 +9,6 @@
         <text name="hg_owned_horses" text="EIGENE PFERDE" />
         <text name="hg_horses_owned" text="Pferde im Besitz: %d" />
         <text name="hg_showing_scroll" text="Anzeige %d-%d von %d  (Scrollen)" />
-        <text name="hg_refresh" text="Aktual." />
         <text name="hg_col_name" text="NAME" />
         <text name="hg_col_age" text="ALTER" />
         <text name="hg_col_speed" text="TEMPO" />
