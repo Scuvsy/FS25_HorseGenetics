@@ -17,10 +17,8 @@ end
 local function hgT(key, ...)
     local text = tostring(key or "")
     if g_i18n ~= nil and g_i18n.getText ~= nil then
-        local ok, result = hgSafeCall(function()
-            return g_i18n:getText(key)
-        end)
-        if ok and type(result) == "string" and result ~= "" then
+        local result = g_i18n:getText(key)
+        if type(result) == "string" and result ~= "" then
             text = result
         end
     end
@@ -1915,12 +1913,6 @@ function HorseGenetics.setClusterReproduction(cluster, percent, duration, remain
         cluster.reproduction = percent
         cluster.reproductionMinAgeMonth = HorseGenetics.getPubertyMonths()
         cluster.isInseminated = inseminated == true
-        if HorseGenetics.hasOffspring(HorseGenetics.getHorseGeneticsId(cluster)) then
-            cluster.hadABirth = true
-            if type(cluster.monthsSinceLastBirth) ~= "number" then
-                cluster.monthsSinceLastBirth = 0
-            end
-        end
         if cluster.setReproduction ~= nil then
             local ok = hgSafeCall(function()
                 cluster:setReproduction(percent)
@@ -2158,6 +2150,17 @@ local function hgReadClusterSellPrice(cluster)
     return nil
 end
 
+local function hgIsAnimalHolder(container)
+    return container ~= nil and (
+        container.spec_husbandryAnimals ~= nil
+        or container.spec_husbandryMeadow ~= nil
+        or container.spec_pasture ~= nil
+        or container.spec_rideable ~= nil
+        or container.spec_livestockTrailer ~= nil
+        or container.clusterSystem ~= nil
+    )
+end
+
 function HorseGenetics.visitAnimalClusters(visitor)
     local mission = g_currentMission
     if mission == nil or visitor == nil then
@@ -2169,23 +2172,15 @@ function HorseGenetics.visitAnimalClusters(visitor)
             return
         end
         seenContainers[container] = true
+        if not hgIsAnimalHolder(container) then
+            return
+        end
         for _, cluster in ipairs(HorseGenetics.getHusbandryClusters(container)) do
-            hgSafeCall(visitor, cluster, container)
+            visitor(cluster, container)
         end
         local cluster = hgInvoke(container, "getCluster") or container.cluster
         if cluster ~= nil then
-            hgSafeCall(visitor, cluster, container)
-        end
-        if type(container) == "table" then
-            visitContainer(container.placeable)
-            visitContainer(container.owner)
-            visitContainer(hgInvoke(container, "getPlaceable"))
-            visitContainer(hgInvoke(container, "getOwner"))
-            if type(container.items) == "table" then
-                for _, item in pairs(container.items) do
-                    visitContainer(item)
-                end
-            end
+            visitor(cluster, container)
         end
     end
     local function visitList(list)
@@ -2225,15 +2220,11 @@ function HorseGenetics.visitAnimalClusters(visitor)
         visitList(ps.placeablesByUniqueId)
         visitMaybe(ps, "getPlaceables")
     end
-    visitList(mission.placeables)
     visitList(mission.husbandries)
     local vs = mission.vehicleSystem
     if vs ~= nil then
         visitList(vs.vehicles)
-        visitMaybe(vs, "getVehicles")
     end
-    visitList(mission.vehicles)
-    visitList(mission.ownedItems)
 end
 
 function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
@@ -2741,54 +2732,34 @@ function HorseGenetics.isHorseCluster(cluster)
     if cluster == nil then
         return false
     end
-    local isHorse = false
-    hgSafeCall(function()
-        if AnimalClusterHorse ~= nil and cluster.isa ~= nil and cluster:isa(AnimalClusterHorse) then
-            isHorse = true
-        elseif AnimalItemHorse ~= nil and cluster.isa ~= nil and cluster:isa(AnimalItemHorse) then
-            isHorse = true
-        elseif AnimalItemStock ~= nil and cluster.isa ~= nil and cluster:isa(AnimalItemStock) then
-            local nested = cluster.cluster
-            if nested == nil and cluster.getCluster ~= nil then
-                nested = cluster:getCluster()
-            end
-            if nested ~= nil and nested ~= cluster and AnimalClusterHorse ~= nil and nested.isa ~= nil and nested:isa(AnimalClusterHorse) then
-                isHorse = true
-            end
-        end
-    end)
-    if isHorse then
+    if cluster._hgIsHorse == true then
         return true
     end
-    local function hasHorseToken(value)
-        return type(value) == "string" and string.find(string.upper(value), "HORSE", 1, true) ~= nil
-    end
-    if hasHorseToken(cluster.typeName) or hasHorseToken(cluster.animalType) then
-        return true
-    end
-    if g_currentMission == nil or g_currentMission.animalSystem == nil then
+    if cluster._hgIsHorse == false then
         return false
     end
-    local ok, label = hgSafeCall(function()
-        local index = nil
-        if cluster.getSubTypeIndex ~= nil then
-            index = cluster:getSubTypeIndex()
-        else
-            index = cluster.subTypeIndex
+    local isHorse = false
+    if type(cluster.isa) == "function" then
+        if AnimalClusterHorse ~= nil and cluster:isa(AnimalClusterHorse) then
+            isHorse = true
+        elseif AnimalItemHorse ~= nil and cluster:isa(AnimalItemHorse) then
+            isHorse = true
         end
-        if index == nil then
-            return ""
+    end
+    if not isHorse then
+        local nested = cluster.cluster
+        if type(nested) == "table" and nested ~= cluster and HorseGenetics.isHorseCluster(nested) then
+            isHorse = true
         end
-        local subtype = g_currentMission.animalSystem:getSubTypeByIndex(index)
-        if subtype == nil then
-            return ""
+    end
+    if not isHorse then
+        local token = tostring(cluster.typeName or "") .. " " .. tostring(cluster.animalType or "")
+        if string.find(string.upper(token), "HORSE", 1, true) ~= nil then
+            isHorse = true
         end
-        local animalType = subtype.typeIndex ~= nil
-            and g_currentMission.animalSystem:getTypeByIndex(subtype.typeIndex) or nil
-        return string.upper(tostring(subtype.name or subtype.title or "") .. " "
-            .. tostring(animalType ~= nil and (animalType.name or animalType.title) or ""))
-    end)
-    return ok and string.find(label, "HORSE", 1, true) ~= nil
+    end
+    cluster._hgIsHorse = isHorse
+    return isHorse
 end
 
 local function hgClearHorseReproduction(cluster)
@@ -2832,9 +2803,6 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 return true
             end
             if methodName == "getReproduction" then
-                if self._hgReproSync ~= true then
-                    HorseGenetics.syncClusterReproduction(self)
-                end
                 local horseId = HorseGenetics.getHorseGeneticsId(self)
                 local pregnancy = HorseGenetics.getPregnancyForHorseId(horseId)
                 if pregnancy ~= nil then
@@ -2852,28 +2820,22 @@ local function hgWrapSkipHorseReproduction(classTable, methodName)
                 return HorseGenetics.getGestationMonths()
             end
             if methodName == "getCanReproduce" then
-                HorseGenetics.syncClusterReproduction(self)
                 return HorseGenetics.getPregnancyForHorseId(HorseGenetics.getHorseGeneticsId(self)) ~= nil
             end
             if methodName == "getHadABirth" then
                 local live = HorseGenetics.getLiveHorseCluster(self)
-                if live ~= nil and live.hadABirth == true then
-                    return true
-                end
-                return HorseGenetics.hasOffspring(HorseGenetics.getHorseGeneticsId(self))
+                return live ~= nil and live.hadABirth == true
             end
             if methodName == "getCanStartReproduction" or methodName == "reproduce" then
                 return false
             end
             if methodName == "updateReproduction" then
-                HorseGenetics.syncClusterReproduction(self)
                 return 0
             end
             if methodName == "changeReproduction" or methodName == "addReproduction" then
                 if self._hgReproSync == true then
                     return original(self, ...)
                 end
-                HorseGenetics.syncClusterReproduction(self)
                 return
             end
         end
@@ -2963,31 +2925,34 @@ function HorseGenetics:loadMap()
 end
 
 function HorseGenetics:update(dt)
-    hgSafeCall(function()
+    if HorseGenetics._hooksReady ~= true then
         HorseGenetics.registerEventClasses()
         HorseGenetics.installNetworkHooks()
         HorseGenetics.installClusterPersistence()
         HorseGenetics.installHorseReproductionBlock()
         HorseGenetics:installCoreIntegrations()
-        if HorseGenetics._appliedPubertyMonths ~= HorseGenetics.getPubertyMonths() then
-            HorseGenetics.applyPubertyToHorseSubtypes()
-            HorseGenetics.syncAllReproductionVisuals()
+        if HorseGenetics.networkHooksInstalled and HorseGenetics.horseReproductionBlockInstalled then
+            HorseGenetics._hooksReady = true
         end
-        dt = tonumber(dt) or 0
-        if HorseGenetics.isAuthoritative() then
-            HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
-            if HorseGenetics._liveScanAcc >= 2000 then
-                HorseGenetics._liveScanAcc = 0
-                HorseGenetics.ensureLiveHorseRecords()
-            end
-        elseif HorseGenetics.clientHasSync ~= true then
-            HorseGenetics._clientSyncAcc = (HorseGenetics._clientSyncAcc or 0) + dt
-            if HorseGenetics._clientSyncAcc >= 2500 then
-                HorseGenetics._clientSyncAcc = 0
-                HorseGenetics.requestSync()
-            end
+    end
+    if HorseGenetics._appliedPubertyMonths ~= HorseGenetics.getPubertyMonths() then
+        HorseGenetics.applyPubertyToHorseSubtypes()
+        HorseGenetics.syncAllReproductionVisuals()
+    end
+    dt = tonumber(dt) or 0
+    if HorseGenetics.isAuthoritative() then
+        HorseGenetics._liveScanAcc = (HorseGenetics._liveScanAcc or 0) + dt
+        if HorseGenetics._liveScanAcc >= 5000 then
+            HorseGenetics._liveScanAcc = 0
+            HorseGenetics.ensureLiveHorseRecords()
         end
-    end)
+    elseif HorseGenetics.clientHasSync ~= true then
+        HorseGenetics._clientSyncAcc = (HorseGenetics._clientSyncAcc or 0) + dt
+        if HorseGenetics._clientSyncAcc >= 5000 then
+            HorseGenetics._clientSyncAcc = 0
+            HorseGenetics.requestSync()
+        end
+    end
 end
 
 addModEventListener(HorseGenetics)

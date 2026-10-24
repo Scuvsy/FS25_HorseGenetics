@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modDesc descVersion="115">
     <author>Scuvsy</author>
-    <version>1.0.21.0</version>
+    <version>1.0.22.0</version>
 
     <title>
         <en>Horse Genetics</en>
@@ -34,6 +34,8 @@ Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breedi
 Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.
 
 CHANGELOG
+1.0.22.0
+- Reduced hitching from Horse Genetics scanning animals every frame.
 1.0.21.0
 - Animals menu reproduction bar fills during Horse Genetics pregnancy and Last birth is set on the parents.
 - German and French titles; French listing text.
@@ -64,6 +66,8 @@ Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, 
 Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.
 
 CHANGELOG
+1.0.22.0
+- Ruckeln durch ständiges Scannen der Tiere reduziert.
 1.0.21.0
 - Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Horse-Genetics-Trächtigkeit. Die letzte Geburt wird bei den Eltern gesetzt.
 - Deutsche und französische Titel; französischer Listing-Text.
@@ -94,6 +98,8 @@ Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, ge
 Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.
 
 CHANGELOG
+1.0.22.0
+- Moins de saccades : Horse Genetics ne parcourt plus les animaux à chaque image.
 1.0.21.0
 - La barre de reproduction du menu animaux se remplit pendant la gestation Horse Genetics. La dernière naissance est enregistrée sur les parents.
 - Titres allemand et français ; texte de listing français.
