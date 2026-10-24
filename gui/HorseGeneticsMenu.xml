@@ -732,5 +732,23 @@
                 <Text id="valueModifierHelp" profile="fs25_textDefault" position="24px -257px" size="900px 24px" text="$l10n_hg_sale_help" />
             </GuiElement>
         </GuiElement>
+
+        <GuiElement id="hgTextureRefs" visible="false" size="1px 1px">
+            <Bitmap id="refCoatBay" filename="gui/coats/bay.dds" size="1px 1px" />
+            <Bitmap id="refCoatBlack" filename="gui/coats/black.dds" size="1px 1px" />
+            <Bitmap id="refCoatBuckskin" filename="gui/coats/buckskin.dds" size="1px 1px" />
+            <Bitmap id="refCoatChestnut" filename="gui/coats/chestnut.dds" size="1px 1px" />
+            <Bitmap id="refCoatGrey" filename="gui/coats/grey.dds" size="1px 1px" />
+            <Bitmap id="refCoatPalomino" filename="gui/coats/palomino.dds" size="1px 1px" />
+            <Bitmap id="refCoatPinto" filename="gui/coats/pinto.dds" size="1px 1px" />
+            <Bitmap id="refUiBay" filename="gui/coats/hg_ui_portrait_bay.dds" size="1px 1px" />
+            <Bitmap id="refUiBlack" filename="gui/coats/hg_ui_portrait_black.dds" size="1px 1px" />
+            <Bitmap id="refUiChestnut" filename="gui/coats/hg_ui_portrait_chestnut.dds" size="1px 1px" />
+            <Bitmap id="refUiDun" filename="gui/coats/hg_ui_portrait_dun.dds" size="1px 1px" />
+            <Bitmap id="refUiGrey" filename="gui/coats/hg_ui_portrait_grey.dds" size="1px 1px" />
+            <Bitmap id="refUiPalomino" filename="gui/coats/hg_ui_portrait_palomino.dds" size="1px 1px" />
+            <Bitmap id="refUiPinto" filename="gui/coats/hg_ui_portrait_pinto.dds" size="1px 1px" />
+            <Bitmap id="refUiSealbrown" filename="gui/coats/hg_ui_portrait_sealbrown.dds" size="1px 1px" />
+        </GuiElement>
     </GuiElement>
 </GUI>

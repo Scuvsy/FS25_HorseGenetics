@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<modDesc descVersion="114">
+<modDesc descVersion="115">
     <author>Scuvsy</author>
-    <version>1.0.20.0</version>
+    <version>1.0.21.0</version>
 
     <title>
         <en>Horse Genetics</en>
         <de>Pferdegenetik</de>
-        <fr>Génétique des chevaux</fr>
+        <fr>Génétique Chevaline</fr>
     </title>
 
     <description>
@@ -31,7 +31,15 @@ Sale price uses the vanilla horse price, then a genetics multiplier. At the defa
 
 Compatible with Enhanced Animal System (FS25_EnhancedAnimalSystem). Horse breeding, gestation, genetics, names and sale values stay on Horse Genetics. Other animals stay on Enhanced Animal System. When both mods are loaded, Horse Genetics portraits use foal-age horse visuals.
 
-Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.]]></en>
+Works in single player and PC multiplayer. Every player and the dedicated server need the same version. Stats are rolled on the host and synced. Each farm only sees its own horses.
+
+CHANGELOG
+1.0.21.0
+- Animals menu reproduction bar fills during Horse Genetics pregnancy and Last birth is set on the parents.
+- German and French titles; French listing text.
+- Testers: descVersion 115, 512x512 DXT1 mod icon.
+1.0.20.0
+- Horse stats stay on the genetic ID so renaming does not reroll them.]]></en>
         <de><![CDATA[Nur PC. Nicht kompatibel mit Xbox oder PlayStation.
 Mehrspieler auf dem PC möglich.
 
@@ -53,7 +61,15 @@ Der Verkaufspreis startet beim Vanilla-Preis, dann kommt ein Genetik-Multiplikat
 
 Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, Tragzeit, Genetik, Namen und Verkaufswerte bleiben bei Horse Genetics. Andere Tiere bleiben beim Enhanced Animal System. Sind beide Mods geladen, nutzen die Porträts Fohlen-Grafiken.
 
-Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.]]></de>
+Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.
+
+CHANGELOG
+1.0.21.0
+- Der Fortpflanzungsbalken im Tiere-Menü füllt sich während der Horse-Genetics-Trächtigkeit. Die letzte Geburt wird bei den Eltern gesetzt.
+- Deutsche und französische Titel; französischer Listing-Text.
+- Testers: descVersion 115, Mod-Icon 512x512 DXT1.
+1.0.20.0
+- Werte bleiben an der Genetik-ID, Umbenennen würfelt nicht neu.]]></de>
         <fr><![CDATA[PC uniquement. Non compatible avec Xbox ou PlayStation.
 Multijoueur compatible sur PC.
 
@@ -75,10 +91,18 @@ Le prix de vente part du prix vanilla, puis un multiplicateur génétique. À 10
 
 Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, gestation, génétique, noms et valeurs de vente des chevaux restent sur Horse Genetics. Les autres animaux restent sur Enhanced Animal System. Si les deux mods sont chargés, les portraits Horse Genetics utilisent les visuels de poulain.
 
-Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.]]></fr>
+Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.
+
+CHANGELOG
+1.0.21.0
+- La barre de reproduction du menu animaux se remplit pendant la gestation Horse Genetics. La dernière naissance est enregistrée sur les parents.
+- Titres allemand et français ; texte de listing français.
+- Testers : descVersion 115, icône 512x512 DXT1.
+1.0.20.0
+- Les stats restent sur l'ID génétique ; renommer ne relance pas les valeurs.]]></fr>
     </description>
 
-    <iconFilename>icon.dds</iconFilename>
+    <iconFilename>icon_horseGenetics.dds</iconFilename>
     <multiplayer supported="true" />
     <l10n filenamePrefix="translations/l10n" />
 
