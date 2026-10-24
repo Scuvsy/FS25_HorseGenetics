@@ -7,6 +7,48 @@ HorseGenetics.modDirectory = g_currentModDirectory
 
 HorseGenetics.horses = {}
 
+local function hgT(key, ...)
+    local text = tostring(key or "")
+    if g_i18n ~= nil and g_i18n.getText ~= nil then
+        local ok, result = pcall(function()
+            return g_i18n:getText(key)
+        end)
+        if ok and type(result) == "string" and result ~= "" then
+            text = result
+        end
+    end
+    if select("#", ...) > 0 then
+        local formatted = string.format(text, ...)
+        if formatted ~= nil then
+            return formatted
+        end
+    end
+    return text
+end
+
+local HG_COAT_L10N = {
+    Bay = "hg_coat_bay",
+    Black = "hg_coat_black",
+    Chestnut = "hg_coat_chestnut",
+    Grey = "hg_coat_grey",
+    Palomino = "hg_coat_palomino",
+    Buckskin = "hg_coat_buckskin",
+    Pinto = "hg_coat_pinto",
+    ["Seal Brown"] = "hg_coat_sealbrown"
+}
+
+local function hgCoatText(coatColour)
+    local key = HG_COAT_L10N[coatColour]
+    if key ~= nil then
+        return hgT(key)
+    end
+    if coatColour == nil or coatColour == "" then
+        return hgT("hg_unknown")
+    end
+    return tostring(coatColour)
+end
+
+
 local function hgGetOwnerFarmId(object)
     if object == nil then
         return nil
@@ -43,6 +85,7 @@ HorseGenetics.COAT_COLOURS = {
 }
 
 HorseGenetics.nextHorseId = 1
+HorseGenetics.recordsReady = false
 
 local function hgApplyHorseDataFile()
     local data = HorseGenetics.HORSE_DATA
@@ -73,7 +116,9 @@ HorseGenetics.xmlSchema:register(XMLValueType.FLOAT, "horseGenetics.horse(?)#hea
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#farmId", "Farm ID")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#soldPrice", "Sold price")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastKnownSellPrice", "Last shop sell price")
+HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics.horse(?)#lastAgeMonths", "Last known age in months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#gestationMonths", "Gestation months")
+HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#pubertyMonths", "Puberty months")
 HorseGenetics.xmlSchema:register(XMLValueType.INT, "horseGenetics#valueModifierPercent", "Sale modifier strength")
 HorseGenetics.xmlSchema:register(XMLValueType.STRING, "horseGenetics.history(?)#parent1Id", "History parent 1")
 HorseGenetics.xmlSchema:register(XMLValueType.STRING, "horseGenetics.history(?)#parent1Name", "History parent 1 name")
@@ -103,9 +148,11 @@ HorseGenetics.pregnancies = {}
 HorseGenetics.VANILLA_GESTATION_MONTHS = 11
 HorseGenetics.VANILLA_MATURITY_MONTHS = 22
 HorseGenetics.GESTATION_OPTIONS = {1, 3, 6, 8, 11, 14, 16, 18, 22}
+HorseGenetics.MATURITY_OPTIONS = {1, 3, 6, 8, 11, 14, 16, 18, 22}
 HorseGenetics.VALUE_MODIFIER_OPTIONS = {0, 25, 50, 75, 100, 125, 150, 175, 200}
 HorseGenetics.settings = {
     gestationMonths = HorseGenetics.VANILLA_GESTATION_MONTHS,
+    pubertyMonths = HorseGenetics.VANILLA_MATURITY_MONTHS,
     valueModifierPercent = 100
 }
 
@@ -163,6 +210,14 @@ function HorseGenetics.getGestationMonths()
     )
 end
 
+function HorseGenetics.getPubertyMonths()
+    return HorseGenetics.clampChoice(
+        HorseGenetics.settings.pubertyMonths,
+        HorseGenetics.MATURITY_OPTIONS,
+        HorseGenetics.VANILLA_MATURITY_MONTHS
+    )
+end
+
 function HorseGenetics.getValueModifierPercent()
     return HorseGenetics.clampChoice(HorseGenetics.settings.valueModifierPercent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
 end
@@ -174,30 +229,43 @@ end
 function HorseGenetics.gestationLabel(months)
     months = HorseGenetics.clampChoice(months, HorseGenetics.GESTATION_OPTIONS, HorseGenetics.VANILLA_GESTATION_MONTHS)
     if months == HorseGenetics.VANILLA_GESTATION_MONTHS then
-        return "11 months (Vanilla)"
+        return hgT("hg_months_vanilla")
     end
     if months == 1 then
-        return "1 month"
+        return hgT("hg_month_one")
     end
-    return tostring(months) .. " months"
+    return hgT("hg_months_n", months)
+end
+
+function HorseGenetics.pubertyLabel(months)
+    months = HorseGenetics.clampChoice(months, HorseGenetics.MATURITY_OPTIONS, HorseGenetics.VANILLA_MATURITY_MONTHS)
+    if months == HorseGenetics.VANILLA_MATURITY_MONTHS then
+        return hgT("hg_puberty_vanilla")
+    end
+    if months == 1 then
+        return hgT("hg_month_one")
+    end
+    return hgT("hg_months_n", months)
 end
 
 function HorseGenetics.valueModifierLabel(percent)
     percent = HorseGenetics.clampChoice(percent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
     if percent == 0 then
-        return "Off (Vanilla prices)"
+        return hgT("hg_value_off")
     end
     if percent == 100 then
-        return "100% (Default)"
+        return hgT("hg_value_default")
     end
     return tostring(percent) .. "%"
 end
 
-function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, skipNetwork)
+function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, pubertyMonths, skipNetwork)
     HorseGenetics.settings.gestationMonths = HorseGenetics.clampChoice(
         gestationMonths, HorseGenetics.GESTATION_OPTIONS, HorseGenetics.VANILLA_GESTATION_MONTHS)
     HorseGenetics.settings.valueModifierPercent = HorseGenetics.clampChoice(
         valueModifierPercent, HorseGenetics.VALUE_MODIFIER_OPTIONS, 100)
+    HorseGenetics.settings.pubertyMonths = HorseGenetics.clampChoice(
+        pubertyMonths, HorseGenetics.MATURITY_OPTIONS, HorseGenetics.VANILLA_MATURITY_MONTHS)
     for _, entry in ipairs(HorseGenetics.pregnancies or {}) do
         HorseGenetics.normalizePregnancy(entry)
     end
@@ -215,9 +283,9 @@ function HorseGenetics.applySettings(gestationMonths, valueModifierPercent, skip
     end
 end
 
-function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent)
+function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent, pubertyMonths)
     if HorseGenetics.isAuthoritative() then
-        HorseGenetics.applySettings(gestationMonths, valueModifierPercent)
+        HorseGenetics.applySettings(gestationMonths, valueModifierPercent, pubertyMonths)
         return
     end
     if g_client == nil or HorseGeneticsSettingsEvent == nil then
@@ -225,7 +293,7 @@ function HorseGenetics.requestSetSettings(gestationMonths, valueModifierPercent)
     end
     local connection = g_client.getServerConnection ~= nil and g_client:getServerConnection() or nil
     if connection ~= nil then
-        connection:sendEvent(HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent))
+        connection:sendEvent(HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent, pubertyMonths))
     end
 end
 
@@ -419,6 +487,7 @@ function HorseGenetics:saveToXMLFile(xmlFile, key)
     xmlFile:setInt(key .. "#version", 1)
     xmlFile:setInt(key .. "#nextHorseId", self.nextHorseId)
     xmlFile:setInt(key .. "#gestationMonths", HorseGenetics.getGestationMonths())
+    xmlFile:setInt(key .. "#pubertyMonths", HorseGenetics.getPubertyMonths())
     xmlFile:setInt(key .. "#valueModifierPercent", HorseGenetics.getValueModifierPercent())
 
     local index = 0
@@ -440,6 +509,7 @@ function HorseGenetics:saveToXMLFile(xmlFile, key)
         xmlFile:setInt(horseKey .. "#farmId", horse.farmId or 0)
         xmlFile:setInt(horseKey .. "#soldPrice", horse.soldPrice or 0)
         xmlFile:setInt(horseKey .. "#lastKnownSellPrice", horse.lastKnownSellPrice or 0)
+        xmlFile:setInt(horseKey .. "#lastAgeMonths", horse.lastAgeMonths or -1)
 
         index = index + 1
     end
@@ -489,6 +559,7 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
     HorseGenetics.applySettings(
         xmlFile:getInt(key .. "#gestationMonths", HorseGenetics.VANILLA_GESTATION_MONTHS),
         xmlFile:getInt(key .. "#valueModifierPercent", 100),
+        xmlFile:getInt(key .. "#pubertyMonths", HorseGenetics.VANILLA_MATURITY_MONTHS),
         true
     )
 
@@ -526,7 +597,8 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
             },
             farmId = xmlFile:getInt(horseKey .. "#farmId", 0),
             soldPrice = xmlFile:getInt(horseKey .. "#soldPrice", 0),
-            lastKnownSellPrice = xmlFile:getInt(horseKey .. "#lastKnownSellPrice", 0)
+            lastKnownSellPrice = xmlFile:getInt(horseKey .. "#lastKnownSellPrice", 0),
+            lastAgeMonths = xmlFile:getInt(horseKey .. "#lastAgeMonths", -1)
         }
 
         if horse.farmId == 0 then
@@ -537,6 +609,9 @@ function HorseGenetics:loadFromXMLFile(xmlFile, key)
         end
         if horse.lastKnownSellPrice == 0 then
             horse.lastKnownSellPrice = nil
+        end
+        if horse.lastAgeMonths ~= nil and horse.lastAgeMonths < 0 then
+            horse.lastAgeMonths = nil
         end
 
         if horse.mareId == "" then
@@ -665,6 +740,7 @@ function HorseGenetics:loadFromSavegame()
 
     self:loadFromXMLFile(xmlFile, "horseGenetics")
     xmlFile:delete()
+    HorseGenetics.recordsReady = true
     HorseGenetics.pruneDuplicateRecords()
     if HorseGenetics.syncAllReproductionVisuals ~= nil then
         HorseGenetics.syncAllReproductionVisuals()
@@ -690,6 +766,7 @@ if Mission00 ~= nil and Mission00.onStartMission ~= nil then
             HorseGenetics.installNetworkHooks()
             if HorseGenetics.isAuthoritative() then
                 HorseGenetics:loadFromSavegame()
+                HorseGenetics.recordsReady = true
                 HorseGenetics.ensureLiveHorseRecords()
             else
                 HorseGenetics.requestSync()
@@ -702,53 +779,55 @@ if Mission00 ~= nil and Mission00.onStartMission ~= nil then
     )
 end
 
--- Register horseGeneticsId on animal clusters before save/load.
-if AnimalClusterSystem ~= nil
-    and AnimalClusterSystem.registerSavegameXMLPaths ~= nil
-    and not AnimalClusterSystem.horseGeneticsSchemaInstalled then
+function HorseGenetics.installClusterPersistence()
+    if AnimalClusterSystem ~= nil
+        and AnimalClusterSystem.registerSavegameXMLPaths ~= nil
+        and not AnimalClusterSystem.horseGeneticsSchemaInstalled then
 
-    local originalRegisterAnimalClusterPaths =
-        AnimalClusterSystem.registerSavegameXMLPaths
+        local originalRegisterAnimalClusterPaths =
+            AnimalClusterSystem.registerSavegameXMLPaths
 
-    AnimalClusterSystem.registerSavegameXMLPaths = function(schema, basePath, ...)
-        originalRegisterAnimalClusterPaths(schema, basePath, ...)
-        schema:register(
-            XMLValueType.STRING,
-            basePath .. ".animal(?)#horseGeneticsId",
-            "Horse Genetics persistent horse identifier"
-        )
-    end
-
-    AnimalClusterSystem.horseGeneticsSchemaInstalled = true
-end
-
--- Persist the genetics ID on stable and rideable horse clusters.
-if AnimalCluster ~= nil
-    and AnimalCluster.saveToXMLFile ~= nil
-    and AnimalCluster.loadFromXMLFile ~= nil
-    and not AnimalCluster.horseGeneticsPersistenceInstalled then
-
-    local originalAnimalClusterSave = AnimalCluster.saveToXMLFile
-    local originalAnimalClusterLoad = AnimalCluster.loadFromXMLFile
-
-    AnimalCluster.saveToXMLFile = function(self, xmlFile, key, usedModNames)
-        local result = originalAnimalClusterSave(self, xmlFile, key, usedModNames)
-
-        if self.horseGeneticsId ~= nil then
-            xmlFile:setValue(key .. "#horseGeneticsId", self.horseGeneticsId)
+        AnimalClusterSystem.registerSavegameXMLPaths = function(schema, basePath, ...)
+            originalRegisterAnimalClusterPaths(schema, basePath, ...)
+            schema:register(
+                XMLValueType.STRING,
+                basePath .. ".animal(?)#horseGeneticsId",
+                "Horse Genetics persistent horse identifier"
+            )
         end
 
-        return result
+        AnimalClusterSystem.horseGeneticsSchemaInstalled = true
     end
 
-    AnimalCluster.loadFromXMLFile = function(self, xmlFile, key, ...)
-        local result = originalAnimalClusterLoad(self, xmlFile, key, ...)
-        self.horseGeneticsId = xmlFile:getValue(key .. "#horseGeneticsId")
-        return result
+    local function installClassPersistence(classTable)
+        if classTable == nil
+            or classTable.saveToXMLFile == nil
+            or classTable.loadFromXMLFile == nil
+            or classTable.horseGeneticsPersistenceInstalled then
+            return
+        end
+        local originalSave = classTable.saveToXMLFile
+        local originalLoad = classTable.loadFromXMLFile
+        classTable.saveToXMLFile = function(self, xmlFile, key, usedModNames)
+            local result = originalSave(self, xmlFile, key, usedModNames)
+            if self.horseGeneticsId ~= nil then
+                xmlFile:setValue(key .. "#horseGeneticsId", self.horseGeneticsId)
+            end
+            return result
+        end
+        classTable.loadFromXMLFile = function(self, xmlFile, key, ...)
+            local result = originalLoad(self, xmlFile, key, ...)
+            self.horseGeneticsId = xmlFile:getValue(key .. "#horseGeneticsId")
+            return result
+        end
+        classTable.horseGeneticsPersistenceInstalled = true
     end
 
-    AnimalCluster.horseGeneticsPersistenceInstalled = true
+    installClassPersistence(AnimalCluster)
+    installClassPersistence(AnimalClusterHorse)
 end
+
+HorseGenetics.installClusterPersistence()
 
 -- Never wrap AnimalCluster readStream/writeStream. Extra bytes desync vanilla
 -- AnimalClusterUpdateEvent on dedicated join (nil:readStream) and can leave
@@ -937,6 +1016,38 @@ function HorseGenetics.getHusbandryClusters(husbandry)
     return list
 end
 
+local function hgNamesMatch(a, b)
+    if a == nil or b == nil or a == "" or b == "" then
+        return false
+    end
+    return string.lower(tostring(a)) == string.lower(tostring(b))
+end
+
+function HorseGenetics.getClusterNumAnimals(cluster)
+    if cluster == nil then
+        return 0
+    end
+    local count = cluster.numAnimals
+    if type(count) ~= "number" and cluster.getNumAnimals ~= nil then
+        local ok, value = pcall(function()
+            return cluster:getNumAnimals()
+        end)
+        if ok then
+            count = value
+        end
+    end
+    if type(count) ~= "number" then
+        return 1
+    end
+    return count
+end
+
+function HorseGenetics.isLiveHorseCluster(cluster)
+    return cluster ~= nil
+        and HorseGenetics.isHorseCluster(cluster)
+        and HorseGenetics.getClusterNumAnimals(cluster) > 0
+end
+
 function HorseGenetics.getHorseForCluster(cluster)
     if cluster == nil then
         return nil
@@ -946,8 +1057,12 @@ function HorseGenetics.getHorseForCluster(cluster)
     if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
         local horse = HorseGenetics.horses[horseId]
         local name = HorseGenetics.getClusterName(cluster)
-        if name ~= nil then
-            horse.name = name
+        if name ~= nil and name ~= "" then
+            if horse.name == nil or horse.name == "" or hgNamesMatch(horse.name, name) then
+                horse.name = name
+            else
+                return nil
+            end
         end
         return horse
     end
@@ -977,7 +1092,7 @@ function HorseGenetics.getBoundHorseIds()
     local bound = {}
     pcall(function()
         HorseGenetics.visitAnimalClusters(function(cluster)
-            if cluster ~= nil and cluster.horseGeneticsId ~= nil then
+            if HorseGenetics.isLiveHorseCluster(cluster) and cluster.horseGeneticsId ~= nil then
                 bound[cluster.horseGeneticsId] = true
             end
         end)
@@ -993,15 +1108,34 @@ function HorseGenetics.getBoundHorseIds()
     return bound
 end
 
--- Reuse an unbound, unsold record with this name instead of rolling a new horse.
-function HorseGenetics.findReusableRecord(horseName, ownerFarmId)
+function HorseGenetics.recordHasPedigree(horse)
+    if horse == nil then
+        return false
+    end
+    if horse.mareId ~= nil and horse.mareId ~= "" then
+        return true
+    end
+    if horse.stallionId ~= nil and horse.stallionId ~= "" then
+        return true
+    end
+    return HorseGenetics.hasOffspring(horse.id)
+end
+
+function HorseGenetics.isFoundationDuplicate(horse)
+    return horse ~= nil
+        and (tonumber(horse.generation) or 1) <= 1
+        and not HorseGenetics.recordHasPedigree(horse)
+end
+
+-- Reuse the original record for this name instead of rolling a new horse.
+function HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
     if horseName == nil or horseName == "" then
         return nil
     end
-    local bound = HorseGenetics.getBoundHorseIds()
+    local bound = usedHorseIds or HorseGenetics.getBoundHorseIds()
     local candidates = {}
     for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse.name ~= nil and string.lower(tostring(horse.name)) == string.lower(tostring(horseName))
+        if horse.name ~= nil and hgNamesMatch(horse.name, horseName)
             and bound[horse.id] ~= true then
             if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
                 table.insert(candidates, horse)
@@ -1012,12 +1146,17 @@ function HorseGenetics.findReusableRecord(horseName, ownerFarmId)
         return nil
     end
     table.sort(candidates, function(a, b)
+        local aPed = HorseGenetics.recordHasPedigree(a)
+        local bPed = HorseGenetics.recordHasPedigree(b)
+        if aPed ~= bPed then
+            return aPed
+        end
         local aLive = a.soldPrice == nil
         local bLive = b.soldPrice == nil
         if aLive ~= bLive then
             return aLive
         end
-        return HorseGenetics.horseNumericId(a) > HorseGenetics.horseNumericId(b)
+        return HorseGenetics.horseNumericId(a) < HorseGenetics.horseNumericId(b)
     end)
     return candidates[1]
 end
@@ -1035,10 +1174,8 @@ function HorseGenetics.pruneDuplicateRecords()
     for id, horse in pairs(HorseGenetics.horses or {}) do
         if horse ~= nil
             and bound[id] ~= true
-            and horse.soldPrice == nil
-            and (horse.mareId == nil or horse.mareId == "")
-            and (horse.stallionId == nil or horse.stallionId == "")
-            and not HorseGenetics.hasOffspring(id)
+            and HorseGenetics.isFoundationDuplicate(horse)
+            and horse.name ~= nil
             and boundNames[horse.name] == true then
             HorseGenetics.horses[id] = nil
             removed = true
@@ -1051,12 +1188,21 @@ end
 
 -- Bind or create the genetics record for a live cluster. Clients never roll new stats.
 function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
-    if cluster == nil then
+    if not HorseGenetics.isLiveHorseCluster(cluster) then
         return nil
     end
 
     local horse = HorseGenetics.getHorseForCluster(cluster)
+    if horse == nil and cluster.horseGeneticsId ~= nil then
+        cluster.horseGeneticsId = nil
+    end
     if horse ~= nil then
+        local canonical = HorseGenetics.findReusableRecord(horse.name or HorseGenetics.getClusterName(cluster), ownerFarmId)
+        if canonical ~= nil and canonical.id ~= horse.id and HorseGenetics.isFoundationDuplicate(horse)
+            and HorseGenetics.recordHasPedigree(canonical) then
+            horse = canonical
+            cluster.horseGeneticsId = canonical.id
+        end
         horse.soldPrice = nil
         if horse.farmId == nil and ownerFarmId ~= nil then
             horse.farmId = ownerFarmId
@@ -1079,7 +1225,7 @@ function HorseGenetics.getOrCreateHorseForCluster(cluster, ownerFarmId)
         return matchingHorse
     end
 
-    if not HorseGenetics.isAuthoritative() then
+    if HorseGenetics.recordsReady ~= true or not HorseGenetics.isAuthoritative() then
         return nil
     end
 
@@ -1111,16 +1257,20 @@ function HorseGenetics.getSaleValueBreakdown(horse)
     local statBonus = 0
     local bonusDetails = {}
 
-    local prettyStatNames = {speed = "Speed", stamina = "Stamina", health = "Health"}
+    local prettyStatNames = {
+        speed = hgT("hg_stat_speed"),
+        stamina = hgT("hg_stat_stamina"),
+        health = hgT("hg_stat_health")
+    }
     for _, statName in ipairs(HorseGenetics.STAT_NAMES) do
         local value = tonumber(horse.stats[statName]) or 0
         local prettyName = prettyStatNames[statName] or statName
         if value >= 90 then
             statBonus = statBonus + 0.05
-            bonusDetails[#bonusDetails + 1] = prettyName .. " +5%"
+            bonusDetails[#bonusDetails + 1] = hgT("hg_bonus_high", prettyName)
         elseif value >= 80 then
             statBonus = statBonus + 0.025
-            bonusDetails[#bonusDetails + 1] = prettyName .. " +2.5%"
+            bonusDetails[#bonusDetails + 1] = hgT("hg_bonus_mid", prettyName)
         end
     end
 
@@ -1156,10 +1306,12 @@ function HorseGenetics.getPossibleCoatText(colourA, colourB)
     if colourB == nil or colourB == "" then
         colourB = colourA
     end
+    colourA = hgCoatText(colourA)
+    colourB = hgCoatText(colourB)
     if colourA == colourB then
-        return colourA .. " (Likely), or Other (10%)"
+        return hgT("hg_coat_likely_one", colourA)
     end
-    return colourA .. " / " .. colourB .. " (Likely), or Other (10%)"
+    return hgT("hg_coat_likely_two", colourA, colourB)
 end
 
 function HorseGenetics.getSubTypeIndexForCoat(coatColour, fallbackIndex)
@@ -1547,33 +1699,22 @@ function HorseGenetics.formatAgeYM(age)
     local years = math.floor(months / 12)
     local rest = months % 12
     if years > 0 and rest > 0 then
-        return string.format("%dY %dM", years, rest)
+        return hgT("hg_age_ym", years, rest)
     end
     if years > 0 then
-        return string.format("%dY", years)
+        return hgT("hg_age_y", years)
     end
-    return string.format("%dM", rest)
-end
-
-function HorseGenetics.formatAgeShort(age)
-    return HorseGenetics.formatAgeYM(age)
-end
-
-function HorseGenetics.formatAgeLong(age)
-    return HorseGenetics.formatAgeYM(age)
+    return hgT("hg_age_m", rest)
 end
 
 function HorseGenetics.getRecordLifeState(record)
     if record == nil then
-        return "Reproduction:", "-"
+        return hgT("hg_label_repro"), hgT("hg_dash")
     end
     local cluster = HorseGenetics.getRecordCluster(record)
     local pregnancy = HorseGenetics.getPregnancyForHorseId(record.id)
     local age = HorseGenetics.getRecordAgeMonths(record)
-    local maturity = HorseGenetics.VANILLA_MATURITY_MONTHS
-    if cluster ~= nil then
-        maturity = HorseGenetics.getMaturityMonths(cluster)
-    end
+    local maturity = HorseGenetics.getMaturityMonths(cluster)
     if age ~= nil and age < maturity then
         local percent = 0
         if cluster ~= nil then
@@ -1581,15 +1722,15 @@ function HorseGenetics.getRecordLifeState(record)
         else
             percent = math.max(0, math.min(100, math.floor(age / math.max(1, maturity) * 100 + 0.5)))
         end
-        return "Puberty:", string.format("%d%%", percent)
+        return hgT("hg_label_puberty"), string.format("%d%%", percent)
     end
     if pregnancy ~= nil then
-        return "Reproduction:", string.format("%d%%", HorseGenetics.getReproductionPercent(pregnancy))
+        return hgT("hg_label_repro"), string.format("%d%%", HorseGenetics.getReproductionPercent(pregnancy))
     end
     if cluster == nil then
-        return "Reproduction:", "-"
+        return hgT("hg_label_repro"), hgT("hg_dash")
     end
-    return "Reproduction:", "0%"
+    return hgT("hg_label_repro"), "0%"
 end
 
 function HorseGenetics.getPregnancyForHorseId(horseId)
@@ -1640,23 +1781,7 @@ function HorseGenetics.getClusterAgeMonths(cluster)
 end
 
 function HorseGenetics.getMaturityMonths(cluster)
-    local months = HorseGenetics.VANILLA_MATURITY_MONTHS
-    pcall(function()
-        local subType
-        if cluster ~= nil and cluster.getSubType ~= nil then
-            subType = cluster:getSubType()
-        elseif cluster ~= nil and cluster.getSubTypeIndex ~= nil
-            and g_currentMission ~= nil and g_currentMission.animalSystem ~= nil then
-            subType = g_currentMission.animalSystem:getSubTypeByIndex(cluster:getSubTypeIndex())
-        end
-        if subType ~= nil and type(subType.reproductionMinAgeMonth) == "number" then
-            months = subType.reproductionMinAgeMonth
-        end
-    end)
-    if months < 1 then
-        months = HorseGenetics.VANILLA_MATURITY_MONTHS
-    end
-    return months
+    return HorseGenetics.getPubertyMonths()
 end
 
 function HorseGenetics.isHorseMature(cluster)
@@ -1966,10 +2091,6 @@ function HorseGenetics.visitAnimalClusters(visitor)
     visitList(mission.ownedItems)
 end
 
-local function hgVisitAnimalClusters(visitor)
-    HorseGenetics.visitAnimalClusters(visitor)
-end
-
 function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseIds)
     if cluster == nil then
         return nil
@@ -1983,22 +2104,7 @@ function HorseGenetics.findRecordForLiveCluster(cluster, ownerFarmId, usedHorseI
     if horseName == nil or horseName == "" then
         return nil
     end
-    local lname = string.lower(tostring(horseName))
-    local match, count = nil, 0
-    for _, horse in pairs(HorseGenetics.horses or {}) do
-        if horse ~= nil and horse.soldPrice == nil and horse.name ~= nil
-            and string.lower(tostring(horse.name)) == lname
-            and (usedHorseIds == nil or usedHorseIds[horse.id] ~= true) then
-            if ownerFarmId == nil or horse.farmId == nil or horse.farmId == ownerFarmId then
-                match = horse
-                count = count + 1
-            end
-        end
-    end
-    if count == 1 then
-        return match
-    end
-    return nil
+    return HorseGenetics.findReusableRecord(horseName, ownerFarmId, usedHorseIds)
 end
 
 function HorseGenetics.collectClusterBindings()
@@ -2254,7 +2360,7 @@ function HorseGenetics.collectHorseSellPrices()
     local sampleBase = nil
     HorseGenetics.quietSalePrice = true
     pcall(function()
-        hgVisitAnimalClusters(function(cluster)
+        HorseGenetics.visitAnimalClusters(function(cluster)
             local horse = nil
             local horseId = cluster ~= nil and cluster.horseGeneticsId or nil
             if horseId ~= nil and HorseGenetics.horses[horseId] ~= nil then
@@ -2473,6 +2579,7 @@ end
 
 -- Hook sale price, new clusters, and mounting a horse.
 function HorseGenetics:installCoreIntegrations()
+    HorseGenetics.installClusterPersistence()
     self:installSaleValueIntegration()
     hgHookHorseClusterAdd(PlaceableHusbandryAnimals, "addCluster")
     hgHookHorseClusterAdd(AnimalClusterSystem, "addCluster")
@@ -2706,6 +2813,7 @@ end
 function HorseGenetics:loadMap()
     HorseGenetics.registerEventClasses()
     HorseGenetics.installNetworkHooks()
+    HorseGenetics.installClusterPersistence()
     HorseGenetics.installHorseReproductionBlock()
     HorseGenetics:installCoreIntegrations()
 end
@@ -2714,6 +2822,7 @@ function HorseGenetics:update(dt)
     pcall(function()
         HorseGenetics.registerEventClasses()
         HorseGenetics.installNetworkHooks()
+        HorseGenetics.installClusterPersistence()
         HorseGenetics.installHorseReproductionBlock()
         HorseGenetics:installCoreIntegrations()
         dt = tonumber(dt) or 0
@@ -2944,6 +3053,7 @@ end
 function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregnancies, settings, clusterBindings)
     HorseGenetics.horses = horses or {}
     HorseGenetics.clientHasSync = true
+    HorseGenetics.recordsReady = true
     if type(nextHorseId) == "number" and nextHorseId > 0 then
         HorseGenetics.nextHorseId = nextHorseId
     end
@@ -2953,7 +3063,12 @@ function HorseGenetics.applyFullSync(horses, nextHorseId, breedingHistory, pregn
         HorseGenetics.normalizePregnancy(entry)
     end
     if type(settings) == "table" then
-        HorseGenetics.applySettings(settings.gestationMonths, settings.valueModifierPercent, true)
+        HorseGenetics.applySettings(
+            settings.gestationMonths,
+            settings.valueModifierPercent,
+            settings.pubertyMonths,
+            true
+        )
     end
     HorseGenetics.applyClusterBindings(clusterBindings)
     HorseGenetics.notifyUiDirty()
@@ -3055,7 +3170,8 @@ function HorseGenetics.registerEventClasses()
             HorseGenetics.pregnancies or {},
             {
                 gestationMonths = HorseGenetics.getGestationMonths(),
-                valueModifierPercent = HorseGenetics.getValueModifierPercent()
+                valueModifierPercent = HorseGenetics.getValueModifierPercent(),
+                pubertyMonths = HorseGenetics.getPubertyMonths()
             },
             HorseGenetics.collectClusterBindings()
         )
@@ -3103,6 +3219,7 @@ function HorseGenetics.registerEventClasses()
         local settings = self.settings or HorseGenetics.settings or {}
         streamWriteInt32(streamId, tonumber(settings.gestationMonths) or HorseGenetics.VANILLA_GESTATION_MONTHS)
         streamWriteInt32(streamId, tonumber(settings.valueModifierPercent) or 100)
+        streamWriteInt32(streamId, tonumber(settings.pubertyMonths) or HorseGenetics.VANILLA_MATURITY_MONTHS)
         local bindings = self.clusterBindings or {}
         streamWriteInt32(streamId, #bindings)
         for i = 1, #bindings do
@@ -3163,7 +3280,8 @@ function HorseGenetics.registerEventClasses()
         end
         self.settings = {
             gestationMonths = streamReadInt32(streamId),
-            valueModifierPercent = streamReadInt32(streamId)
+            valueModifierPercent = streamReadInt32(streamId),
+            pubertyMonths = streamReadInt32(streamId)
         }
         local bindingCount = streamReadInt32(streamId)
         self.clusterBindings = {}
@@ -3254,35 +3372,42 @@ function HorseGenetics.registerEventClasses()
         return Event.new(HorseGeneticsSettingsEvent_mt)
     end
 
-    function HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent)
+    function HorseGeneticsSettingsEvent.new(gestationMonths, valueModifierPercent, pubertyMonths)
         local self = HorseGeneticsSettingsEvent.emptyNew()
         self.gestationMonths = gestationMonths
         self.valueModifierPercent = valueModifierPercent
+        self.pubertyMonths = pubertyMonths
         return self
     end
 
     function HorseGeneticsSettingsEvent.newFromCurrent()
-        return HorseGeneticsSettingsEvent.new(HorseGenetics.getGestationMonths(), HorseGenetics.getValueModifierPercent())
+        return HorseGeneticsSettingsEvent.new(
+            HorseGenetics.getGestationMonths(),
+            HorseGenetics.getValueModifierPercent(),
+            HorseGenetics.getPubertyMonths()
+        )
     end
 
     function HorseGeneticsSettingsEvent:writeStream(streamId, connection)
         streamWriteInt32(streamId, tonumber(self.gestationMonths) or HorseGenetics.VANILLA_GESTATION_MONTHS)
         streamWriteInt32(streamId, tonumber(self.valueModifierPercent) or 100)
+        streamWriteInt32(streamId, tonumber(self.pubertyMonths) or HorseGenetics.VANILLA_MATURITY_MONTHS)
     end
 
     function HorseGeneticsSettingsEvent:readStream(streamId, connection)
         self.gestationMonths = streamReadInt32(streamId)
         self.valueModifierPercent = streamReadInt32(streamId)
+        self.pubertyMonths = streamReadInt32(streamId)
         self:run(connection)
     end
 
     function HorseGeneticsSettingsEvent:run(connection)
         if g_server ~= nil and connection ~= nil and not connection:getIsServer() then
-            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent)
+            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, self.pubertyMonths)
             return
         end
         if connection ~= nil and connection:getIsServer() then
-            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, true)
+            HorseGenetics.applySettings(self.gestationMonths, self.valueModifierPercent, self.pubertyMonths, true)
         end
     end
 
@@ -3736,7 +3861,7 @@ function HorseGeneticsMenu.new()
     self.btnBack = {inputAction = InputAction.MENU_BACK}
     self:setMenuButtonInfo({self.btnBack})
     if self.setTitle ~= nil then
-        self:setTitle("HORSE GENETICS")
+        self:setTitle(hgT("hg_title"))
     end
     return self
 end
@@ -3744,7 +3869,7 @@ end
 function HorseGeneticsMenu:onFrameOpen()
     HorseGeneticsMenu:superClass().onFrameOpen(self)
     if self.setTitle ~= nil then
-        self:setTitle("HORSE GENETICS")
+        self:setTitle(hgT("hg_title"))
     end
     self:showTab(self.currentTab or "horses")
     self:styleSectionTitles()
@@ -3787,13 +3912,15 @@ end
 
 function HorseGeneticsMenu:renderSettingsPage()
     hgSetText(self.gestationValue, HorseGenetics.gestationLabel(HorseGenetics.getGestationMonths()))
+    hgSetText(self.pubertyValue, HorseGenetics.pubertyLabel(HorseGenetics.getPubertyMonths()))
     hgSetText(self.valueModifierValue, HorseGenetics.valueModifierLabel(HorseGenetics.getValueModifierPercent()))
 end
 
 function HorseGeneticsMenu:onClickGestationDown()
     HorseGenetics.requestSetSettings(
         HorseGenetics.cycleSetting(HorseGenetics.GESTATION_OPTIONS, HorseGenetics.getGestationMonths(), -1),
-        HorseGenetics.getValueModifierPercent()
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3801,7 +3928,26 @@ end
 function HorseGeneticsMenu:onClickGestationUp()
     HorseGenetics.requestSetSettings(
         HorseGenetics.cycleSetting(HorseGenetics.GESTATION_OPTIONS, HorseGenetics.getGestationMonths(), 1),
-        HorseGenetics.getValueModifierPercent()
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.getPubertyMonths()
+    )
+    self:renderSettingsPage()
+end
+
+function HorseGeneticsMenu:onClickPubertyDown()
+    HorseGenetics.requestSetSettings(
+        HorseGenetics.getGestationMonths(),
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.cycleSetting(HorseGenetics.MATURITY_OPTIONS, HorseGenetics.getPubertyMonths(), -1)
+    )
+    self:renderSettingsPage()
+end
+
+function HorseGeneticsMenu:onClickPubertyUp()
+    HorseGenetics.requestSetSettings(
+        HorseGenetics.getGestationMonths(),
+        HorseGenetics.getValueModifierPercent(),
+        HorseGenetics.cycleSetting(HorseGenetics.MATURITY_OPTIONS, HorseGenetics.getPubertyMonths(), 1)
     )
     self:renderSettingsPage()
 end
@@ -3809,7 +3955,8 @@ end
 function HorseGeneticsMenu:onClickValueDown()
     HorseGenetics.requestSetSettings(
         HorseGenetics.getGestationMonths(),
-        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), -1)
+        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), -1),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3817,7 +3964,8 @@ end
 function HorseGeneticsMenu:onClickValueUp()
     HorseGenetics.requestSetSettings(
         HorseGenetics.getGestationMonths(),
-        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), 1)
+        HorseGenetics.cycleSetting(HorseGenetics.VALUE_MODIFIER_OPTIONS, HorseGenetics.getValueModifierPercent(), 1),
+        HorseGenetics.getPubertyMonths()
     )
     self:renderSettingsPage()
 end
@@ -3881,6 +4029,7 @@ function HorseGeneticsMenu:styleSectionTitles()
     hgStyleSectionTitle(self.titleBreedPicker)
     hgSetColor(self.settingsHint, HG_COLOR_MUTED)
     hgSetColor(self.gestationHelp, HG_COLOR_MUTED)
+    hgSetColor(self.pubertyHelp, HG_COLOR_MUTED)
     hgSetColor(self.valueModifierHelp, HG_COLOR_MUTED)
     hgStyleColumnHeader(self.histHeaderName)
     hgStyleColumnHeader(self.histHeaderAge)
@@ -3947,6 +4096,7 @@ function HorseGeneticsMenu:refreshRecords()
     if self.selectedRecord == nil and #self.records > 0 then
         self.selectedRecord = self.records[1]
     end
+    self:syncBreedParentsToOwned()
 
     local maxOffset = math.max(0, #self.records - HorseGeneticsMenu.LIST_ROWS)
     if self.listOffset > maxOffset then
@@ -3956,7 +4106,7 @@ function HorseGeneticsMenu:refreshRecords()
 end
 
 function HorseGeneticsMenu:renderOverview()
-    hgSetText(self.overviewText, string.format("Horses owned: %d", #self.records))
+    hgSetText(self.overviewText, hgT("hg_horses_owned", #self.records))
 
     for i = 1, HorseGeneticsMenu.LIST_ROWS do
         local record = self.records[self.listOffset + i]
@@ -3966,8 +4116,8 @@ function HorseGeneticsMenu:renderOverview()
         if record ~= nil then
             local stats = record.stats or {}
             local breakdown = record._hgUiBreakdown or HorseGenetics.getSaleValueBreakdown(record)
-            name = tostring(record.name or record.id or "Unnamed")
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            name = tostring(record.name or record.id or hgT("hg_unnamed"))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
@@ -4003,7 +4153,7 @@ function HorseGeneticsMenu:renderOverview()
     end
 
     if #self.records > HorseGeneticsMenu.LIST_ROWS then
-        hgSetText(self.moreRecordsText, string.format("Showing %d-%d of %d  (Scroll)", self.listOffset + 1, math.min(#self.records, self.listOffset + HorseGeneticsMenu.LIST_ROWS), #self.records))
+        hgSetText(self.moreRecordsText, hgT("hg_showing_scroll", self.listOffset + 1, math.min(#self.records, self.listOffset + HorseGeneticsMenu.LIST_ROWS), #self.records))
     else
         hgSetText(self.moreRecordsText, "")
     end
@@ -4126,7 +4276,7 @@ function HorseGeneticsMenu:hgPollScrollInput()
     end
 end
 
--- Shop portraits: use dataS store horse DDS, never local coat photos.
+-- Shop portraits: prefer dataS store horse DDS, then local coat fallbacks.
 local HG_HORSE_STORE_ICON_DIR = "$dataS/character/animals/domesticated/horse/"
 local HG_HORSE_STORE_ICON_STEMS = {
     bay = "store_horseBay",
@@ -4589,31 +4739,31 @@ function HorseGeneticsMenu:renderProfile()
     pcall(hgSetBarFill, self.averageBar, average, "averageBar")
 
     if r == nil then
-        hgSetText(self.profileName, "-")
-        hgSetText(self.profileId, "-")
-        hgSetText(self.profileGeneration, "-")
-        hgSetText(self.profileCoat, "-")
-        hgSetText(self.profileAgeLabel, "Age:")
-        hgSetText(self.profileAge, "-")
-        hgSetText(self.profileReproLabel, "Reproduction:")
-        hgSetText(self.profileRepro, "-")
+        hgSetText(self.profileName, hgT("hg_dash"))
+        hgSetText(self.profileId, hgT("hg_dash"))
+        hgSetText(self.profileGeneration, hgT("hg_dash"))
+        hgSetText(self.profileCoat, hgT("hg_dash"))
+        hgSetText(self.profileAgeLabel, hgT("hg_label_age"))
+        hgSetText(self.profileAge, hgT("hg_dash"))
+        hgSetText(self.profileReproLabel, hgT("hg_label_repro"))
+        hgSetText(self.profileRepro, hgT("hg_dash"))
         hgSetText(self.portraitPlaceholder, "")
         hgSetText(self.saleBaseValue, "1.000x")
         hgSetText(self.saleBonusValue, "+0.0%")
-        hgSetText(self.saleTraitsValue, "None")
+        hgSetText(self.saleTraitsValue, hgT("hg_none"))
         hgSetText(self.saleTotalText, "+0.0%")
         hgSetColor(self.saleTotalLabel, HG_COLOR_SELECTED)
         hgSetColor(self.saleTotalText, HG_COLOR_SELECTED)
         return
     end
 
-    local bonuses = #(breakdown.bonusDetails or {}) > 0 and table.concat(breakdown.bonusDetails, ", ") or "None"
-    hgSetText(self.profileName, r.name or "Unnamed")
-    hgSetText(self.profileId, r.id or "Unknown")
+    local bonuses = #(breakdown.bonusDetails or {}) > 0 and table.concat(breakdown.bonusDetails, ", ") or hgT("hg_none")
+    hgSetText(self.profileName, r.name or hgT("hg_unnamed"))
+    hgSetText(self.profileId, r.id or hgT("hg_unknown"))
     hgSetText(self.profileGeneration, r.generation or 1)
-    hgSetText(self.profileCoat, r.coatColour or "Unknown")
-    hgSetText(self.profileAgeLabel, "Age:")
-    hgSetText(self.profileAge, HorseGenetics.formatAgeLong(HorseGenetics.getRecordAgeMonths(r)))
+    hgSetText(self.profileCoat, hgCoatText(r.coatColour))
+    hgSetText(self.profileAgeLabel, hgT("hg_label_age"))
+    hgSetText(self.profileAge, HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(r)))
     local reproLabel, reproValue = HorseGenetics.getRecordLifeState(r)
     hgSetText(self.profileReproLabel, reproLabel)
     hgSetText(self.profileRepro, reproValue)
@@ -4729,25 +4879,25 @@ end
 
 function HorseGeneticsMenu:renderParentPanel(prefix, record)
     if record == nil then
-        hgSetText(self["breed" .. prefix .. "Name"], "Name: -")
-        hgSetText(self["breed" .. prefix .. "Id"], "ID: -")
-        hgSetText(self["breed" .. prefix .. "Age"], "Age: -")
-        hgSetText(self["breed" .. prefix .. "Speed"], "Speed: -")
-        hgSetText(self["breed" .. prefix .. "Stamina"], "Stamina: -")
-        hgSetText(self["breed" .. prefix .. "Health"], "Health: -")
-        hgSetText(self["breed" .. prefix .. "Average"], "Average: -")
+        hgSetText(self["breed" .. prefix .. "Name"], hgT("hg_field_name", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Id"], hgT("hg_field_id", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Age"], hgT("hg_field_age", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Speed"], hgT("hg_field_speed", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Stamina"], hgT("hg_field_stamina", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Health"], hgT("hg_field_health", hgT("hg_dash")))
+        hgSetText(self["breed" .. prefix .. "Average"], hgT("hg_field_average", hgT("hg_dash")))
         hgSetPortraitVisible(self["breed" .. prefix .. "Portrait"], false)
         return
     end
     local stats = record.stats or {}
     local average = HorseGenetics.calculateAverage(stats)
-    hgSetText(self["breed" .. prefix .. "Name"], "Name: " .. tostring(record.name or "Unnamed"))
-    hgSetText(self["breed" .. prefix .. "Id"], "ID: " .. tostring(record.id or "-"))
-    hgSetText(self["breed" .. prefix .. "Age"], "Age: " .. HorseGenetics.formatAgeLong(HorseGenetics.getRecordAgeMonths(record)))
-    hgSetText(self["breed" .. prefix .. "Speed"], string.format("Speed: %d", tonumber(stats.speed) or 0))
-    hgSetText(self["breed" .. prefix .. "Stamina"], string.format("Stamina: %d", tonumber(stats.stamina) or 0))
-    hgSetText(self["breed" .. prefix .. "Health"], string.format("Health: %d", tonumber(stats.health) or 0))
-    hgSetText(self["breed" .. prefix .. "Average"], string.format("Average: %.1f", average))
+    hgSetText(self["breed" .. prefix .. "Name"], hgT("hg_field_name", tostring(record.name or hgT("hg_unnamed"))))
+    hgSetText(self["breed" .. prefix .. "Id"], hgT("hg_field_id", tostring(record.id or hgT("hg_dash"))))
+    hgSetText(self["breed" .. prefix .. "Age"], hgT("hg_field_age", HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))))
+    hgSetText(self["breed" .. prefix .. "Speed"], hgT("hg_field_speed", tostring(tonumber(stats.speed) or 0)))
+    hgSetText(self["breed" .. prefix .. "Stamina"], hgT("hg_field_stamina", tostring(tonumber(stats.stamina) or 0)))
+    hgSetText(self["breed" .. prefix .. "Health"], hgT("hg_field_health", tostring(tonumber(stats.health) or 0)))
+    hgSetText(self["breed" .. prefix .. "Average"], hgT("hg_field_average", string.format("%.1f", average)))
     self:bindCoatPortrait(self["breed" .. prefix .. "Portrait"], record.coatColour)
 end
 
@@ -4758,9 +4908,9 @@ function HorseGeneticsMenu:renderBreedingPage()
 
     local warning = ""
     if p1 ~= nil and p2 ~= nil and p1.id == p2.id then
-        warning = "Cannot breed a horse with itself. Choose two different horses."
+        warning = hgT("hg_warn_self")
     elseif p1 == nil or p2 == nil then
-        warning = "Select two different horses to compare and breed."
+        warning = hgT("hg_warn_need_two")
     end
     hgSetText(self.breedWarningText, warning)
     hgSetColor(self.breedWarningText, HG_COLOR_SELECTED)
@@ -4768,10 +4918,10 @@ function HorseGeneticsMenu:renderBreedingPage()
     local function setCompatRow(prefix, combText)
         hgSetText(self["compat" .. prefix .. "Comb"], combText)
     end
-    hgSetText(self.compatSpeed, "Speed")
-    hgSetText(self.compatStamina, "Stamina")
-    hgSetText(self.compatHealth, "Health")
-    hgSetText(self.compatAverage, "Average")
+    hgSetText(self.compatSpeed, hgT("hg_stat_speed"))
+    hgSetText(self.compatStamina, hgT("hg_stat_stamina"))
+    hgSetText(self.compatHealth, hgT("hg_stat_health"))
+    hgSetText(self.compatAverage, hgT("hg_stat_average"))
     if p1 ~= nil and p2 ~= nil then
         local s1, s2 = p1.stats or {}, p2.stats or {}
         local function fillInt(prefix, a, b)
@@ -4794,7 +4944,7 @@ function HorseGeneticsMenu:renderBreedingPage()
     self:renderOffspringPanels()
     self:renderBreedPicker()
     if self.breedStatusText ~= nil and (self.breedStatusText.text == nil or self.breedStatusText.text == "") then
-        hgSetText(self.breedStatusText, "Click a horse in the list to add or remove it. Foals are born in-stable.")
+        hgSetText(self.breedStatusText, hgT("hg_breed_hint_list"))
     end
 end
 
@@ -4807,14 +4957,14 @@ function HorseGeneticsMenu:renderBreedPicker()
         local name, age, speed, stamina, health, average = "", "", "", "", "", ""
         if record ~= nil then
             local stats = record.stats or {}
-            name = tostring(record.name or record.id or "Unnamed")
+            name = tostring(record.name or record.id or hgT("hg_unnamed"))
             if self.breedParent1 ~= nil and record.id == self.breedParent1.id then
                 name = name .. "  [H1]"
             end
             if self.breedParent2 ~= nil and record.id == self.breedParent2.id then
                 name = name .. "  [H2]"
             end
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
@@ -4849,6 +4999,24 @@ function HorseGeneticsMenu:renderBreedPicker()
     end
 end
 
+function HorseGeneticsMenu:resolveOwnedBreedRecord(parent)
+    if parent == nil or parent.id == nil then
+        return nil
+    end
+    for _, record in ipairs(self.records or {}) do
+        if record.id == parent.id then
+            return record
+        end
+    end
+    return nil
+end
+
+function HorseGeneticsMenu:syncBreedParentsToOwned()
+    self.breedParent1 = self:resolveOwnedBreedRecord(self.breedParent1)
+    self.breedParent2 = self:resolveOwnedBreedRecord(self.breedParent2)
+    self.breedPickerSelected = self:resolveOwnedBreedRecord(self.breedPickerSelected)
+end
+
 function HorseGeneticsMenu:clearBreedParent(slot)
     local removed = nil
     if slot == 1 then
@@ -4859,7 +5027,7 @@ function HorseGeneticsMenu:clearBreedParent(slot)
         self.breedParent2 = nil
     end
     if removed ~= nil then
-        hgSetText(self.breedStatusText, string.format("Removed %s from Horse %d. Click another horse to fill the slot.", tostring(removed.name), slot))
+        hgSetText(self.breedStatusText, hgT("hg_status_removed", tostring(removed.name), slot))
     end
     self:renderBreedingPage()
 end
@@ -4887,8 +5055,7 @@ function HorseGeneticsMenu:onClickBreedPick(index)
         self:assignBreedParent(2)
         return
     end
-    hgSetText(self.breedStatusText, "Selected " .. tostring(record.name) .. ". Click a selected horse to remove it, then pick another.")
-    self:renderBreedingPage()
+    self:assignBreedParent(1)
 end
 
 function HorseGeneticsMenu:onClickBreedPick1() self:onClickBreedPick(1) end
@@ -4911,7 +5078,7 @@ end
 function HorseGeneticsMenu:assignBreedParent(slot)
     local record = hgBreedSourceRecord(self)
     if record == nil then
-        hgSetText(self.breedStatusText, "Click a horse in the owned list first.")
+        hgSetText(self.breedStatusText, hgT("hg_status_pick_first"))
         self:renderBreedingPage()
         return
     end
@@ -4920,25 +5087,25 @@ function HorseGeneticsMenu:assignBreedParent(slot)
     else
         self.breedParent2 = record
     end
-    hgSetText(self.breedStatusText, string.format("Horse %d set to %s.", slot, tostring(record.name)))
+    hgSetText(self.breedStatusText, hgT("hg_status_set", slot, tostring(record.name)))
     self:renderBreedingPage()
 end
 
 function HorseGeneticsMenu:renderOffspringPanels()
     local p1, p2 = self.breedParent1, self.breedParent2
-    hgSetText(self.breedPreviewNote, "Ranges shown until they breed in a stable.")
+    hgSetText(self.breedPreviewNote, hgT("hg_preview_note_alt"))
 
     local function renderRange(prefix, parent)
         if p1 == nil or p2 == nil then
-            hgSetText(self["breed" .. prefix .. "Name"], "Name: -")
-            hgSetText(self["breed" .. prefix .. "Id"], "ID: Assigned on breed")
-            hgSetText(self["breed" .. prefix .. "Stats"], "Speed -")
-            hgSetText(self["breed" .. prefix .. "Stamina"], "Stamina -")
-            hgSetText(self["breed" .. prefix .. "Health"], "Health -")
-            hgSetText(self["breed" .. prefix .. "Average"], "Average: -")
+            hgSetText(self["breed" .. prefix .. "Name"], hgT("hg_field_name", hgT("hg_dash")))
+            hgSetText(self["breed" .. prefix .. "Id"], hgT("hg_id_on_breed"))
+            hgSetText(self["breed" .. prefix .. "Stats"], hgT("hg_field_speed_blank"))
+            hgSetText(self["breed" .. prefix .. "Stamina"], hgT("hg_field_stamina_blank"))
+            hgSetText(self["breed" .. prefix .. "Health"], hgT("hg_field_health_blank"))
+            hgSetText(self["breed" .. prefix .. "Average"], hgT("hg_field_average", hgT("hg_dash")))
             hgSetText(self["breed" .. prefix .. "AvgNote"], "")
-            hgSetText(self["breed" .. prefix .. "Coat"], "Coat: -")
-            hgSetText(self["breed" .. prefix .. "Sale"], "Sale Mod: -")
+            hgSetText(self["breed" .. prefix .. "Coat"], hgT("hg_field_coat", hgT("hg_dash")))
+            hgSetText(self["breed" .. prefix .. "Sale"], hgT("hg_field_sale", hgT("hg_dash")))
             hgSetPortraitVisible(self["breed" .. prefix .. "Portrait"], false)
             return
         end
@@ -4948,15 +5115,15 @@ function HorseGeneticsMenu:renderOffspringPanels()
         local heMin, heMax = HorseGenetics.getPredictedStatRange(s1.health, s2.health)
         local avgMin = (spMin + stMin + heMin) / 3
         local avgMax = (spMax + stMax + heMax) / 3
-        hgSetText(self["breed" .. prefix .. "Name"], "Name: Assigned at birth")
-        hgSetText(self["breed" .. prefix .. "Id"], "ID: Assigned on breed")
-        hgSetText(self["breed" .. prefix .. "Stats"], string.format("Speed: %d-%d", spMin, spMax))
-        hgSetText(self["breed" .. prefix .. "Stamina"], string.format("Stamina: %d-%d", stMin, stMax))
-        hgSetText(self["breed" .. prefix .. "Health"], string.format("Health: %d-%d", heMin, heMax))
-        hgSetText(self["breed" .. prefix .. "Average"], string.format("Average: %.1f-%.1f", avgMin, avgMax))
-        hgSetText(self["breed" .. prefix .. "AvgNote"], "Not guaranteed")
-        hgSetText(self["breed" .. prefix .. "Coat"], "Coat: " .. HorseGenetics.getPossibleCoatText(p1.coatColour, p2.coatColour))
-        hgSetText(self["breed" .. prefix .. "Sale"], "Sale Mod: Depends on rolled stats")
+        hgSetText(self["breed" .. prefix .. "Name"], hgT("hg_name_at_birth"))
+        hgSetText(self["breed" .. prefix .. "Id"], hgT("hg_id_on_breed"))
+        hgSetText(self["breed" .. prefix .. "Stats"], hgT("hg_field_speed", string.format("%d-%d", spMin, spMax)))
+        hgSetText(self["breed" .. prefix .. "Stamina"], hgT("hg_field_stamina", string.format("%d-%d", stMin, stMax)))
+        hgSetText(self["breed" .. prefix .. "Health"], hgT("hg_field_health", string.format("%d-%d", heMin, heMax)))
+        hgSetText(self["breed" .. prefix .. "Average"], hgT("hg_field_average", string.format("%.1f-%.1f", avgMin, avgMax)))
+        hgSetText(self["breed" .. prefix .. "AvgNote"], hgT("hg_not_guaranteed"))
+        hgSetText(self["breed" .. prefix .. "Coat"], hgT("hg_field_coat", HorseGenetics.getPossibleCoatText(p1.coatColour, p2.coatColour)))
+        hgSetText(self["breed" .. prefix .. "Sale"], hgT("hg_field_sale", hgT("hg_sale_depends")))
         self:bindCoatPortrait(self["breed" .. prefix .. "Portrait"], parent ~= nil and parent.coatColour or p1.coatColour)
     end
 
@@ -4966,16 +5133,16 @@ end
 
 function HorseGeneticsMenu:onClickPreviewOffspring()
     if self.breedParent1 == nil or self.breedParent2 == nil then
-        hgSetText(self.breedStatusText, "Select two horses before previewing.")
+        hgSetText(self.breedStatusText, hgT("hg_status_need_pair"))
         self:renderBreedingPage()
         return
     end
     if self.breedParent1.id == self.breedParent2.id then
-        hgSetText(self.breedStatusText, "Choose two different horses.")
+        hgSetText(self.breedStatusText, hgT("hg_status_different"))
         self:renderBreedingPage()
         return
     end
-    hgSetText(self.breedStatusText, "Preview only. Put both mature horses in the same stable with 2 free slots; they each produce a foal on the monthly tick.")
+    hgSetText(self.breedStatusText, hgT("hg_status_preview"))
     self:renderBreedingPage()
 end
 
@@ -5022,8 +5189,11 @@ local function hgTreeValueLine(menu, record)
         return ""
     end
     local amount, sold = HorseGenetics.getHorseDisplayValue(record, menu.sellPriceIndex, menu.ownedIds)
-    local label = sold and "Sold: " or "Value: "
-    return label .. HorseGenetics.formatHorseMoney(amount)
+    local money = HorseGenetics.formatHorseMoney(amount)
+    if sold then
+        return hgT("hg_sold", money)
+    end
+    return hgT("hg_value_line", money)
 end
 
 function HorseGeneticsMenu:renderGeneticInfoPage()
@@ -5051,7 +5221,7 @@ function HorseGeneticsMenu:renderGeneticInfoPage()
 end
 
 function HorseGeneticsMenu:renderHistoryList()
-    hgSetText(self.histOverviewText, string.format("All horses ever recorded: %d", #self.historyRecords))
+    hgSetText(self.histOverviewText, hgT("hg_all_recorded", #self.historyRecords))
     for i = 1, HorseGeneticsMenu.HIST_LIST_ROWS do
         local record = self.historyRecords[(self.historyOffset or 0) + i]
         local selected = record ~= nil and self.historySelected ~= nil and record.id == self.historySelected.id
@@ -5059,8 +5229,8 @@ function HorseGeneticsMenu:renderHistoryList()
         local name, age, speed, stamina, health, average = "", "", "", "", "", ""
         if record ~= nil then
             local stats = record.stats or {}
-            name = tostring(record.name or record.id or "Unnamed")
-            age = HorseGenetics.formatAgeShort(HorseGenetics.getRecordAgeMonths(record))
+            name = tostring(record.name or record.id or hgT("hg_unnamed"))
+            age = HorseGenetics.formatAgeYM(HorseGenetics.getRecordAgeMonths(record))
             speed = tostring(tonumber(stats.speed) or 0)
             stamina = tostring(tonumber(stats.stamina) or 0)
             health = tostring(tonumber(stats.health) or 0)
@@ -5102,14 +5272,14 @@ end
 function HorseGeneticsMenu:fillTreeRelative(prefix, record, emptyLabel)
     local portrait = self[prefix .. "Portrait"]
     if record == nil then
-        hgSetText(self[prefix .. "Name"], emptyLabel or "Unknown")
+        hgSetText(self[prefix .. "Name"], emptyLabel or hgT("hg_unknown"))
         hgSetText(self[prefix .. "Value"], "")
         hgSetColor(self[prefix .. "Name"], HG_COLOR_MUTED)
         hgSetTreeStatRow(self, prefix, nil)
         hgSetPortraitVisible(portrait, false)
         return
     end
-    hgSetText(self[prefix .. "Name"], tostring(record.name or "Unnamed"))
+    hgSetText(self[prefix .. "Name"], tostring(record.name or hgT("hg_unnamed")))
     hgSetText(self[prefix .. "Value"], hgTreeValueLine(self, record))
     hgSetColor(self[prefix .. "Name"], HG_COLOR_TEXT)
     hgSetColor(self[prefix .. "Value"], HG_COLOR_TEXT)
@@ -5123,25 +5293,25 @@ end
 function HorseGeneticsMenu:renderFamilyTree()
     local record = self.historySelected
     if record == nil then
-        hgSetText(self.treeFocusName, "Select a horse")
+        hgSetText(self.treeFocusName, hgT("hg_select_horse"))
         hgSetText(self.treeFocusId, "")
         hgSetText(self.treeFocusValue, "")
         hgSetTreeStatRow(self, "treeFocus", nil)
         hgSetText(self.treeFocusAverage, "")
         hgSetPortraitVisible(self.treeFocusPortrait, false)
-        self:fillTreeRelative("treeP1", nil, "Unknown")
-        self:fillTreeRelative("treeP2", nil, "Unknown")
+        self:fillTreeRelative("treeP1", nil, hgT("hg_unknown"))
+        self:fillTreeRelative("treeP2", nil, hgT("hg_unknown"))
         for i = 1, HorseGeneticsMenu.TREE_CHILD_SLOTS do
             self:fillTreeRelative("treeC" .. i, nil, "")
         end
-        hgSetText(self.treeKidsLabel, "OFFSPRING")
+        hgSetText(self.treeKidsLabel, hgT("hg_offspring"))
         return
     end
 
     local stats = record.stats or {}
     local average = HorseGenetics.calculateAverage(stats)
-    hgSetText(self.treeFocusName, tostring(record.name or "Unnamed"))
-    hgSetText(self.treeFocusId, string.format("ID: %s   Gen: %d", tostring(record.id or "-"), tonumber(record.generation) or 1))
+    hgSetText(self.treeFocusName, tostring(record.name or hgT("hg_unnamed")))
+    hgSetText(self.treeFocusId, hgT("hg_id_gen", tostring(record.id or hgT("hg_dash")), tonumber(record.generation) or 1))
     hgSetTreeStatRow(self, "treeFocus", record)
     hgSetText(self.treeFocusAverage, string.format("%.1f", average))
     hgSetText(self.treeFocusValue, hgTreeValueLine(self, record))
@@ -5157,8 +5327,8 @@ function HorseGeneticsMenu:renderFamilyTree()
     end
     self.treeParent1 = parent1
     self.treeParent2 = parent2
-    self:fillTreeRelative("treeP1", parent1, "Unknown parent")
-    self:fillTreeRelative("treeP2", parent2, "Unknown parent")
+    self:fillTreeRelative("treeP1", parent1, hgT("hg_unknown_parent"))
+    self:fillTreeRelative("treeP2", parent2, hgT("hg_unknown_parent"))
 
     self.treeChildren = hgCollectOffspring(record.id)
     local maxOffset = math.max(0, #self.treeChildren - HorseGeneticsMenu.TREE_CHILD_SLOTS)
@@ -5172,11 +5342,11 @@ function HorseGeneticsMenu:renderFamilyTree()
         end
     end
     if #self.treeChildren == 0 then
-        hgSetText(self.treeKidsLabel, "OFFSPRING  (None)")
+        hgSetText(self.treeKidsLabel, hgT("hg_offspring_none"))
     elseif #self.treeChildren > HorseGeneticsMenu.TREE_CHILD_SLOTS then
-        hgSetText(self.treeKidsLabel, string.format("OFFSPRING  (%d, Scroll here)", #self.treeChildren))
+        hgSetText(self.treeKidsLabel, hgT("hg_offspring_scroll", #self.treeChildren))
     else
-        hgSetText(self.treeKidsLabel, string.format("OFFSPRING  (%d)", #self.treeChildren))
+        hgSetText(self.treeKidsLabel, hgT("hg_offspring_n", #self.treeChildren))
     end
     local p1Btn = self.btnTreeP1
     local p2Btn = self.btnTreeP2
@@ -5604,7 +5774,7 @@ function HorseGenetics.installGeneticsMenu()
     pcall(hgBindStatBarTextures, page)
     pcall(function()
         if page.setTitle ~= nil then
-            page:setTitle("HORSE GENETICS")
+            page:setTitle(hgT("hg_title"))
         end
     end)
     pcall(function()
