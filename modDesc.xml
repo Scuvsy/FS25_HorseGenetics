@@ -5,6 +5,8 @@
 
     <title>
         <en>Horse Genetics</en>
+        <de>Pferdegenetik</de>
+        <fr>Génétique des chevaux</fr>
     </title>
 
     <description>
@@ -52,6 +54,28 @@ Der Verkaufspreis startet beim Vanilla-Preis, dann kommt ein Genetik-Multiplikat
 Kompatibel mit Enhanced Animal System (FS25_EnhancedAnimalSystem). Pferdezucht, Tragzeit, Genetik, Namen und Verkaufswerte bleiben bei Horse Genetics. Andere Tiere bleiben beim Enhanced Animal System. Sind beide Mods geladen, nutzen die Porträts Fohlen-Grafiken.
 
 Funktioniert im Einzelspieler und im PC-Mehrspieler. Jeder Spieler und der Dedicated Server brauchen dieselbe Version. Werte würfelt der Host und synchronisiert sie. Jede Farm sieht nur die eigenen Pferde.]]></de>
+        <fr><![CDATA[PC uniquement. Non compatible avec Xbox ou PlayStation.
+Multijoueur compatible sur PC.
+
+Chaque cheval reçoit des gènes uniques de Vitesse, Endurance et Santé (0-100). La moyenne est celle de ces trois valeurs. Les stats modifient le prix de vente et sont héritées par les poulains.
+
+Ouvrez Horse Genetics depuis le menu Échap (à côté d'Animals). Quatre pages :
+MES CHEVAUX : chevaux possédés, âge, stats, modificateur de vente, valeur boutique actuelle, et un profil avec reproduction ou puberté.
+ÉLEVAGE : associez deux chevaux possédés pour prévisualiser les fourchettes probables des poulains. Cette page ne fait pas naître de poulains.
+INFOS GÉNÉTIQUES : chaque cheval enregistré, y compris les chevaux vendus, plus un arbre généalogique des parents et descendants.
+PARAMÈTRES : durée de gestation, âge de puberté, et à quel point la génétique change le prix de vente. Les paramètres de l'hôte s'appliquent en multijoueur.
+
+Les chevaux du magasin deviennent le cheptel fondateur (chaque stat 35-75). Les vraies naissances ont lieu à l'écurie. Placez deux chevaux à l'âge de puberté des Paramètres ou plus dans le même bâtiment. Une gestation démarre au changement de mois. Gestation par défaut : 11 mois. Puberté par défaut : 22 mois, comme les chevaux vanilla. Les Paramètres proposent 1, 3, 6, 8, 11, 14, 16, 18 ou 22 mois pour les deux. Quand la gestation est terminée et que deux boxes sont libres, chaque parent produit un poulain. Les noms viennent du jeu de base. Vous pouvez renommer n'importe quel cheval ; Vitesse, Endurance et Santé restent liées à l'ID génétique (HG-000001), pas au nom.
+
+La barre de reproduction du menu animaux se remplit dès qu'une gestation Horse Genetics commence, selon la gestation des Paramètres. Après une naissance, la dernière naissance est enregistrée sur les parents. Les poulains montrent une barre de puberté jusqu'à l'âge défini. Les naissances automatiques vanilla des chevaux sont désactivées pour que ce mod gère l'élevage.
+
+Les poulains héritent de la moyenne des deux parents, plus une variation (-8 à +8), un possible bonus de qualité, et une robe des parents ou 10 % de chance d'une autre couleur.
+
+Le prix de vente part du prix vanilla, puis un multiplicateur génétique. À 100 % par défaut, il va de 0,75x à 1,60x. Désactivé conserve les prix vanilla. À 200 %, il peut aller de 0,50x à 2,20x.
+
+Compatible avec Enhanced Animal System (FS25_EnhancedAnimalSystem). Élevage, gestation, génétique, noms et valeurs de vente des chevaux restent sur Horse Genetics. Les autres animaux restent sur Enhanced Animal System. Si les deux mods sont chargés, les portraits Horse Genetics utilisent les visuels de poulain.
+
+Fonctionne en solo et en multijoueur PC. Chaque joueur et le serveur dédié doivent avoir la même version. Les stats sont tirées sur l'hôte et synchronisées. Chaque ferme ne voit que ses propres chevaux.]]></fr>
     </description>
 
     <iconFilename>icon.dds</iconFilename>
